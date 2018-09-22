@@ -353,11 +353,39 @@ namespace CASCToolHost
 
             return encoding;
         }
-
-        public static void GetIndexes(string url, string[] archives, Dictionary<string, IndexEntry> indexDictionary)
+        public static void GetIndexes(string url, string[] archives, Dictionary<string, Dictionary<string, IndexEntry>> indexDictionary)
         {
             Parallel.ForEach(archives, (archive, state, i) =>
             {
+
+                try
+                {
+                    cacheLock.EnterUpgradeableReadLock();
+
+                    if (!indexDictionary.ContainsKey(archives[i]))
+                    {
+                        try
+                        {
+                            cacheLock.EnterWriteLock();
+                            indexDictionary.Add(archives[i], new Dictionary<string, IndexEntry>());
+                        }
+                        finally
+                        {
+                            cacheLock.ExitWriteLock();
+                        }
+
+                    }
+                    else
+                    {
+                        Console.WriteLine("Index already exists!");
+                        return;
+                    }
+                }
+                finally
+                {
+                    cacheLock.ExitUpgradeableReadLock();
+                }
+
                 byte[] indexContent;
                 if (url.StartsWith("http"))
                 {
@@ -380,7 +408,7 @@ namespace CASCToolHost
 
                             var entry = new IndexEntry()
                             {
-                                index = (short)i,
+                                indexName = archives[i],
                                 size = bin.ReadUInt32(true),
                                 offset = bin.ReadUInt32(true)
                             };
@@ -388,12 +416,12 @@ namespace CASCToolHost
                             cacheLock.EnterUpgradeableReadLock();
                             try
                             {
-                                if (!indexDictionary.ContainsKey(headerHash))
+                                if (!indexDictionary[archives[i]].ContainsKey(headerHash))
                                 {
                                     cacheLock.EnterWriteLock();
                                     try
                                     {
-                                        indexDictionary.Add(headerHash, entry);
+                                        indexDictionary[archives[i]].Add(headerHash, entry);
                                     }
                                     finally
                                     {

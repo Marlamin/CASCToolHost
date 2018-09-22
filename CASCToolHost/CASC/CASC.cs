@@ -12,7 +12,7 @@ namespace CASCToolHost
     public static class CASC
     {
         public static Dictionary<string, Build> buildDictionary = new Dictionary<string, Build>();
-        public static Dictionary<string, IndexEntry> indexDictionary = new Dictionary<string, IndexEntry>();
+        public static Dictionary<string, Dictionary<string, IndexEntry>> indexDictionary = new Dictionary<string, Dictionary<string, IndexEntry>>();
 
         static CASC()
         {
@@ -33,11 +33,12 @@ namespace CASCToolHost
             public BuildConfigFile buildConfig;
             public CDNConfigFile cdnConfig;
             public EncodingFile encoding;
-            public Dictionary<string, IndexEntry> indexDictionary;
         }
 
         public static void LoadBuild(string program, string buildConfigHash, string cdnConfigHash)
         {
+            Console.WriteLine("Loading build " + buildConfigHash + "..");
+
             var build = new Build();
 
             var cdnsFile = NGDP.GetCDNs(program);
@@ -56,6 +57,8 @@ namespace CASCToolHost
             NGDP.GetIndexes(Path.Combine(CDN.cacheDir, cdnsFile.entries[0].path), build.cdnConfig.archives, indexDictionary);
 
             buildDictionary.Add(buildConfigHash, build);
+
+            Console.WriteLine("Loaded build!");
         }
 
         public static byte[] GetFile(string buildConfig, string cdnConfig, string contenthash)
@@ -89,7 +92,6 @@ namespace CASCToolHost
         public static byte[] RetrieveFileBytes(string buildConfig, string target, bool raw = false, string cdndir = "tpr/wow")
         {
             var unarchivedName = Path.Combine(CDN.cacheDir, cdndir, "data", target[0] + "" + target[1], target[2] + "" + target[3], target);
-            var build = buildDictionary[buildConfig];
 
             if (File.Exists(unarchivedName))
             {
@@ -103,38 +105,51 @@ namespace CASCToolHost
                 }
             }
 
-            if (!build.indexDictionary.TryGetValue(target.ToUpper(), out IndexEntry entry))
+            if (!buildDictionary.ContainsKey(buildConfig))
+            {
+                throw new Exception("Build is not loaded!");
+            }
+
+            var build = buildDictionary[buildConfig];
+
+            IndexEntry entry = new IndexEntry();
+
+            foreach(var indexName in build.cdnConfig.archives)
+            {
+                indexDictionary[indexName].TryGetValue(target.ToUpper(), out entry);
+                if (entry.size != 0) break;
+            }
+
+            if(entry.size == 0)
             {
                 throw new Exception("Unable to find file in archives. File is not available!?");
             }
-            else
+          
+            var index = entry.indexName;
+
+            var archiveName = Path.Combine(CDN.cacheDir, cdndir, "data", index[0] + "" + index[1], index[2] + "" + index[3], index);
+            if (!File.Exists(archiveName))
             {
-                var index = build.cdnConfig.archives[entry.index];
+                throw new FileNotFoundException("Unable to find archive " + index + " on disk!");
+            }
 
-                var archiveName = Path.Combine(CDN.cacheDir, cdndir, "data", index[0] + "" + index[1], index[2] + "" + index[3], index);
-                if (!File.Exists(archiveName))
+            using (BinaryReader bin = new BinaryReader(File.Open(archiveName, FileMode.Open, FileAccess.Read)))
+            {
+                bin.BaseStream.Position = entry.offset;
+                try
                 {
-                    throw new FileNotFoundException("Unable to find archive " + index + " on disk!");
+                    if (!raw)
+                    {
+                        return BLTE.Parse(bin.ReadBytes((int)entry.size));
+                    }
+                    else
+                    {
+                        return bin.ReadBytes((int)entry.size);
+                    }
                 }
-
-                using (BinaryReader bin = new BinaryReader(File.Open(archiveName, FileMode.Open, FileAccess.Read)))
+                catch (Exception e)
                 {
-                    bin.BaseStream.Position = entry.offset;
-                    try
-                    {
-                        if (!raw)
-                        {
-                            return BLTE.Parse(bin.ReadBytes((int)entry.size));
-                        }
-                        else
-                        {
-                            return bin.ReadBytes((int)entry.size);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.Message);
-                    }
+                    Console.WriteLine(e.Message);
                 }
             }
 

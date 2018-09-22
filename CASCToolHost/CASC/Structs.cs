@@ -83,7 +83,7 @@ namespace CASCToolHost
 
     public struct IndexEntry
     {
-        public short index;
+        public string indexName;
         public uint offset;
         public uint size;
     }
