@@ -357,7 +357,6 @@ namespace CASCToolHost
         {
             Parallel.ForEach(archives, (archive, state, i) =>
             {
-
                 try
                 {
                     cacheLock.EnterUpgradeableReadLock();
@@ -377,7 +376,6 @@ namespace CASCToolHost
                     }
                     else
                     {
-                        Console.WriteLine("Index already exists!");
                         return;
                     }
                 }

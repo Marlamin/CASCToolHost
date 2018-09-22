@@ -20,6 +20,8 @@ namespace CASCToolHost.Controllers
                 throw new NullReferenceException("Invalid arguments!");
             }
 
+            Console.WriteLine("[" + DateTime.Now + "] Serving file \"" + filename + "\" (" + contenthash + ") for build " + buildConfig + " and cdn " + cdnConfig);
+
             return new FileContentResult(CASC.GetFile(buildConfig, cdnConfig, contenthash), "application/octet-stream")
             {
                 FileDownloadName = filename
