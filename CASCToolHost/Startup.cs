@@ -30,6 +30,7 @@ namespace CASCToolHost
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            CASC.LoadBuild("wowt", "081460ab8f317f8273068b29288f2af7", "a00c4591f68ddf55d8baa84db360a8d0");
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
