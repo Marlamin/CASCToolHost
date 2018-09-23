@@ -59,6 +59,8 @@ namespace CASCToolHost.Controllers
                     return "text/xml";
                 case ".ogg":
                     return "audio/ogg";
+                case ".blp":
+                    return "image/blp";
                 default:
                     Console.WriteLine("Not familiar with extension " + ext + ", returning default mime type..");
                     return "application/octet-stream";

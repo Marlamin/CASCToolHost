@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.IO;
-using System.Text;
-using System.Runtime.InteropServices;
+using System.Linq;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 
 namespace CASCToolHost
 {
@@ -33,11 +31,12 @@ namespace CASCToolHost
             public BuildConfigFile buildConfig;
             public CDNConfigFile cdnConfig;
             public EncodingFile encoding;
+            public RootFile root;
         }
 
         public static void LoadBuild(string program, string buildConfigHash, string cdnConfigHash)
         {
-            Console.WriteLine("Loading build " + buildConfigHash + "..");
+            Logger.WriteLine("Loading build " + buildConfigHash + "..");
 
             var build = new Build();
 
@@ -45,6 +44,7 @@ namespace CASCToolHost
             build.buildConfig = Config.GetBuildConfig(Path.Combine(CDN.cacheDir, cdnsFile.entries[0].path), buildConfigHash);
             build.cdnConfig = Config.GetCDNConfig(Path.Combine(CDN.cacheDir, cdnsFile.entries[0].path), cdnConfigHash);
 
+            Logger.WriteLine("Loading encoding..");
             if (build.buildConfig.encodingSize == null || build.buildConfig.encodingSize.Count() < 2)
             {
                 build.encoding = NGDP.GetEncoding("http://" + cdnsFile.entries[0].hosts[0] + "/" + cdnsFile.entries[0].path + "/", build.buildConfig.encoding[1], 0);
@@ -54,11 +54,54 @@ namespace CASCToolHost
                 build.encoding = NGDP.GetEncoding("http://" + cdnsFile.entries[0].hosts[0] + "/" + cdnsFile.entries[0].path + "/", build.buildConfig.encoding[1], int.Parse(build.buildConfig.encodingSize[1]));
             }
 
+            Logger.WriteLine("Loading root..");
+            var rootHash = "";
+
+            foreach (var entry in build.encoding.aEntries)
+            {
+                if (entry.hash.ToLower() == build.buildConfig.root.ToLower()) { rootHash = entry.key.ToLower(); break; }
+            }
+
+            build.root = NGDP.GetRoot("http://" + cdnsFile.entries[0].hosts[0] + "/" + cdnsFile.entries[0].path + "/", rootHash, true);
+
+            Logger.WriteLine("Loading indexes..");
             NGDP.GetIndexes(Path.Combine(CDN.cacheDir, cdnsFile.entries[0].path), build.cdnConfig.archives, indexDictionary);
 
             buildDictionary.Add(buildConfigHash, build);
 
-            Console.WriteLine("Loaded build!");
+            Logger.WriteLine("Loaded build!");
+        }
+
+        public static byte[] GetFile(string buildConfig, string cdnConfig, int filedataid)
+        {
+            if (!buildDictionary.ContainsKey(buildConfig))
+            {
+                LoadBuild("wowt", buildConfig, cdnConfig);
+            }
+
+            var build = buildDictionary[buildConfig];
+
+            var target = "";
+
+            foreach (var entry in build.root.entries)
+            {
+                if (entry.Value[0].fileDataID == filedataid)
+                {
+                    RootEntry? prioritizedEntry = entry.Value.FirstOrDefault(subentry =>
+                        subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
+                    );
+
+                    var selectedEntry = (prioritizedEntry.Value.md5 != null) ? prioritizedEntry.Value : entry.Value.First();
+                    target = BitConverter.ToString(selectedEntry.md5).Replace("-", string.Empty).ToLower();
+                }
+            }
+
+            if (string.IsNullOrEmpty(target))
+            {
+                throw new FileNotFoundException("No file found in root for FileDataID " + filedataid);
+            }
+
+            return GetFile(buildConfig, cdnConfig, target);
         }
 
         public static byte[] GetFile(string buildConfig, string cdnConfig, string contenthash)
@@ -114,17 +157,17 @@ namespace CASCToolHost
 
             IndexEntry entry = new IndexEntry();
 
-            foreach(var indexName in build.cdnConfig.archives)
+            foreach (var indexName in build.cdnConfig.archives)
             {
                 indexDictionary[indexName].TryGetValue(target.ToUpper(), out entry);
                 if (entry.size != 0) break;
             }
 
-            if(entry.size == 0)
+            if (entry.size == 0)
             {
                 throw new Exception("Unable to find file in archives. File is not available!?");
             }
-          
+
             var index = entry.indexName;
 
             var archiveName = Path.Combine(CDN.cacheDir, cdndir, "data", index[0] + "" + index[1], index[2] + "" + index[3], index);

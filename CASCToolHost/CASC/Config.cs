@@ -22,7 +22,7 @@ namespace CASCToolHost
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Error retrieving CDN config: " + e.Message);
+                    Logger.WriteLine("Error retrieving CDN config: " + e.Message);
                     return cdnConfig;
                 }
             }
@@ -74,7 +74,7 @@ namespace CASCToolHost
                         cdnConfig.patchFileIndexSize = cols[1];
                         break;
                     default:
-                        //Console.WriteLine("!!!!!!!! Unknown cdnconfig variable '" + cols[0] + "'");
+                        Logger.WriteLine("!!!!!!!! Unknown cdnconfig variable '" + cols[0] + "'");
                         break;
                 }
             }
@@ -201,7 +201,7 @@ namespace CASCToolHost
                         buildConfig.partialPrioritySize = cols[1];
                         break;
                     default:
-                        Console.WriteLine("!!!!!!!! Unknown buildconfig variable '" + cols[0] + "'");
+                        Logger.WriteLine("!!!!!!!! Unknown buildconfig variable '" + cols[0] + "'");
                         break;
                 }
             }

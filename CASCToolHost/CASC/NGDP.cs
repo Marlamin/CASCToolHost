@@ -31,7 +31,7 @@ namespace CASCToolHost
             }
             catch (Exception e)
             {
-                Console.WriteLine("Error retrieving versions: " + e.Message);
+                Logger.WriteLine("Error retrieving versions: " + e.Message);
                 return versions;
             }
 
@@ -89,7 +89,7 @@ namespace CASCToolHost
                                 versions.entries[i - 1].productConfig = row[c];
                                 break;
                             default:
-                                Console.WriteLine("!!!!!!!! Unknown versions variable '" + friendlyName + "'");
+                                Logger.WriteLine("!!!!!!!! Unknown versions variable '" + friendlyName + "'");
                                 break;
                         }
                     }
@@ -123,7 +123,7 @@ namespace CASCToolHost
             }
             catch (Exception e)
             {
-                Console.WriteLine("Error retrieving CDNs file: " + e.Message);
+                Logger.WriteLine("Error retrieving CDNs file: " + e.Message);
                 return cdns;
             }
 
@@ -175,7 +175,7 @@ namespace CASCToolHost
                                 cdns.entries[i - 1].configPath = row[c];
                                 break;
                             default:
-                                //Console.WriteLine("!!!!!!!! Unknown cdns variable '" + friendlyName + "'");
+                                //Logger.WriteLine("!!!!!!!! Unknown cdns variable '" + friendlyName + "'");
                                 break;
                         }
                     }
@@ -197,6 +197,60 @@ namespace CASCToolHost
             }
 
             return cdns;
+        }
+        public static RootFile GetRoot(string url, string hash, bool parseIt = false)
+        {
+            var root = new RootFile
+            {
+                entries = new MultiDictionary<ulong, RootEntry>()
+            };
+
+            byte[] content;
+
+            if (url.StartsWith("http:"))
+            {
+                content = CDN.Get(url + "data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash);
+            }
+            else
+            {
+                content = File.ReadAllBytes(Path.Combine(url, "data", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
+            }
+
+            if (!parseIt) return root;
+
+            using (BinaryReader bin = new BinaryReader(new MemoryStream(BLTE.Parse(content))))
+            {
+                while (bin.BaseStream.Position < bin.BaseStream.Length)
+                {
+                    var count = bin.ReadUInt32();
+                    var contentFlags = (ContentFlags)bin.ReadUInt32();
+                    var localeFlags = (LocaleFlags)bin.ReadUInt32();
+
+                    var entries = new RootEntry[count];
+                    var filedataIds = new int[count];
+
+                    var fileDataIndex = 0;
+                    for (var i = 0; i < count; ++i)
+                    {
+                        entries[i].localeFlags = localeFlags;
+                        entries[i].contentFlags = contentFlags;
+
+                        filedataIds[i] = fileDataIndex + bin.ReadInt32();
+                        entries[i].fileDataID = (uint)filedataIds[i];
+
+                        fileDataIndex = filedataIds[i] + 1;
+                    }
+
+                    for (var i = 0; i < count; ++i)
+                    {
+                        entries[i].md5 = bin.ReadBytes(16);
+                        entries[i].lookup = bin.ReadUInt64();
+                        root.entries.Add(entries[i].lookup, entries[i]);
+                    }
+                }
+            }
+
+            return root;
         }
         public static EncodingFile GetEncoding(string url, string hash, int encodingSize = 0, bool parseTableB = false, bool checkStuff = false)
         {

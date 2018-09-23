@@ -22,7 +22,7 @@ namespace CASCToolHost
                 try
                 {
                     if (!Directory.Exists(cacheDir + cleanname)) { Directory.CreateDirectory(Path.GetDirectoryName(cacheDir + cleanname)); }
-                    Console.Write("\nDownloading " + cleanname);
+                    Logger.WriteLine("Downloading " + cleanname);
                     using (HttpResponseMessage response = client.GetAsync(uri).Result)
                     {
                         if (response.IsSuccessStatusCode)
@@ -48,7 +48,7 @@ namespace CASCToolHost
                         }
                         else if (response.StatusCode == System.Net.HttpStatusCode.NotFound && !url.StartsWith("http://client04"))
                         {
-                            Console.WriteLine("Not found on primary mirror, retrying on secondary mirror...");
+                            Logger.WriteLine("Not found on primary mirror, retrying on secondary mirror...");
                             return Get("http://client04.pdl.wow.battlenet.com.cn/" + cleanname, returnstream, redownload);
                         }
                         else
@@ -60,7 +60,7 @@ namespace CASCToolHost
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.Message);
+                    Logger.WriteLine(e.Message);
                 }
             }
 
