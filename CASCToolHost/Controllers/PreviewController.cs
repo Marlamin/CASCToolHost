@@ -14,8 +14,46 @@ namespace CASCToolHost.Controllers
     [ApiController]
     public class PreviewController : ControllerBase
     {
+        [Route("fdid")]
         [HttpGet]
-        public FileContentResult Get(string buildConfig, string cdnConfig, string contenthash, string filename)
+        public FileContentResult GetByFileDataID(string buildConfig, string cdnConfig, int filedataid, string filename)
+        {
+            Console.WriteLine("[" + DateTime.Now + "] Serving preview of \"" + filename + "\" (" + filedataid + ") for build " + buildConfig + " and cdn " + cdnConfig);
+
+            System.Net.Mime.ContentDisposition cd = new System.Net.Mime.ContentDisposition
+            {
+                FileName = "preview",
+                Inline = true
+            };
+
+            Response.Headers[HeaderNames.ContentDisposition] = cd.ToString();
+
+            var fileBytes = CASC.GetFile(buildConfig, cdnConfig, filedataid);
+            var ext = Path.GetExtension(filename);
+
+            var mime = GetMimeTypeByExt(ext);
+
+            if (ext == ".blp")
+            {
+                using (var stream = new MemoryStream(fileBytes))
+                using (var outStream = new MemoryStream())
+                {
+                    var blpReader = new SereniaBLPLib.BlpFile(stream);
+                    var blp = blpReader.GetBitmap(0);
+                    blp.Save(outStream, ImageFormat.Png);
+                    fileBytes = outStream.ToArray();
+                }
+
+                mime = "image/png";
+            }
+
+            return new FileContentResult(fileBytes, mime);
+        }
+
+        [Route("")]
+        [Route("chash")]
+        [HttpGet]
+        public FileContentResult GetByContentHash(string buildConfig, string cdnConfig, string contenthash, string filename)
         {
             Console.WriteLine("[" + DateTime.Now + "] Serving preview of \"" + filename + "\" (" + contenthash + ") for build " + buildConfig + " and cdn " + cdnConfig);
 
