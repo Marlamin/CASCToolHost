@@ -176,7 +176,8 @@ namespace CASCToolHost
                 throw new FileNotFoundException("Unable to find archive " + index + " on disk!");
             }
 
-            using (BinaryReader bin = new BinaryReader(File.Open(archiveName, FileMode.Open, FileAccess.Read)))
+            using (var stream = new FileStream(archiveName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var bin = new BinaryReader(stream))
             {
                 bin.BaseStream.Position = entry.offset;
                 try
