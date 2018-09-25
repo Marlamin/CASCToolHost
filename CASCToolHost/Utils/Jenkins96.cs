@@ -2,7 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace BuildBackup
+namespace CASCToolHost
 {
     // Implementation of Bob Jenkins' hash function in C# (96 bit internal state)
     public class Jenkins96 : HashAlgorithm

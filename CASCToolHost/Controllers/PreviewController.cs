@@ -16,7 +16,7 @@ namespace CASCToolHost.Controllers
     {
         [Route("fdid")]
         [HttpGet]
-        public FileContentResult GetByFileDataID(string buildConfig, string cdnConfig, int filedataid, string filename)
+        public FileContentResult GetByFileDataID(string buildConfig, string cdnConfig, uint filedataid, string filename)
         {
             Console.WriteLine("[" + DateTime.Now + "] Serving preview of \"" + filename + "\" (" + filedataid + ") for build " + buildConfig + " and cdn " + cdnConfig);
 

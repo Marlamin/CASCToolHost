@@ -72,7 +72,7 @@ namespace CASCToolHost
             Logger.WriteLine("Loaded build!");
         }
 
-        public static byte[] GetFile(string buildConfig, string cdnConfig, int filedataid)
+        public static byte[] GetFile(string buildConfig, string cdnConfig, uint filedataid)
         {
             if (!buildDictionary.ContainsKey(buildConfig))
             {
@@ -200,5 +200,38 @@ namespace CASCToolHost
             return new byte[0];
         }
 
+        public static byte[] GetFileByFilename(string buildConfig, string cdnConfig, string filename)
+        {
+            if (!buildDictionary.ContainsKey(buildConfig))
+            {
+                LoadBuild("wowt", buildConfig, cdnConfig);
+            }
+
+            var build = buildDictionary[buildConfig];
+
+            var hasher = new Jenkins96();
+            var lookup = hasher.ComputeHash(filename, true);
+            var target = "";
+
+            foreach (var entry in build.root.entries)
+            {
+                if (entry.Value[0].lookup == lookup)
+                {
+                    RootEntry? prioritizedEntry = entry.Value.FirstOrDefault(subentry =>
+                         subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
+                     );
+
+                    var selectedEntry = (prioritizedEntry.Value.md5 != null) ? prioritizedEntry.Value : entry.Value.First();
+                    target = BitConverter.ToString(selectedEntry.md5).Replace("-", string.Empty).ToLower();
+                }
+            }
+
+            if (string.IsNullOrEmpty(target))
+            {
+                throw new FileNotFoundException("No file found in root for filename " + filename);
+            }
+
+            return GetFile(buildConfig, cdnConfig, target);
+        }
     }
 }
