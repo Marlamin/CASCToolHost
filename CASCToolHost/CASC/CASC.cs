@@ -72,6 +72,49 @@ namespace CASCToolHost
             Logger.WriteLine("Loaded build!");
         }
 
+        public static bool FileExists(string buildConfig, string cdnConfig, uint filedataid)
+        {
+            if (!buildDictionary.ContainsKey(buildConfig))
+            {
+                LoadBuild("wowt", buildConfig, cdnConfig);
+            }
+
+            var build = buildDictionary[buildConfig];
+
+            foreach (var entry in build.root.entries)
+            {
+                if (entry.Value[0].fileDataID == filedataid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool FileExists(string buildConfig, string cdnConfig, string filename)
+        {
+            if (!buildDictionary.ContainsKey(buildConfig))
+            {
+                LoadBuild("wowt", buildConfig, cdnConfig);
+            }
+
+            var build = buildDictionary[buildConfig];
+
+            var hasher = new Jenkins96();
+            var lookup = hasher.ComputeHash(filename, true);
+
+            foreach (var entry in build.root.entries)
+            {
+                if (entry.Value[0].lookup == lookup)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public static byte[] GetFile(string buildConfig, string cdnConfig, uint filedataid)
         {
             if (!buildDictionary.ContainsKey(buildConfig))
@@ -232,6 +275,29 @@ namespace CASCToolHost
             }
 
             return GetFile(buildConfig, cdnConfig, target);
+        }
+
+        public static uint GetFileDataIDByFilename(string buildConfig, string cdnConfig, string filename)
+        {
+            if (!buildDictionary.ContainsKey(buildConfig))
+            {
+                LoadBuild("wowt", buildConfig, cdnConfig);
+            }
+
+            var build = buildDictionary[buildConfig];
+
+            var hasher = new Jenkins96();
+            var lookup = hasher.ComputeHash(filename, true);
+
+            foreach (var entry in build.root.entries)
+            {
+                if (entry.Value[0].lookup == lookup)
+                {
+                    return entry.Value[0].fileDataID;
+                }
+            }
+
+            return 0;
         }
     }
 }

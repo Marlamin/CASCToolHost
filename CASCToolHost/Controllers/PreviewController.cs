@@ -18,7 +18,7 @@ namespace CASCToolHost.Controllers
         [HttpGet]
         public FileContentResult GetByFileDataID(string buildConfig, string cdnConfig, uint filedataid, string filename)
         {
-            Console.WriteLine("[" + DateTime.Now + "] Serving preview of \"" + filename + "\" (" + filedataid + ") for build " + buildConfig + " and cdn " + cdnConfig);
+            Logger.WriteLine("Serving preview of \"" + filename + "\" for build " + buildConfig + " and cdn " + cdnConfig);
 
             System.Net.Mime.ContentDisposition cd = new System.Net.Mime.ContentDisposition
             {
