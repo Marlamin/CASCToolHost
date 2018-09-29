@@ -4,6 +4,11 @@ using System.Collections.Generic;
 
 namespace CASCToolHost
 {
+    public unsafe struct MD5Hash
+    {
+        public fixed byte Value[16];
+    }
+
     public struct VersionsFile
     {
         public VersionsEntry[] entries;
@@ -40,12 +45,12 @@ namespace CASCToolHost
 
     public struct BuildConfigFile
     {
-        public string root;
-        public string[] download;
+        public MD5Hash root;
+        public MD5Hash[] download;
         public string[] downloadSize;
-        public string[] install;
+        public MD5Hash[] install;
         public string[] installSize;
-        public string[] encoding;
+        public MD5Hash[] encoding;
         public string[] encodingSize;
         public string[] size;
         public string[] sizeSize;
@@ -61,18 +66,18 @@ namespace CASCToolHost
         public string buildFixedHash;
         public string buildReplayHash;
         public string buildManifestVersion;
-        public string patch;
+        public MD5Hash patch;
         public string patchSize;
-        public string patchConfig;
+        public MD5Hash patchConfig;
         public string partialPriority;
         public string partialPrioritySize;
     }
 
     public struct CDNConfigFile
     {
-        public string[] archives;
+        public MD5Hash[] archives;
         public string archiveGroup;
-        public string[] patchArchives;
+        public MD5Hash[] patchArchives;
         public string patchArchiveGroup;
         public string[] builds;
         public string fileIndex;
@@ -83,7 +88,7 @@ namespace CASCToolHost
 
     public struct IndexEntry
     {
-        public string indexName;
+        public uint indexID;
         public uint offset;
         public uint size;
     }
@@ -123,21 +128,21 @@ namespace CASCToolHost
 
     public struct EncodingHeaderEntry
     {
-        public string firstHash;
-        public string checksum;
+        public MD5Hash firstHash;
+        public MD5Hash checksum;
     }
 
     public struct EncodingFileEntry
     {
         public ushort keyCount;
         public uint size;
-        public string hash;
-        public string key;
+        public MD5Hash hash;
+        public MD5Hash key;
     }
 
     public struct EncodingFileDescEntry
     {
-        public string key;
+        public MD5Hash key;
         public uint stringIndex;
         public ulong compressedSize;
     }
@@ -199,7 +204,7 @@ namespace CASCToolHost
         public LocaleFlags localeFlags;
         public ulong lookup;
         public uint fileDataID;
-        public byte[] md5;
+        public MD5Hash md5;
     }
 
     public struct PatchFile

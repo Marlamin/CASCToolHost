@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using CASCToolHost;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace System.IO
@@ -110,6 +112,13 @@ namespace System.IO
 
             return byteArray;
         }
+
+        public static T Read<T>(this BinaryReader reader) where T : struct
+        {
+            byte[] result = reader.ReadBytes(Unsafe.SizeOf<T>());
+
+            return Unsafe.ReadUnaligned<T>(ref result[0]);
+        }
     }
 
     public static class CStringExtensions
@@ -153,6 +162,74 @@ namespace System.IO
                 res[i] = Convert.ToByte(str.Substring(i * 2, 2), 16);
             }
             return res;
+        }
+    }
+
+    public static class MD5HashExtensions
+    {
+        public static unsafe string ToHexString(this MD5Hash key)
+        {
+            byte[] array = new byte[16];
+
+            fixed (byte* aptr = array)
+            {
+                *(MD5Hash*)aptr = key;
+            }
+
+            return array.ToHexString();
+        }
+
+        public static unsafe bool EqualsTo(this MD5Hash key, byte[] array)
+        {
+            if (array.Length != 16)
+                return false;
+
+            MD5Hash other;
+
+            fixed (byte* ptr = array)
+                other = *(MD5Hash*)ptr;
+
+            for (int i = 0; i < 2; ++i)
+            {
+                ulong keyPart = *(ulong*)(key.Value + i * 8);
+                ulong otherPart = *(ulong*)(other.Value + i * 8);
+
+                if (keyPart != otherPart)
+                    return false;
+            }
+            return true;
+        }
+
+        public static unsafe bool EqualsTo(this MD5Hash key, MD5Hash other)
+        {
+            for (int i = 0; i < 2; ++i)
+            {
+                ulong keyPart = *(ulong*)(key.Value + i * 8);
+                ulong otherPart = *(ulong*)(other.Value + i * 8);
+
+                if (keyPart != otherPart)
+                    return false;
+            }
+            return true;
+        }
+    }
+
+    public static class ByteArrayExtensions
+    {
+        public static string ToHexString(this byte[] data)
+        {
+            return BitConverter.ToString(data).Replace("-", string.Empty);
+        }
+
+        public static unsafe MD5Hash ToMD5(this byte[] array)
+        {
+            if (array.Length != 16)
+                throw new ArgumentException("array size != 16");
+
+            fixed (byte* ptr = array)
+            {
+                return *(MD5Hash*)ptr;
+            }
         }
     }
 }

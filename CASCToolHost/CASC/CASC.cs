@@ -10,7 +10,10 @@ namespace CASCToolHost
     public static class CASC
     {
         public static Dictionary<string, Build> buildDictionary = new Dictionary<string, Build>();
-        public static Dictionary<string, Dictionary<string, IndexEntry>> indexDictionary = new Dictionary<string, Dictionary<string, IndexEntry>>();
+        private static MD5HashComparer comparer = new MD5HashComparer();
+        public static Dictionary<uint, Dictionary<MD5Hash, IndexEntry>> indexDictionary = new Dictionary<uint, Dictionary<MD5Hash, IndexEntry>>();
+        public static List<MD5Hash> indexNames = new List<MD5Hash>();
+        public static Dictionary<MD5Hash, uint> indexNameToIndexIDLookup = new Dictionary<MD5Hash, uint>(comparer);
 
         static CASC()
         {
@@ -36,6 +39,7 @@ namespace CASCToolHost
 
         public static void LoadBuild(string program, string buildConfigHash, string cdnConfigHash)
         {
+
             Logger.WriteLine("Loading build " + buildConfigHash + "..");
 
             var build = new Build();
@@ -47,11 +51,11 @@ namespace CASCToolHost
             Logger.WriteLine("Loading encoding..");
             if (build.buildConfig.encodingSize == null || build.buildConfig.encodingSize.Count() < 2)
             {
-                build.encoding = NGDP.GetEncoding("http://" + cdnsFile.entries[0].hosts[0] + "/" + cdnsFile.entries[0].path + "/", build.buildConfig.encoding[1], 0);
+                build.encoding = NGDP.GetEncoding("http://" + cdnsFile.entries[0].hosts[0] + "/" + cdnsFile.entries[0].path + "/", build.buildConfig.encoding[1].ToHexString(), 0);
             }
             else
             {
-                build.encoding = NGDP.GetEncoding("http://" + cdnsFile.entries[0].hosts[0] + "/" + cdnsFile.entries[0].path + "/", build.buildConfig.encoding[1], int.Parse(build.buildConfig.encodingSize[1]));
+                build.encoding = NGDP.GetEncoding("http://" + cdnsFile.entries[0].hosts[0] + "/" + cdnsFile.entries[0].path + "/", build.buildConfig.encoding[1].ToHexString(), int.Parse(build.buildConfig.encodingSize[1]));
             }
 
             Logger.WriteLine("Loading root..");
@@ -59,13 +63,13 @@ namespace CASCToolHost
 
             foreach (var entry in build.encoding.aEntries)
             {
-                if (entry.hash.ToLower() == build.buildConfig.root.ToLower()) { rootHash = entry.key.ToLower(); break; }
+                if (comparer.Equals(entry.hash, build.buildConfig.root)) { rootHash = entry.key.ToHexString().ToLower(); break; }
             }
 
             build.root = NGDP.GetRoot("http://" + cdnsFile.entries[0].hosts[0] + "/" + cdnsFile.entries[0].path + "/", rootHash, true);
 
             Logger.WriteLine("Loading indexes..");
-            NGDP.GetIndexes(Path.Combine(CDN.cacheDir, cdnsFile.entries[0].path), build.cdnConfig.archives, indexDictionary);
+            NGDP.GetIndexes(Path.Combine(CDN.cacheDir, cdnsFile.entries[0].path), build.cdnConfig.archives);
 
             buildDictionary.Add(buildConfigHash, build);
 
@@ -130,12 +134,12 @@ namespace CASCToolHost
             {
                 if (entry.Value[0].fileDataID == filedataid)
                 {
-                    RootEntry? prioritizedEntry = entry.Value.FirstOrDefault(subentry =>
+                    RootEntry? prioritizedEntry = entry.Value.First(subentry =>
                         subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
                     );
 
-                    var selectedEntry = (prioritizedEntry.Value.md5 != null) ? prioritizedEntry.Value : entry.Value.First();
-                    target = BitConverter.ToString(selectedEntry.md5).Replace("-", string.Empty).ToLower();
+                    var selectedEntry = (prioritizedEntry != null) ? prioritizedEntry.Value : entry.Value.First();
+                    target = selectedEntry.md5.ToHexString().ToLower();
                 }
             }
 
@@ -160,9 +164,10 @@ namespace CASCToolHost
 
             foreach (var entry in build.encoding.aEntries)
             {
-                if (entry.hash.ToLower() == contenthash)
+                var entryHash = entry.hash.ToHexString().ToLower();
+                if (entryHash == contenthash)
                 {
-                    target = entry.key.ToLower();
+                    target = entry.key.ToHexString().ToLower();
                     break;
                 }
             }
@@ -202,7 +207,7 @@ namespace CASCToolHost
 
             foreach (var indexName in build.cdnConfig.archives)
             {
-                indexDictionary[indexName].TryGetValue(target.ToUpper(), out entry);
+                indexDictionary[indexNameToIndexIDLookup[indexName]].TryGetValue(target.ToByteArray().ToMD5(), out entry);
                 if (entry.size != 0) break;
             }
 
@@ -211,7 +216,7 @@ namespace CASCToolHost
                 throw new Exception("Unable to find file in archives. File is not available!?");
             }
 
-            var index = entry.indexName;
+            var index = indexNames[(int)entry.indexID].ToHexString().ToLower();
 
             var archiveName = Path.Combine(CDN.cacheDir, cdndir, "data", index[0] + "" + index[1], index[2] + "" + index[3], index);
             if (!File.Exists(archiveName))
@@ -261,11 +266,11 @@ namespace CASCToolHost
                 if (entry.Value[0].lookup == lookup)
                 {
                     RootEntry? prioritizedEntry = entry.Value.FirstOrDefault(subentry =>
-                         subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
-                     );
+                        subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
+                    );
 
-                    var selectedEntry = (prioritizedEntry.Value.md5 != null) ? prioritizedEntry.Value : entry.Value.First();
-                    target = BitConverter.ToString(selectedEntry.md5).Replace("-", string.Empty).ToLower();
+                    var selectedEntry = (prioritizedEntry != null) ? prioritizedEntry.Value : entry.Value.First();
+                    target = selectedEntry.md5.ToHexString().ToLower();
                 }
             }
 

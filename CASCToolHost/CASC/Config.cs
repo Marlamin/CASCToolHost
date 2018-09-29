@@ -42,7 +42,11 @@ namespace CASCToolHost
                 {
                     case "archives":
                         var archives = cols[1].Split(' ');
-                        cdnConfig.archives = archives;
+                        cdnConfig.archives = new MD5Hash[archives.Length];
+                        for (var j = 0; j < archives.Length; j++)
+                        {
+                            cdnConfig.archives[j] = archives[j].ToByteArray().ToMD5();
+                        }
                         break;
                     case "archive-group":
                         cdnConfig.archiveGroup = cols[1];
@@ -51,7 +55,11 @@ namespace CASCToolHost
                         if (cols.Length > 1)
                         {
                             var patchArchives = cols[1].Split(' ');
-                            cdnConfig.patchArchives = patchArchives;
+                            cdnConfig.patchArchives = new MD5Hash[patchArchives.Length];
+                            for (var j = 0; j < patchArchives.Length; j++)
+                            {
+                                cdnConfig.patchArchives[j] = patchArchives[j].ToByteArray().ToMD5();
+                            }
                         }
                         break;
                     case "patch-archive-group":
@@ -119,16 +127,41 @@ namespace CASCToolHost
                 switch (cols[0])
                 {
                     case "root":
-                        buildConfig.root = cols[1];
+                        buildConfig.root = cols[1].ToByteArray().ToMD5();
                         break;
                     case "download":
-                        buildConfig.download = cols[1].Split(' ');
+                        var downloadSplit = cols[1].Split(' ');
+
+                        buildConfig.download = new MD5Hash[downloadSplit.Length];
+                        buildConfig.download[0] = downloadSplit[0].ToByteArray().ToMD5();
+
+                        if (downloadSplit.Length > 1)
+                        {
+                            buildConfig.download[1] = downloadSplit[1].ToByteArray().ToMD5();
+                        }
+
                         break;
                     case "install":
-                        buildConfig.install = cols[1].Split(' ');
+                        var installSplit = cols[1].Split(' ');
+
+                        buildConfig.install = new MD5Hash[installSplit.Length];
+                        buildConfig.install[0] = installSplit[0].ToByteArray().ToMD5();
+
+                        if (installSplit.Length > 1)
+                        {
+                            buildConfig.install[1] = installSplit[1].ToByteArray().ToMD5();
+                        }
                         break;
                     case "encoding":
-                        buildConfig.encoding = cols[1].Split(' ');
+                        var encodingSplit = cols[1].Split(' ');
+
+                        buildConfig.encoding = new MD5Hash[encodingSplit.Length];
+                        buildConfig.encoding[0] = encodingSplit[0].ToByteArray().ToMD5();
+
+                        if (encodingSplit.Length > 1)
+                        {
+                            buildConfig.encoding[1] = encodingSplit[1].ToByteArray().ToMD5();
+                        }
                         break;
                     case "encoding-size":
                         var encodingSize = cols[1].Split(' ');
@@ -153,13 +186,13 @@ namespace CASCToolHost
                         buildConfig.buildUid = cols[1];
                         break;
                     case "patch":
-                        buildConfig.patch = cols[1];
+                        buildConfig.patch = cols[1].ToByteArray().ToMD5();
                         break;
                     case "patch-size":
                         buildConfig.patchSize = cols[1];
                         break;
                     case "patch-config":
-                        buildConfig.patchConfig = cols[1];
+                        buildConfig.patchConfig = cols[1].ToByteArray().ToMD5();
                         break;
                     case "build-branch": // Overwatch
                         buildConfig.buildBranch = cols[1];

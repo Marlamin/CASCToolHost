@@ -243,7 +243,7 @@ namespace CASCToolHost
 
                     for (var i = 0; i < count; ++i)
                     {
-                        entries[i].md5 = bin.ReadBytes(16);
+                        entries[i].md5 = bin.Read<MD5Hash>();
                         entries[i].lookup = bin.ReadUInt64();
                         root.entries.Add(entries[i].lookup, entries[i]);
                     }
@@ -314,8 +314,8 @@ namespace CASCToolHost
 
                     for (int i = 0; i < encoding.numEntriesA; i++)
                     {
-                        encoding.aHeaders[i].firstHash = BitConverter.ToString(bin.ReadBytes(16)).Replace("-", "");
-                        encoding.aHeaders[i].checksum = BitConverter.ToString(bin.ReadBytes(16)).Replace("-", "");
+                        encoding.aHeaders[i].firstHash = bin.Read<MD5Hash>();
+                        encoding.aHeaders[i].checksum = bin.Read<MD5Hash>();
                     }
                 }
                 else
@@ -336,8 +336,8 @@ namespace CASCToolHost
                         {
                             keyCount = keysCount,
                             size = bin.ReadUInt32(true),
-                            hash = BitConverter.ToString(bin.ReadBytes(16)).Replace("-", ""),
-                            key = BitConverter.ToString(bin.ReadBytes(16)).Replace("-", "")
+                            hash = bin.Read<MD5Hash>(),
+                            key = bin.Read<MD5Hash>()
                         };
 
                         // @TODO add support for multiple encoding keys
@@ -367,8 +367,8 @@ namespace CASCToolHost
 
                     for (int i = 0; i < encoding.numEntriesB; i++)
                     {
-                        encoding.bHeaders[i].firstHash = BitConverter.ToString(bin.ReadBytes(16)).Replace("-", "");
-                        encoding.bHeaders[i].checksum = BitConverter.ToString(bin.ReadBytes(16)).Replace("-", "");
+                        encoding.bHeaders[i].firstHash = bin.Read<MD5Hash>();
+                        encoding.bHeaders[i].checksum = bin.Read<MD5Hash>();
                     }
                 }
                 else
@@ -392,7 +392,7 @@ namespace CASCToolHost
 
                     EncodingFileDescEntry entry = new EncodingFileDescEntry()
                     {
-                        key = BitConverter.ToString(bin.ReadBytes(16)).Replace("-", ""),
+                        key = bin.Read<MD5Hash>(),
                         stringIndex = bin.ReadUInt32(true),
                         compressedSize = bin.ReadUInt40(true)
                     };
@@ -407,7 +407,7 @@ namespace CASCToolHost
 
             return encoding;
         }
-        public static void GetIndexes(string url, string[] archives, Dictionary<string, Dictionary<string, IndexEntry>> indexDictionary)
+        public static void GetIndexes(string url, MD5Hash[] archives)
         {
             Parallel.ForEach(archives, (archive, state, i) =>
             {
@@ -415,12 +415,14 @@ namespace CASCToolHost
                 {
                     cacheLock.EnterUpgradeableReadLock();
 
-                    if (!indexDictionary.ContainsKey(archives[i]))
+                    if (!CASC.indexNameToIndexIDLookup.ContainsKey(archives[i]))
                     {
                         try
                         {
                             cacheLock.EnterWriteLock();
-                            indexDictionary.Add(archives[i], new Dictionary<string, IndexEntry>());
+                            CASC.indexNames.Add(archives[i]);
+                            CASC.indexNameToIndexIDLookup.Add(archives[i], (uint)CASC.indexNames.Count - 1);
+                            CASC.indexDictionary.Add((uint)CASC.indexNames.Count - 1, new Dictionary<MD5Hash, IndexEntry>(new MD5HashComparer()));
                         }
                         finally
                         {
@@ -438,14 +440,18 @@ namespace CASCToolHost
                     cacheLock.ExitUpgradeableReadLock();
                 }
 
+
                 byte[] indexContent;
+                var indexID = CASC.indexNameToIndexIDLookup[archives[i]];
+                var indexName = CASC.indexNames[(int)indexID].ToHexString().ToLower();
+
                 if (url.StartsWith("http"))
                 {
-                    indexContent = CDN.Get(url + "data/" + archives[i][0] + archives[i][1] + "/" + archives[i][2] + archives[i][3] + "/" + archives[i] + ".index");
+                    indexContent = CDN.Get(url + "data/" + indexName[0] + indexName[1] + "/" + indexName[2] + indexName[3] + "/" + indexName + ".index");
                 }
                 else
                 {
-                    indexContent = File.ReadAllBytes(Path.Combine(url, "data", "" + archives[i][0] + archives[i][1], "" + archives[i][2] + archives[i][3], archives[i] + ".index"));
+                    indexContent = File.ReadAllBytes(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName + ".index"));
                 }
 
                 using (BinaryReader bin = new BinaryReader(new MemoryStream(indexContent)))
@@ -456,11 +462,11 @@ namespace CASCToolHost
                     {
                         for (var bi = 0; bi < 170; bi++)
                         {
-                            var headerHash = BitConverter.ToString(bin.ReadBytes(16)).Replace("-", "");
+                            var headerHash = bin.Read<MD5Hash>();
 
                             var entry = new IndexEntry()
                             {
-                                indexName = archives[i],
+                                indexID = indexID,
                                 size = bin.ReadUInt32(true),
                                 offset = bin.ReadUInt32(true)
                             };
@@ -468,12 +474,12 @@ namespace CASCToolHost
                             cacheLock.EnterUpgradeableReadLock();
                             try
                             {
-                                if (!indexDictionary[archives[i]].ContainsKey(headerHash))
+                                if (!CASC.indexDictionary[indexID].ContainsKey(headerHash))
                                 {
                                     cacheLock.EnterWriteLock();
                                     try
                                     {
-                                        indexDictionary[archives[i]].Add(headerHash, entry);
+                                        CASC.indexDictionary[indexID].Add(headerHash, entry);
                                     }
                                     finally
                                     {
