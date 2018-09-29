@@ -105,7 +105,7 @@ namespace CASCToolHost
             [0x1076074F2B350A2D] = "88BF0CD0D5BA159AE7CB916AFBE13865".ToByteArray(), // TactKeyId 121
             //[0x816F00C1322CDF52] = "????????????????????????????????".ToByteArray(), // TactKeyId 122
             [0xDDD295C82E60DB3C] = "3429CC5927D1629765974FD9AFAB7580".ToByteArray(), // TactKeyId 123
-            //[0x83E96F07F259F799] = "????????????????????????????????".ToByteArray(), // TactKeyId 124
+            [0x83E96F07F259F799] = "91F7D0E7A02CDE0DE0BD367FABCB8A6E".ToByteArray(), // TactKeyId 124
             [0xC1E5D7408A7D4484] = "A7D88E52749FA5459D644523F8359651".ToByteArray(), // TactKeyId 226
             [0xE46276EB9E1A9854] = "CCCA36E302F9459B1D60526A31BE77C8".ToByteArray(), // TactKeyId 227
             [0xD245B671DD78648C] = "19DCB4D45A658B54351DB7DDC81DE79E".ToByteArray(), // TactKeyId 228
