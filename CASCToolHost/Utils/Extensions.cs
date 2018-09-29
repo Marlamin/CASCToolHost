@@ -87,6 +87,12 @@ namespace System.IO
             return reader.ReadUInt64();
         }
 
+        public static long ReadInt40BE(this BinaryReader reader)
+        {
+            byte[] val = reader.ReadBytes(5);
+            return val[4] | val[3] << 8 | val[2] << 16 | val[1] << 24 | val[0] << 32;
+        }
+
         public static UInt64 ReadUInt40(this BinaryReader reader, bool invertEndian = false)
         {
             ulong b1 = reader.ReadByte();

@@ -280,13 +280,13 @@ namespace CASCToolHost
             using (BinaryReader bin = new BinaryReader(new MemoryStream(BLTE.Parse(content))))
             {
                 if (Encoding.UTF8.GetString(bin.ReadBytes(2)) != "EN") { throw new Exception("Error while parsing encoding file. Did BLTE header size change?"); }
-                encoding.unk1 = bin.ReadByte();
-                encoding.checksumSizeA = bin.ReadByte();
-                encoding.checksumSizeB = bin.ReadByte();
-                encoding.flagsA = bin.ReadUInt16();
-                encoding.flagsB = bin.ReadUInt16();
-                encoding.numEntriesA = bin.ReadUInt32(true);
-                encoding.numEntriesB = bin.ReadUInt32(true);
+                encoding.version = bin.ReadByte();
+                encoding.cKeyLength = bin.ReadByte();
+                encoding.eKeyLength = bin.ReadByte();
+                encoding.cKeyPageSize = bin.ReadUInt16(true);
+                encoding.eKeyPageSize = bin.ReadUInt16(true);
+                encoding.cKeyPageCount = bin.ReadUInt32(true);
+                encoding.eKeyPageCount = bin.ReadUInt32(true);
                 encoding.stringBlockSize = bin.ReadUInt40(true);
 
                 var headerLength = bin.BaseStream.Position;
@@ -310,9 +310,9 @@ namespace CASCToolHost
                 /* Table A */
                 if (checkStuff)
                 {
-                    encoding.aHeaders = new EncodingHeaderEntry[encoding.numEntriesA];
+                    encoding.aHeaders = new EncodingHeaderEntry[encoding.cKeyPageCount];
 
-                    for (int i = 0; i < encoding.numEntriesA; i++)
+                    for (int i = 0; i < encoding.cKeyPageCount; i++)
                     {
                         encoding.aHeaders[i].firstHash = bin.Read<MD5Hash>();
                         encoding.aHeaders[i].checksum = bin.Read<MD5Hash>();
@@ -320,40 +320,46 @@ namespace CASCToolHost
                 }
                 else
                 {
-                    bin.BaseStream.Position += encoding.numEntriesA * 32;
+                    bin.BaseStream.Position += encoding.cKeyPageCount * 32;
                 }
 
                 var tableAstart = bin.BaseStream.Position;
 
-                List<EncodingFileEntry> entries = new List<EncodingFileEntry>();
+                Dictionary <MD5Hash, EncodingFileEntry> entries = new Dictionary<MD5Hash, EncodingFileEntry>(new MD5HashComparer());
 
-                for (int i = 0; i < encoding.numEntriesA; i++)
+                for (int i = 0; i < encoding.cKeyPageCount; i++)
                 {
-                    ushort keysCount;
-                    while ((keysCount = bin.ReadUInt16()) != 0)
+                    byte keysCount;
+
+                    while ((keysCount = bin.ReadByte()) != 0)
                     {
                         EncodingFileEntry entry = new EncodingFileEntry()
                         {
-                            keyCount = keysCount,
-                            size = bin.ReadUInt32(true),
-                            hash = bin.Read<MD5Hash>(),
-                            key = bin.Read<MD5Hash>()
+                            size = bin.ReadInt40BE()
                         };
 
-                        // @TODO add support for multiple encoding keys
-                        for (int key = 0; key < entry.keyCount - 1; key++)
-                        {
-                            bin.ReadBytes(16);
-                        }
+                        var cKey = bin.Read<MD5Hash>();
 
-                        entries.Add(entry);
+                        // @TODO add support for multiple encoding keys
+                        for (int key = 0; key < keysCount; key++)
+                        {
+                            if(key == 0)
+                            {
+                                entry.eKey = bin.Read<MD5Hash>();
+                            }
+                            else
+                            {
+                                bin.ReadBytes(16);
+                            }
+                        }
+                        entries.Add(cKey, entry);
                     }
 
                     var remaining = 4096 - ((bin.BaseStream.Position - tableAstart) % 4096);
                     if (remaining > 0) { bin.BaseStream.Position += remaining; }
                 }
 
-                encoding.aEntries = entries.ToArray();
+                encoding.aEntries = entries;
 
                 if (!parseTableB)
                 {
@@ -363,9 +369,9 @@ namespace CASCToolHost
                 /* Table B */
                 if (checkStuff)
                 {
-                    encoding.bHeaders = new EncodingHeaderEntry[encoding.numEntriesB];
+                    encoding.bHeaders = new EncodingHeaderEntry[encoding.eKeyPageCount];
 
-                    for (int i = 0; i < encoding.numEntriesB; i++)
+                    for (int i = 0; i < encoding.eKeyPageCount; i++)
                     {
                         encoding.bHeaders[i].firstHash = bin.Read<MD5Hash>();
                         encoding.bHeaders[i].checksum = bin.Read<MD5Hash>();
@@ -373,14 +379,14 @@ namespace CASCToolHost
                 }
                 else
                 {
-                    bin.BaseStream.Position += encoding.numEntriesB * 32;
+                    bin.BaseStream.Position += encoding.eKeyPageCount * 32;
                 }
 
                 var tableBstart = bin.BaseStream.Position;
 
                 List<EncodingFileDescEntry> b_entries = new List<EncodingFileDescEntry>();
 
-                while (bin.BaseStream.Position < tableBstart + 4096 * encoding.numEntriesB)
+                while (bin.BaseStream.Position < tableBstart + 4096 * encoding.eKeyPageCount)
                 {
                     var remaining = 4096 - (bin.BaseStream.Position - tableBstart) % 4096;
 
@@ -411,6 +417,9 @@ namespace CASCToolHost
         {
             Parallel.ForEach(archives, (archive, state, i) =>
             {
+                uint indexID;
+                string indexName;
+
                 try
                 {
                     cacheLock.EnterUpgradeableReadLock();
@@ -421,7 +430,9 @@ namespace CASCToolHost
                         {
                             cacheLock.EnterWriteLock();
                             CASC.indexNames.Add(archives[i]);
+                            indexName = archives[i].ToHexString().ToLower();
                             CASC.indexNameToIndexIDLookup.Add(archives[i], (uint)CASC.indexNames.Count - 1);
+                            indexID = (uint)CASC.indexNames.Count - 1;
                             CASC.indexDictionary.Add((uint)CASC.indexNames.Count - 1, new Dictionary<MD5Hash, IndexEntry>(new MD5HashComparer()));
                         }
                         finally
@@ -442,8 +453,6 @@ namespace CASCToolHost
 
 
                 byte[] indexContent;
-                var indexID = CASC.indexNameToIndexIDLookup[archives[i]];
-                var indexName = CASC.indexNames[(int)indexID].ToHexString().ToLower();
 
                 if (url.StartsWith("http"))
                 {

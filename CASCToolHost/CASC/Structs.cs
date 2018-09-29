@@ -110,18 +110,18 @@ namespace CASCToolHost
 
     public struct EncodingFile
     {
-        public byte unk1;
-        public byte checksumSizeA;
-        public byte checksumSizeB;
-        public ushort flagsA;
-        public ushort flagsB;
-        public uint numEntriesA;
-        public uint numEntriesB;
-        public byte unk2;
+        public byte version;
+        public byte cKeyLength;
+        public byte eKeyLength;
+        public ushort cKeyPageSize;
+        public ushort eKeyPageSize;
+        public uint cKeyPageCount;
+        public uint eKeyPageCount;
+        public byte unk;
         public ulong stringBlockSize;
         public string[] stringBlockEntries;
         public EncodingHeaderEntry[] aHeaders;
-        public EncodingFileEntry[] aEntries;
+        public Dictionary<MD5Hash, EncodingFileEntry> aEntries;
         public EncodingHeaderEntry[] bHeaders;
         public EncodingFileDescEntry[] bEntries;
     }
@@ -134,10 +134,8 @@ namespace CASCToolHost
 
     public struct EncodingFileEntry
     {
-        public ushort keyCount;
-        public uint size;
-        public MD5Hash hash;
-        public MD5Hash key;
+        public long size;
+        public MD5Hash eKey;
     }
 
     public struct EncodingFileDescEntry

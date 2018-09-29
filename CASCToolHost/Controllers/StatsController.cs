@@ -15,7 +15,12 @@ namespace CASCToolHost.Controllers
         public string Get()
         {
             Console.WriteLine("[" + DateTime.Now + "] Serving stats!");
-            return "Builds loaded: " + CASC.buildDictionary.Count + "\nIndexes loaded: " + CASC.indexDictionary.Count;
+            var loadedFilesInIndex = 0;
+            foreach(var index in CASC.indexDictionary)
+            {
+                loadedFilesInIndex += index.Value.Count;
+            }
+            return "Builds loaded: " + CASC.buildDictionary.Count + "\nIndexes loaded: " + CASC.indexDictionary.Count + " (total of " + loadedFilesInIndex + " entries)";
         }
     }
 }

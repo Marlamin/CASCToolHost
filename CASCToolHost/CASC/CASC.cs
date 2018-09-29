@@ -10,10 +10,11 @@ namespace CASCToolHost
     public static class CASC
     {
         public static Dictionary<string, Build> buildDictionary = new Dictionary<string, Build>();
-        private static MD5HashComparer comparer = new MD5HashComparer();
         public static Dictionary<uint, Dictionary<MD5Hash, IndexEntry>> indexDictionary = new Dictionary<uint, Dictionary<MD5Hash, IndexEntry>>();
         public static List<MD5Hash> indexNames = new List<MD5Hash>();
-        public static Dictionary<MD5Hash, uint> indexNameToIndexIDLookup = new Dictionary<MD5Hash, uint>(comparer);
+        public static Dictionary<MD5Hash, uint> indexNameToIndexIDLookup = new Dictionary<MD5Hash, uint>(new MD5HashComparer());
+
+        private static Jenkins96 hasher = new Jenkins96();
 
         static CASC()
         {
@@ -61,9 +62,13 @@ namespace CASCToolHost
             Logger.WriteLine("Loading root..");
             var rootHash = "";
 
-            foreach (var entry in build.encoding.aEntries)
+            if(build.encoding.aEntries.TryGetValue(build.buildConfig.root, out var rootEntry))
             {
-                if (comparer.Equals(entry.hash, build.buildConfig.root)) { rootHash = entry.key.ToHexString().ToLower(); break; }
+                rootHash = rootEntry.eKey.ToHexString().ToLower();
+            }
+            else
+            {
+                throw new KeyNotFoundException("Root encoding key not found!");
             }
 
             build.root = NGDP.GetRoot("http://" + cdnsFile.entries[0].hosts[0] + "/" + cdnsFile.entries[0].path + "/", rootHash, true);
@@ -162,15 +167,15 @@ namespace CASCToolHost
 
             string target = "";
 
-            foreach (var entry in build.encoding.aEntries)
+            if (build.encoding.aEntries.TryGetValue(contenthash.ToByteArray().ToMD5(), out var entry))
             {
-                var entryHash = entry.hash.ToHexString().ToLower();
-                if (entryHash == contenthash)
-                {
-                    target = entry.key.ToHexString().ToLower();
-                    break;
-                }
+                target = entry.eKey.ToHexString().ToLower();
             }
+            else
+            {
+                throw new KeyNotFoundException("Key not found in encoding!");
+            }
+          
 
             if (string.IsNullOrEmpty(target))
             {
@@ -257,21 +262,17 @@ namespace CASCToolHost
 
             var build = buildDictionary[buildConfig];
 
-            var hasher = new Jenkins96();
             var lookup = hasher.ComputeHash(filename, true);
             var target = "";
 
-            foreach (var entry in build.root.entries)
+            if (build.root.entries.TryGetValue(lookup, out var entry))
             {
-                if (entry.Value[0].lookup == lookup)
-                {
-                    RootEntry? prioritizedEntry = entry.Value.FirstOrDefault(subentry =>
+                RootEntry? prioritizedEntry = entry.FirstOrDefault(subentry =>
                         subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
                     );
 
-                    var selectedEntry = (prioritizedEntry != null) ? prioritizedEntry.Value : entry.Value.First();
-                    target = selectedEntry.md5.ToHexString().ToLower();
-                }
+                var selectedEntry = (prioritizedEntry != null) ? prioritizedEntry.Value : entry.First();
+                target = selectedEntry.md5.ToHexString().ToLower();
             }
 
             if (string.IsNullOrEmpty(target))
@@ -291,15 +292,11 @@ namespace CASCToolHost
 
             var build = buildDictionary[buildConfig];
 
-            var hasher = new Jenkins96();
             var lookup = hasher.ComputeHash(filename, true);
 
-            foreach (var entry in build.root.entries)
+            if (build.root.entries.TryGetValue(lookup, out var entry))
             {
-                if (entry.Value[0].lookup == lookup)
-                {
-                    return entry.Value[0].fileDataID;
-                }
+                return entry[0].fileDataID;
             }
 
             return 0;
