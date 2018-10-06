@@ -424,16 +424,14 @@ namespace CASCToolHost
                 {
                     cacheLock.EnterUpgradeableReadLock();
 
-                    if (!CASC.indexNameToIndexIDLookup.ContainsKey(archives[i]))
+                    if (!CASC.indexNames.Contains(archives[i], new MD5HashComparer()))
                     {
                         try
                         {
                             cacheLock.EnterWriteLock();
                             CASC.indexNames.Add(archives[i]);
                             indexName = archives[i].ToHexString().ToLower();
-                            CASC.indexNameToIndexIDLookup.Add(archives[i], (uint)CASC.indexNames.Count - 1);
                             indexID = (uint)CASC.indexNames.Count - 1;
-                            CASC.indexDictionary.Add((uint)CASC.indexNames.Count - 1, new Dictionary<MD5Hash, IndexEntry>(new MD5HashComparer()));
                         }
                         finally
                         {
@@ -483,12 +481,12 @@ namespace CASCToolHost
                             cacheLock.EnterUpgradeableReadLock();
                             try
                             {
-                                if (!CASC.indexDictionary[indexID].ContainsKey(headerHash))
+                                if (!CASC.indexDictionary.ContainsKey(headerHash))
                                 {
                                     cacheLock.EnterWriteLock();
                                     try
                                     {
-                                        CASC.indexDictionary[indexID].Add(headerHash, entry);
+                                        CASC.indexDictionary.Add(headerHash, entry);
                                     }
                                     finally
                                     {

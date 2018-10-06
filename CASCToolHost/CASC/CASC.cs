@@ -10,9 +10,8 @@ namespace CASCToolHost
     public static class CASC
     {
         public static Dictionary<string, Build> buildDictionary = new Dictionary<string, Build>();
-        public static Dictionary<uint, Dictionary<MD5Hash, IndexEntry>> indexDictionary = new Dictionary<uint, Dictionary<MD5Hash, IndexEntry>>();
+        public static Dictionary<MD5Hash, IndexEntry> indexDictionary = new Dictionary<MD5Hash, IndexEntry>(new MD5HashComparer());
         public static List<MD5Hash> indexNames = new List<MD5Hash>();
-        public static Dictionary<MD5Hash, uint> indexNameToIndexIDLookup = new Dictionary<MD5Hash, uint>(new MD5HashComparer());
 
         private static Jenkins96 hasher = new Jenkins96();
 
@@ -40,7 +39,6 @@ namespace CASCToolHost
 
         public static void LoadBuild(string program, string buildConfigHash, string cdnConfigHash)
         {
-
             Logger.WriteLine("Loading build " + buildConfigHash + "..");
 
             var build = new Build();
@@ -176,7 +174,6 @@ namespace CASCToolHost
                 throw new KeyNotFoundException("Key not found in encoding!");
             }
           
-
             if (string.IsNullOrEmpty(target))
             {
                 throw new FileNotFoundException("Unable to find file in encoding!");
@@ -210,11 +207,7 @@ namespace CASCToolHost
 
             IndexEntry entry = new IndexEntry();
 
-            foreach (var indexName in build.cdnConfig.archives)
-            {
-                indexDictionary[indexNameToIndexIDLookup[indexName]].TryGetValue(target.ToByteArray().ToMD5(), out entry);
-                if (entry.size != 0) break;
-            }
+            indexDictionary.TryGetValue(target.ToByteArray().ToMD5(), out entry);
 
             if (entry.size == 0)
             {
