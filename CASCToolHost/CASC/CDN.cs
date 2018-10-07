@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 
 namespace CASCToolHost
 {
@@ -10,6 +11,20 @@ namespace CASCToolHost
         public static string cacheDir;
         public static bool isEncrypted = false;
         public static string decryptionKeyName = "";
+
+        static CDN()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                cacheDir = "H:/";
+            }
+            else
+            {
+                cacheDir = "/var/www/bnet.marlam.in/";
+            }
+
+            client = new HttpClient();
+        }
 
         public static byte[] Get(string url, bool returnstream = true, bool redownload = false)
         {

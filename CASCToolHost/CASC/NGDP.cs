@@ -418,7 +418,7 @@ namespace CASCToolHost
             Parallel.ForEach(archives, (archive, state, i) =>
             {
                 uint indexID;
-                string indexName;
+                string indexName = archive.ToHexString().ToLower();
 
                 try
                 {
@@ -429,8 +429,7 @@ namespace CASCToolHost
                         try
                         {
                             cacheLock.EnterWriteLock();
-                            CASC.indexNames.Add(archives[i]);
-                            indexName = archives[i].ToHexString().ToLower();
+                            CASC.indexNames.Add(archive);
                             indexID = (uint)CASC.indexNames.Count - 1;
                         }
                         finally
@@ -503,6 +502,48 @@ namespace CASCToolHost
                     }
                 }
             });
+        }
+        public static void LoadAllIndexes()
+        {
+            Logger.WriteLine("Filtering indexes..");
+            var archiveList = new List<MD5Hash>();
+
+            foreach (var file in Directory.GetFiles(Path.Combine(CDN.cacheDir, "tpr", "wow", "data"), "*.index", SearchOption.AllDirectories))
+            {
+                var indexName = Path.GetFileNameWithoutExtension(file);
+                using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read))
+                using (var bin = new BinaryReader(stream))
+                {
+                    bin.BaseStream.Position = bin.BaseStream.Length - 16;
+                    // 0 = loose file index, 4 = archive index, 6 = group archive index
+                    if (bin.ReadChar() == 4)
+                    {
+                        if (!File.Exists(Path.Combine(CDN.cacheDir, "tpr", "wow", "patch", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName + ".index")))
+                        {
+                            if (File.Exists(Path.Combine(CDN.cacheDir, "tpr", "wow", "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)))
+                            {
+                                archiveList.Add(Path.GetFileNameWithoutExtension(file).ToByteArray().ToMD5());
+                            }
+                            else
+                            {
+                                Logger.WriteLine("Skipping archive index without archive " + file);
+                            }
+                        }
+                        else
+                        {
+                            Logger.WriteLine("Skipping patch index " + file);
+                        }
+                    }
+                    else
+                    {
+                        Logger.WriteLine("Skipping non-archive index " + file);
+                    }
+                }
+            }
+
+            Logger.WriteLine("Loading " + archiveList.Count.ToString() + " archive indexes..");
+
+            GetIndexes(Path.Combine(CDN.cacheDir, "tpr", "wow"), archiveList.ToArray());
         }
     }
 }

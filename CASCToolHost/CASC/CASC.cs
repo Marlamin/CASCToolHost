@@ -15,20 +15,6 @@ namespace CASCToolHost
 
         private static Jenkins96 hasher = new Jenkins96();
 
-        static CASC()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                CDN.cacheDir = "H:/";
-            }
-            else
-            {
-                CDN.cacheDir = "/var/www/bnet.marlam.in/";
-            }
-
-            CDN.client = new HttpClient();
-        }
-
         public struct Build
         {
             public BuildConfigFile buildConfig;
