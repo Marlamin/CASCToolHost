@@ -81,6 +81,9 @@ namespace CASCToolHost
                     case "patch-file-index-size":
                         cdnConfig.patchFileIndexSize = cols[1];
                         break;
+                    case "archives-index-size":
+                    case "patch-archives-index-size":
+                        break;
                     default:
                         Logger.WriteLine("!!!!!!!! Unknown cdnconfig variable '" + cols[0] + "'");
                         break;
