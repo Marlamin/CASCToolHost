@@ -60,9 +60,16 @@ namespace CASCToolHost
             Logger.WriteLine("Loading indexes..");
             NGDP.GetIndexes(Path.Combine(CDN.cacheDir, cdnsFile.entries[0].path), build.cdnConfig.archives);
 
-            buildDictionary.Add(buildConfigHash, build);
+            if (buildDictionary.ContainsKey(buildConfigHash))
+            {
+                Logger.WriteLine("Build was already loaded while this iteration was loading, not adding to cache!");
+            }
+            else
+            {
+                buildDictionary.Add(buildConfigHash, build);
+                Logger.WriteLine("Loaded build " + build.buildConfig.buildName + "!");
+            }
 
-            Logger.WriteLine("Loaded build!");
         }
 
         public static bool FileExists(string buildConfig, string cdnConfig, uint filedataid)
