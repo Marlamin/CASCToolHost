@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -134,7 +135,18 @@ namespace CASCToolHost
                         }
                         break;
                     case 'E': // encrypted
-                        byte[] decrypted = Decrypt(chunkBuffer, index);
+                        byte[] decrypted = new byte[chunkBuffer.Length - 15];
+                        decrypted[0] = Convert.ToByte('N');
+                        try
+                        {
+                            decrypted = Decrypt(chunkBuffer, index);
+                        }
+                        catch (KeyNotFoundException e)
+                        {
+                            Console.WriteLine(e.Message);
+                            chunkResult.Write(new byte[chunk.actualSize], 0, chunk.actualSize);
+                            break;
+                        }
 
                         //Console.WriteLine("File is encrypted with key " + ReturnEncryptionKeyName(chunkreader.ReadBytes(chunk.inFileSize)));
                         //Console.WriteLine("Encrypted chunk size is " + chunk.inFileSize);
@@ -147,7 +159,7 @@ namespace CASCToolHost
                         break;
                     case 'F': // frame
                     default:
-                        throw new Exception("Unsupported mode!");
+                        throw new Exception("Unsupported mode " + mode + "!");
                 }
             }
         }
@@ -213,7 +225,7 @@ namespace CASCToolHost
             byte[] key = KeyService.GetKey(keyName);
 
             if (key == null)
-                throw new Exception("Unknown keyname " + keyName.ToString("X16"));
+                throw new KeyNotFoundException("Unknown keyname " + keyName.ToString("X16"));
 
             if (encType == 'S')
             {
