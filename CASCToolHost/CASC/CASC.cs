@@ -32,9 +32,9 @@ namespace CASCToolHost
 
             foreach(var loadedBuild in buildDictionary)
             {
-                if (loadedBuild.Value.loadedAt < DateTime.Now.AddHours(-4))
+                if (loadedBuild.Value.loadedAt < DateTime.Now.AddHours(-2))
                 {
-                    Logger.WriteLine("Unloading build " + loadedBuild.Key + " as it its been loaded over 4 hours ago.");
+                    Logger.WriteLine("Unloading build " + loadedBuild.Key + " as it its been loaded over 2 hours ago.");
                     unloadList.Add(loadedBuild.Key);
                 }
             }
