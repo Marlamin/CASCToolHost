@@ -21,11 +21,28 @@ namespace CASCToolHost
             public CDNConfigFile cdnConfig;
             public EncodingFile encoding;
             public RootFile root;
+            public DateTime loadedAt;
         }
 
         public static void LoadBuild(string program, string buildConfigHash, string cdnConfigHash)
         {
             Logger.WriteLine("Loading build " + buildConfigHash + "..");
+
+            var unloadList = new List<string>();
+
+            foreach(var loadedBuild in buildDictionary)
+            {
+                if (loadedBuild.Value.loadedAt < DateTime.Now.AddHours(-4))
+                {
+                    Logger.WriteLine("Unloading build " + loadedBuild.Key + " as it its been loaded over 4 hours ago.");
+                    unloadList.Add(loadedBuild.Key);
+                }
+            }
+
+            foreach(var unloadBuild in unloadList)
+            {
+                buildDictionary.Remove(unloadBuild);
+            }
 
             var build = new Build();
 
@@ -56,6 +73,8 @@ namespace CASCToolHost
             }
 
             build.root = NGDP.GetRoot("http://" + cdnsFile.entries[0].hosts[0] + "/" + cdnsFile.entries[0].path + "/", rootHash, true);
+
+            build.loadedAt = DateTime.Now;
 
             Logger.WriteLine("Loading indexes..");
             NGDP.GetIndexes(Path.Combine(CDN.cacheDir, cdnsFile.entries[0].path), build.cdnConfig.archives);
