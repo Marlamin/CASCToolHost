@@ -13,8 +13,6 @@ namespace CASCToolHost
         public static Dictionary<MD5Hash, IndexEntry> indexDictionary = new Dictionary<MD5Hash, IndexEntry>(new MD5HashComparer());
         public static List<MD5Hash> indexNames = new List<MD5Hash>();
 
-        private static Jenkins96 hasher = new Jenkins96();
-
         public struct Build
         {
             public BuildConfigFile buildConfig;
@@ -267,6 +265,7 @@ namespace CASCToolHost
 
             var build = buildDictionary[buildConfig];
 
+            var hasher = new Jenkins96();
             var lookup = hasher.ComputeHash(filename, true);
             var target = "";
 
@@ -297,6 +296,7 @@ namespace CASCToolHost
 
             var build = buildDictionary[buildConfig];
 
+            var hasher = new Jenkins96();
             var lookup = hasher.ComputeHash(filename, true);
 
             if (build.root.entries.TryGetValue(lookup, out var entry))
