@@ -28,7 +28,7 @@ namespace CASCToolHost.Controllers
 
         [Route("fdid")]
         [HttpGet]
-        public FileContentResult GetByFileDataID(string buildConfig, string cdnConfig, uint filedataid, string filename)
+        public ActionResult GetByFileDataID(string buildConfig, string cdnConfig, uint filedataid, string filename)
         {
             if (string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || filedataid == 0 || string.IsNullOrEmpty(filename))
             {
@@ -37,15 +37,33 @@ namespace CASCToolHost.Controllers
 
             Logger.WriteLine("Serving file \"" + filename + "\" (fdid " + filedataid + ") for build " + buildConfig + " and cdn " + cdnConfig);
 
-            return new FileContentResult(CASC.GetFile(buildConfig, cdnConfig, filedataid), "application/octet-stream")
+            try
             {
-                FileDownloadName = filename
-            };
+                return new FileContentResult(CASC.GetFile(buildConfig, cdnConfig, filedataid), "application/octet-stream")
+                {
+                    FileDownloadName = filename
+                };
+            }
+            catch (FileNotFoundException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Logger.WriteLine("File " + filedataid + " not found in root of buildconfig " + buildConfig + " cdnconfig " + cdnConfig);
+                Console.ResetColor();
+                return NotFound();
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Logger.WriteLine("Error " + e.Message + " occured when getting file " + filedataid + " of buildconfig " + buildConfig + " cdnconfig " + cdnConfig);
+                Console.ResetColor();
+            }
+
+            return NotFound();
         }
 
         [Route("fname")]
         [HttpGet]
-        public FileContentResult GetByFileName(string buildConfig, string cdnConfig, string filename)
+        public ActionResult GetByFileName(string buildConfig, string cdnConfig, string filename)
         {
             if (string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || string.IsNullOrEmpty(filename))
             {
@@ -54,10 +72,28 @@ namespace CASCToolHost.Controllers
 
             Logger.WriteLine("Serving file \"" + filename + "\" for build " + buildConfig + " and cdn " + cdnConfig);
 
-            return new FileContentResult(CASC.GetFileByFilename(buildConfig, cdnConfig, filename), "application/octet-stream")
+            try
             {
-                FileDownloadName = Path.GetFileName(filename)
-            };
+                return new FileContentResult(CASC.GetFileByFilename(buildConfig, cdnConfig, filename), "application/octet-stream")
+                {
+                    FileDownloadName = filename
+                };
+            }
+            catch (FileNotFoundException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Logger.WriteLine("File " + filename + " not found in root of buildconfig " + buildConfig + " cdnconfig " + cdnConfig);
+                Console.ResetColor();
+                return NotFound();
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Logger.WriteLine("Error " + e.Message + " occured when getting file " + filename + " of buildconfig " + buildConfig + " cdnconfig " + cdnConfig);
+                Console.ResetColor();
+            }
+
+            return NotFound();
         }
     }
 }

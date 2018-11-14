@@ -31,7 +31,6 @@ namespace CASCToolHost
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             NGDP.LoadAllIndexes();
-            CASC.LoadBuild("wowt", "081460ab8f317f8273068b29288f2af7", "a00c4591f68ddf55d8baa84db360a8d0");
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
