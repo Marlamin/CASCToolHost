@@ -7,44 +7,6 @@ namespace CASCToolHost
     {
         private static Dictionary<ulong, byte[]> keys = new Dictionary<ulong, byte[]>()
         {
-            // hardcoded Overwatch keys
-            [0xFB680CB6A8BF81F3] = "62D90EFA7F36D71C398AE2F1FE37BDB9".ToByteArray(),
-            [0x402CD9D8D6BFED98] = "AEB0EADEA47612FE6C041A03958DF241".ToByteArray(),
-            // streamed Overwatch keys
-            [0xDBD3371554F60306] = "34E397ACE6DD30EEFDC98A2AB093CD3C".ToByteArray(),
-            [0x11A9203C9881710A] = "2E2CB8C397C2F24ED0B5E452F18DC267".ToByteArray(),
-            [0xA19C4F859F6EFA54] = "0196CB6F5ECBAD7CB5283891B9712B4B".ToByteArray(),
-            [0x87AEBBC9C4E6B601] = "685E86C6063DFDA6C9E85298076B3D42".ToByteArray(),
-            [0xDEE3A0521EFF6F03] = "AD740CE3FFFF9231468126985708E1B9".ToByteArray(),
-            [0x8C9106108AA84F07] = "53D859DDA2635A38DC32E72B11B32F29".ToByteArray(),
-            [0x49166D358A34D815] = "667868CD94EA0135B9B16C93B1124ABA".ToByteArray(),
-            [0x1463A87356778D14] = "69BD2A78D05C503E93994959B30E5AEC".ToByteArray(),
-            [0x5E152DE44DFBEE01] = "E45A1793B37EE31A8EB85CEE0EEE1B68".ToByteArray(),
-            [0x9B1F39EE592CA415] = "54A99F081CAD0D08F7E336F4368E894C".ToByteArray(),
-            [0x24C8B75890AD5917] = "31100C00FDE0CE18BBB33F3AC15B309F".ToByteArray(),
-            [0xEA658B75FDD4890F] = "DEC7A4E721F425D133039895C36036F8".ToByteArray(),
-            [0x026FDCDF8C5C7105] = "8F41809DA55366AD416D3C337459EEE3".ToByteArray(),
-            [0xCAE3FAC925F20402] = "98B78E8774BF275093CB1B5FC714511B".ToByteArray(),
-            [0x061581CA8496C80C] = "DA2EF5052DB917380B8AA6EF7A5F8E6A".ToByteArray(),
-            [0xBE2CB0FAD3698123] = "902A1285836CE6DA5895020DD603B065".ToByteArray(),
-            [0x57A5A33B226B8E0A] = "FDFC35C99B9DB11A326260CA246ACB41".ToByteArray(),
-            [0x42B9AB1AF5015920] = "C68778823C964C6F247ACC0F4A2584F8".ToByteArray(),
-            [0x4F0FE18E9FA1AC1A] = "89381C748F6531BBFCD97753D06CC3CD".ToByteArray(),
-            [0x7758B2CF1E4E3E1B] = "3DE60D37C664723595F27C5CDBF08BFA".ToByteArray(),
-            [0xE5317801B3561125] = "7DD051199F8401F95E4C03C884DCEA33".ToByteArray(),
-            [0x16B866D7BA3A8036] = "1395E882BF25B481F61A4D621141DA6E".ToByteArray(),
-            [0x11131FFDA0D18D30] = "C32AD1B82528E0A456897B3CE1C2D27E".ToByteArray(),
-            [0xCAC6B95B2724144A] = "73E4BEA145DF2B89B65AEF02F83FA260".ToByteArray(),
-            [0xB7DBC693758A5C36] = "BC3A92BFE302518D91CC30790671BF10".ToByteArray(),
-            [0x90CA73B2CDE3164B] = "5CBFF11F22720BACC2AE6AAD8FE53317".ToByteArray(),
-            [0x6DD3212FB942714A] = "E02C1643602EC16C3AE2A4D254A08FD9".ToByteArray(),
-            [0x11DDB470ABCBA130] = "66198766B1C4AF7589EFD13AD4DD667A".ToByteArray(),
-            [0x5BEF27EEE95E0B4B] = "36BCD2B551FF1C84AA3A3994CCEB033E".ToByteArray(),
-            [0x9359B46E49D2DA42] = "173D65E7FCAE298A9363BD6AA189F200".ToByteArray(),
-            [0x1A46302EF8896F34] = "8029AD5451D4BC18E9D0F5AC449DC055".ToByteArray(),
-            [0x693529F7D40A064C] = "CE54873C62DAA48EFF27FCC032BD07E3".ToByteArray(),
-            [0x388B85AEEDCB685D] = "D926E659D04A096B24C19151076D379A".ToByteArray(),
-            // streamed WoW keys
             [0xFA505078126ACB3E] = "BDC51862ABED79B2DE48C8E7E66C6200".ToByteArray(), // TactKeyId 15
             [0xFF813F7D062AC0BC] = "AA0B5C77F088CCC2D39049BD267F066D".ToByteArray(), // TactKeyId 25
             [0xD1E9B5EDF9283668] = "8E4A2579894E38B4AB9058BA5C7328EE".ToByteArray(), // TactKeyId 39
@@ -115,9 +77,18 @@ namespace CASCToolHost
             [0x3C6243057F3D9B24] = "58AE3E064210E3EDF9C1259CDE914C5D".ToByteArray(), // TactKeyId 231
             [0x7827FBE24427E27D] = "34A432042073CD0B51627068D2E0BD3E".ToByteArray(), // TactKeyId 232
             // [0x5DD92EE32BBF9ABD] = "????????????????????????????????".ToByteArray(), // TactKeyId 234
+            [0x0B68A7AF5F85F7EE] = "27AA011082F5E8BBBD71D1BA04F6ABA4".ToByteArray(), // TactKeyId 236
+            // [0x01531713C83FCC39] = "????????????????????????????????".ToByteArray(), // TactKeyID 237
+            // [0x76E4F6739A35E8D7] = "????????????????????????????????".ToByteArray(), // TactKeyID 238
             [0x66033F28DC01923C] = "9F9519861490C5A9FFD4D82A6D0067DB".ToByteArray(), // TactKeyId 239
-            // BNA 1.5.0 Alpha
-            [0x2C547F26A2613E01] = "37C50C102D4C9E3A5AC069F072B1417D".ToByteArray(),
+            // [0xFCF34A9B05AE7E6A] = "????????????????????????????????".ToByteArray(), // TactKeyID 240
+            // [0xE2F6BD41298A2AB9] = "????????????????????????????????".ToByteArray(), // TactKeyID 241
+            [0x14C4257E557B49A1] = "064A9709F42D50CB5F8B94BC1ACFDD5D".ToByteArray(), // TactKeyId 242
+            [0x1254E65319C6EEFF] = "79D2B3D1CCB015474E7158813864B8E6".ToByteArray(), // TactKeyId 243
+            // [0xC8753773ADF1174C] = "????????????????????????????????".ToByteArray(), // TactKeyID 244
+            // [0x2170BCAA9FA96E22] = "????????????????????????????????".ToByteArray(), // TactKeyID 245
+            // [0x75485627AA225F4D] = "????????????????????????????????".ToByteArray(), // TactKeyID 246
+            // [0x08717B15BF3C7955] = "????????????????????????????????".ToByteArray(), // TactKeyID 248
         };
 
         private static Salsa20 salsa = new Salsa20();
