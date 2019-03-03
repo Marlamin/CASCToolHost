@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Net.Http;
-using System.Runtime.InteropServices;
 
 namespace CASCToolHost
 {
@@ -14,15 +13,7 @@ namespace CASCToolHost
 
         static CDN()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                cacheDir = "H:/";
-            }
-            else
-            {
-                cacheDir = "/var/www/bnet.marlam.in/";
-            }
-
+            cacheDir = SettingsManager.cacheDir;
             client = new HttpClient();
         }
 
