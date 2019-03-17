@@ -306,5 +306,20 @@ namespace CASCToolHost
 
             return 0;
         }
+
+        public static uint[] GetFileDataIDsInBuild(string buildConfig, string cdnConfig)
+        {
+            if (!buildDictionary.ContainsKey(buildConfig))
+            {
+                LoadBuild("wowt", buildConfig, cdnConfig);
+            }
+
+            var filedataids = new List<uint>();
+            foreach(var entry in buildDictionary[buildConfig].root.entries)
+            {
+                filedataids.Add(entry.Value[0].fileDataID);
+            }
+            return filedataids.ToArray();
+        }
     }
 }

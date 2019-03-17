@@ -26,5 +26,12 @@ namespace CASCToolHost.Controllers
             Logger.WriteLine("Serving existence check of \"" + filename + "\" for build " + buildConfig + " and cdn " + cdnConfig);
             return CASC.FileExists(buildConfig, cdnConfig, filename);
         }
+
+        [Route("fdids")]
+        public uint[] Get(string buildConfig, string cdnConfig)
+        {
+            Logger.WriteLine("Serving filedataid list for build " + buildConfig + " and cdn " + cdnConfig);
+            return CASC.GetFileDataIDsInBuild(buildConfig, cdnConfig);
+        }
     }
 }
