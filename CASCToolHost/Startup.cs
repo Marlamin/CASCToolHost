@@ -36,6 +36,8 @@ namespace CASCToolHost
                 NGDP.LoadAllIndexes();
             }
 
+            KeyService.LoadKeys();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
