@@ -44,7 +44,7 @@ namespace CASCToolHost.Controllers
                     FileDownloadName = filename
                 };
             }
-            catch (FileNotFoundException e)
+            catch (FileNotFoundException)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Logger.WriteLine("File " + filedataid + " not found in root of buildconfig " + buildConfig + " cdnconfig " + cdnConfig);
@@ -79,7 +79,7 @@ namespace CASCToolHost.Controllers
                     FileDownloadName = filename
                 };
             }
-            catch (FileNotFoundException e)
+            catch (FileNotFoundException)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Logger.WriteLine("File " + filename + " not found in root of buildconfig " + buildConfig + " cdnconfig " + cdnConfig);
