@@ -24,7 +24,8 @@ namespace CASCToolHost.Controllers
         public ActionResult Download()
         {
             Logger.WriteLine("Serving listfile");
-            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', Listfile.GetFiles())), "text/plain")
+            var listfile = new Listfile();
+            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', listfile.GetFiles())), "text/plain")
             {
                 FileDownloadName = "listfile.txt"
             };
@@ -33,8 +34,9 @@ namespace CASCToolHost.Controllers
         [Route("download/build/{buildConfig}")]
         public ActionResult DownloadByBuild(string buildConfig)
         {
+            var listfile = new Listfile();
             Logger.WriteLine("Serving listfile for build " + buildConfig);
-            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', Listfile.GetFilesByBuild(buildConfig))), "text/plain")
+            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', listfile.GetFilesByBuild(buildConfig))), "text/plain")
             {
                 FileDownloadName = "listfile.txt"
             };

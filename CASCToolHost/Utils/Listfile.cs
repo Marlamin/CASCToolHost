@@ -1,17 +1,15 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace CASCToolHost.Utils
 {
-    public static class Listfile
+    public class Listfile
     {
-        private static MySqlConnection connection;
-        static Listfile()
+        private MySqlConnection connection;
+        public Listfile()
         {
             connection = new MySqlConnection(SettingsManager.connectionString);
 
@@ -19,13 +17,18 @@ namespace CASCToolHost.Utils
             {
                 connection.Open();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.WriteLine("An error occured opening a MySQL connection: " + e.Message);
             }
         }
 
-        public static string[] GetFiles()
+        ~Listfile()
+        {
+            connection.Close();
+        }
+
+        public string[] GetFiles()
         {
             var fileList = new List<string>();
 
@@ -43,7 +46,7 @@ namespace CASCToolHost.Utils
             return fileList.ToArray();
         }
 
-        public static string[] GetFilesByBuild(string buildConfig)
+        public string[] GetFilesByBuild(string buildConfig)
         {
             var config = Config.GetBuildConfig("http://cdn.blizzard.com/tpr/wow/", buildConfig);
 
@@ -61,7 +64,7 @@ namespace CASCToolHost.Utils
                 reader.Close();
             }
 
-            if(rootHash == "")
+            if (rootHash == "")
             {
                 EncodingFile encoding;
 
@@ -101,9 +104,10 @@ namespace CASCToolHost.Utils
             }
 
             var returnNames = new List<string>();
-            foreach(var entry in root.entries)
+            foreach (var entry in root.entries)
             {
-                if (fileList.TryGetValue(entry.Value[0].fileDataID, out string filename)){
+                if (fileList.TryGetValue(entry.Value[0].fileDataID, out string filename))
+                {
                     returnNames.Add(filename);
                 }
             }
