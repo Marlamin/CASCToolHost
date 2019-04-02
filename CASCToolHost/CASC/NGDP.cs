@@ -325,7 +325,7 @@ namespace CASCToolHost
 
                 var tableAstart = bin.BaseStream.Position;
 
-                Dictionary <MD5Hash, EncodingFileEntry> entries = new Dictionary<MD5Hash, EncodingFileEntry>(new MD5HashComparer());
+                Dictionary<MD5Hash, EncodingFileEntry> entries = new Dictionary<MD5Hash, EncodingFileEntry>(new MD5HashComparer());
 
                 for (int i = 0; i < encoding.cKeyPageCount; i++)
                 {
@@ -343,7 +343,7 @@ namespace CASCToolHost
                         // @TODO add support for multiple encoding keys
                         for (int key = 0; key < keysCount; key++)
                         {
-                            if(key == 0)
+                            if (key == 0)
                             {
                                 entry.eKey = bin.Read<MD5Hash>();
                             }

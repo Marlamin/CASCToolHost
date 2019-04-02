@@ -1,11 +1,7 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 
 namespace CASCToolHost.Controllers
 {
@@ -18,9 +14,9 @@ namespace CASCToolHost.Controllers
         {
             var bytes = new List<byte>();
 
-            foreach(var entry in CASC.buildDictionary)
+            foreach (var entry in CASC.buildDictionary)
             {
-                foreach(var encodingEntry in entry.Value.encoding.aEntries)
+                foreach (var encodingEntry in entry.Value.encoding.aEntries)
                 {
                     bytes.AddRange(Encoding.ASCII.GetBytes(encodingEntry.Value.eKey.ToHexString() + " " + encodingEntry.Key.ToHexString() + "\n"));
                 }

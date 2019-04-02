@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Runtime.InteropServices;
 
 namespace CASCToolHost
 {
@@ -28,7 +26,7 @@ namespace CASCToolHost
 
             var unloadList = new List<string>();
 
-            foreach(var loadedBuild in buildDictionary)
+            foreach (var loadedBuild in buildDictionary)
             {
                 if (loadedBuild.Value.loadedAt < DateTime.Now.AddHours(-1))
                 {
@@ -37,7 +35,7 @@ namespace CASCToolHost
                 }
             }
 
-            foreach(var unloadBuild in unloadList)
+            foreach (var unloadBuild in unloadList)
             {
                 buildDictionary.Remove(unloadBuild);
             }
@@ -59,9 +57,10 @@ namespace CASCToolHost
             }
 
             Logger.WriteLine("Loading root..");
-            var rootHash = "";
 
-            if(build.encoding.aEntries.TryGetValue(build.buildConfig.root, out var rootEntry))
+            string rootHash;
+
+            if (build.encoding.aEntries.TryGetValue(build.buildConfig.root, out var rootEntry))
             {
                 rootHash = rootEntry.eKey.ToHexString().ToLower();
             }
@@ -86,7 +85,6 @@ namespace CASCToolHost
                 buildDictionary.Add(buildConfigHash, build);
                 Logger.WriteLine("Loaded build " + build.buildConfig.buildName + "!");
             }
-
         }
 
         public static bool FileExists(string buildConfig, string cdnConfig, uint filedataid)
@@ -173,7 +171,7 @@ namespace CASCToolHost
 
             var build = buildDictionary[buildConfig];
 
-            string target = "";
+            string target;
 
             if (build.encoding.aEntries.TryGetValue(contenthash.ToByteArray().ToMD5(), out var entry))
             {
@@ -183,7 +181,7 @@ namespace CASCToolHost
             {
                 throw new KeyNotFoundException("Key not found in encoding!");
             }
-          
+
             if (string.IsNullOrEmpty(target))
             {
                 throw new FileNotFoundException("Unable to find file in encoding!");
@@ -213,13 +211,7 @@ namespace CASCToolHost
                 throw new Exception("Build is not loaded!");
             }
 
-            var build = buildDictionary[buildConfig];
-
-            IndexEntry entry = new IndexEntry();
-
-            indexDictionary.TryGetValue(target.ToByteArray().ToMD5(), out entry);
-
-            if (entry.size == 0)
+            if (!indexDictionary.TryGetValue(target.ToByteArray().ToMD5(), out IndexEntry entry))
             {
                 throw new Exception("Unable to find file in archives. File is not available!?");
             }
@@ -315,7 +307,7 @@ namespace CASCToolHost
             }
 
             var filedataids = new List<uint>();
-            foreach(var entry in buildDictionary[buildConfig].root.entries)
+            foreach (var entry in buildDictionary[buildConfig].root.entries)
             {
                 filedataids.Add(entry.Value[0].fileDataID);
             }

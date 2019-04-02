@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
+using System;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Net.Http.Headers;
 
 namespace CASCToolHost.Controllers
 {
@@ -70,7 +66,7 @@ namespace CASCToolHost.Controllers
 
             var mime = GetMimeTypeByExt(ext);
 
-            if(ext == ".blp")
+            if (ext == ".blp")
             {
                 using (var stream = new MemoryStream(fileBytes))
                 using (var outStream = new MemoryStream())

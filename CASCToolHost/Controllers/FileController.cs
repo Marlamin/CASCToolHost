@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
+using System;
 using System.IO;
-using Microsoft.AspNetCore.Mvc;
 
 namespace CASCToolHost.Controllers
 {
@@ -13,7 +13,7 @@ namespace CASCToolHost.Controllers
         [HttpGet]
         public FileContentResult GetByContentHash(string buildConfig, string cdnConfig, string contenthash, string filename)
         {
-            if(string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || string.IsNullOrEmpty(contenthash) || string.IsNullOrEmpty(filename))
+            if (string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || string.IsNullOrEmpty(contenthash) || string.IsNullOrEmpty(filename))
             {
                 throw new NullReferenceException("Invalid arguments!");
             }

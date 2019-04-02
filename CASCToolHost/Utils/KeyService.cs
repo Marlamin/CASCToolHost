@@ -18,7 +18,7 @@ namespace CASCToolHost
             keys.Clear();
 
             var rawkeys = File.ReadAllLines("keys.txt");
-            foreach(var rawkey in rawkeys)
+            foreach (var rawkey in rawkeys)
             {
                 var keysplit = rawkey.Split("  ");
                 if (keysplit[0] == "key_name") continue;
@@ -26,7 +26,7 @@ namespace CASCToolHost
                 var keyname = keysplit[0];
                 var keybytes = keysplit[1];
 
-                if(keyname.Length == 16&& !keybytes.Contains('?') && keybytes.Length == 32)
+                if (keyname.Length == 16 && !keybytes.Contains('?') && keybytes.Length == 32)
                 {
                     keys.Add(Convert.ToUInt64(keyname, 16), keybytes.ToByteArray());
                 }

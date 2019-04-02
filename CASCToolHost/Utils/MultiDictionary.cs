@@ -6,8 +6,7 @@ namespace CASCToolHost
     {
         public void Add(K key, V value)
         {
-            List<V> hset;
-            if (TryGetValue(key, out hset))
+            if (TryGetValue(key, out List<V> hset))
             {
                 hset.Add(value);
             }
