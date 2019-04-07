@@ -94,9 +94,7 @@ namespace CASCToolHost
                 LoadBuild("wowt", buildConfig, cdnConfig);
             }
 
-            var build = buildDictionary[buildConfig];
-
-            foreach (var entry in build.root.entries)
+            foreach (var entry in buildDictionary[buildConfig].root.entries)
             {
                 if (entry.Value[0].fileDataID == filedataid)
                 {
@@ -114,12 +112,10 @@ namespace CASCToolHost
                 LoadBuild("wowt", buildConfig, cdnConfig);
             }
 
-            var build = buildDictionary[buildConfig];
-
             var hasher = new Jenkins96();
             var lookup = hasher.ComputeHash(filename, true);
 
-            foreach (var entry in build.root.entries)
+            foreach (var entry in buildDictionary[buildConfig].root.entries)
             {
                 if (entry.Value[0].lookup == lookup)
                 {
@@ -137,11 +133,9 @@ namespace CASCToolHost
                 LoadBuild("wowt", buildConfig, cdnConfig);
             }
 
-            var build = buildDictionary[buildConfig];
-
             var target = "";
 
-            foreach (var entry in build.root.entries)
+            foreach (var entry in buildDictionary[buildConfig].root.entries)
             {
                 if (entry.Value[0].fileDataID == filedataid)
                 {
@@ -169,11 +163,9 @@ namespace CASCToolHost
                 LoadBuild("wowt", buildConfig, cdnConfig);
             }
 
-            var build = buildDictionary[buildConfig];
-
             string target;
 
-            if (build.encoding.aEntries.TryGetValue(contenthash.ToByteArray().ToMD5(), out var entry))
+            if (buildDictionary[buildConfig].encoding.aEntries.TryGetValue(contenthash.ToByteArray().ToMD5(), out var entry))
             {
                 target = entry.eKey.ToHexString().ToLower();
             }
@@ -187,10 +179,10 @@ namespace CASCToolHost
                 throw new FileNotFoundException("Unable to find file in encoding!");
             }
 
-            return RetrieveFileBytes(buildConfig, target);
+            return RetrieveFileBytes(target);
         }
 
-        public static byte[] RetrieveFileBytes(string buildConfig, string target, bool raw = false, string cdndir = "tpr/wow")
+        public static byte[] RetrieveFileBytes(string target, bool raw = false, string cdndir = "tpr/wow")
         {
             var unarchivedName = Path.Combine(CDN.cacheDir, cdndir, "data", target[0] + "" + target[1], target[2] + "" + target[3], target);
 
@@ -204,11 +196,6 @@ namespace CASCToolHost
                 {
                     return File.ReadAllBytes(unarchivedName);
                 }
-            }
-
-            if (!buildDictionary.ContainsKey(buildConfig))
-            {
-                throw new Exception("Build is not loaded!");
             }
 
             if (!indexDictionary.TryGetValue(target.ToByteArray().ToMD5(), out IndexEntry entry))
