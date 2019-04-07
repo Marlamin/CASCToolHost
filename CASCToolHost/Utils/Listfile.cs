@@ -53,7 +53,7 @@ namespace CASCToolHost.Utils
 
             using (var cmd = connection.CreateCommand())
             {
-                cmd.CommandText = "SELECT filename from wow_rootfiles ORDER BY id DESC";
+                cmd.CommandText = "SELECT filename from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
                 var reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
