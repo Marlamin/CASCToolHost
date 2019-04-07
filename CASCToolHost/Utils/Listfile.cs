@@ -28,6 +28,25 @@ namespace CASCToolHost.Utils
             connection.Close();
         }
 
+        public string GetFilenameByFileDataID(uint filedataid)
+        {
+            var filename = "";
+
+            using (var cmd = connection.CreateCommand())
+            {
+                cmd.CommandText = "SELECT filename from wow_rootfiles WHERE id = @id";
+                cmd.Parameters.AddWithValue("@id", filedataid);
+                var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    filename = reader["filename"].ToString();
+                }
+                reader.Close();
+            }
+
+            return filename;
+        }
+
         public string[] GetFiles()
         {
             var fileList = new List<string>();
