@@ -6,10 +6,10 @@ using System.Linq;
 
 namespace CASCToolHost.Utils
 {
-    public class Listfile
+    public class Database
     {
         private MySqlConnection connection;
-        public Listfile()
+        public Database()
         {
             connection = new MySqlConnection(SettingsManager.connectionString);
 
@@ -23,7 +23,7 @@ namespace CASCToolHost.Utils
             }
         }
 
-        ~Listfile()
+        ~Database()
         {
             connection.Close();
         }

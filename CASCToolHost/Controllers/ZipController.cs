@@ -51,7 +51,7 @@ namespace CASCToolHost.Controllers
                         {
                             using (var cascStream = new MemoryStream(CASC.GetFile(buildConfig, cdnConfig, filedataid)))
                             {
-                                var listfile = new Listfile();
+                                var listfile = new Database();
                                 var entryname = Path.GetFileName(listfile.GetFilenameByFileDataID(filedataid));
                                 if(entryname == "")
                                 {
