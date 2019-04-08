@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using CASCToolHost.Utils;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.IO;
 
@@ -15,7 +16,7 @@ namespace CASCToolHost.Controllers
         {
             if (string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || string.IsNullOrEmpty(contenthash) || string.IsNullOrEmpty(filename))
             {
-                throw new NullReferenceException("Invalid arguments!");
+                throw new ArgumentException("Invalid arguments!");
             }
 
             Logger.WriteLine("Serving file \"" + filename + "\" (" + contenthash + ") for build " + buildConfig + " and cdn " + cdnConfig);
@@ -30,9 +31,27 @@ namespace CASCToolHost.Controllers
         [HttpGet]
         public ActionResult GetByFileDataID(string buildConfig, string cdnConfig, uint filedataid, string filename)
         {
-            if (string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || filedataid == 0 || string.IsNullOrEmpty(filename))
+            // Retrieve CDNConfig from DB if not set in request
+            if (string.IsNullOrEmpty(cdnConfig) && !string.IsNullOrEmpty(buildConfig))
             {
-                throw new NullReferenceException("Invalid arguments!");
+                var database = new Database();
+                cdnConfig = database.GetCDNConfigByBuildConfig(buildConfig);
+            }
+
+            // Retrieve filename from DB if not set in request
+            if (string.IsNullOrEmpty(filename) && filedataid != 0)
+            {
+                var database = new Database();
+                filename = database.GetFilenameByFileDataID(filedataid);
+                if (string.IsNullOrEmpty(filename))
+                {
+                    filename = filedataid + ".unk";
+                }
+            }
+
+            if (string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || filedataid == 0)
+            {
+                throw new ArgumentException("Invalid arguments!");
             }
 
             Logger.WriteLine("Serving file \"" + filename + "\" (fdid " + filedataid + ") for build " + buildConfig + " and cdn " + cdnConfig);
@@ -67,7 +86,7 @@ namespace CASCToolHost.Controllers
         {
             if (string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || string.IsNullOrEmpty(filename))
             {
-                throw new NullReferenceException("Invalid arguments!");
+                throw new ArgumentException("Invalid arguments!");
             }
 
             Logger.WriteLine("Serving file \"" + filename + "\" for build " + buildConfig + " and cdn " + cdnConfig);
