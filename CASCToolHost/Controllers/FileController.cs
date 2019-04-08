@@ -42,7 +42,7 @@ namespace CASCToolHost.Controllers
             if (string.IsNullOrEmpty(filename) && filedataid != 0)
             {
                 var database = new Database();
-                filename = database.GetFilenameByFileDataID(filedataid);
+                filename = Path.GetFileName(database.GetFilenameByFileDataID(filedataid));
                 if (string.IsNullOrEmpty(filename))
                 {
                     filename = filedataid + ".unk";
