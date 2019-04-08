@@ -28,6 +28,30 @@ namespace CASCToolHost.Utils
             connection.Close();
         }
 
+        public string GetCDNConfigByBuildConfig(string buildConfig)
+        {
+            var cdnconfig = "";
+
+            using (var cmd = connection.CreateCommand())
+            {
+                cmd.CommandText = "SELECT cdnconfig from wow_versions WHERE buildconfig = @hash LIMIT 1";
+                cmd.Parameters.AddWithValue("@hash", buildConfig);
+                var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    cdnconfig = reader["cdnconfig"].ToString();
+                }
+                reader.Close();
+            }
+
+            if (string.IsNullOrEmpty(cdnconfig))
+            {
+                throw new FileNotFoundException("Unable to locate proper CDNConfig for BuildConfig " + buildConfig);
+            }
+
+            return cdnconfig;
+        }
+
         public string GetFilenameByFileDataID(uint filedataid)
         {
             var filename = "";
