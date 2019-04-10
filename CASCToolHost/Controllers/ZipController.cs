@@ -38,6 +38,8 @@ namespace CASCToolHost.Controllers
             {
                 using (var archive = new ZipArchive(zip, ZipArchiveMode.Create))
                 {
+                    var listfile = new Database();
+
                     foreach (var filedataid in filedataids)
                     {
                         if (zip.Length > 100000000)
@@ -51,7 +53,6 @@ namespace CASCToolHost.Controllers
                         {
                             using (var cascStream = new MemoryStream(CASC.GetFile(buildConfig, cdnConfig, filedataid)))
                             {
-                                var listfile = new Database();
                                 var entryname = Path.GetFileName(listfile.GetFilenameByFileDataID(filedataid));
                                 if(entryname == "")
                                 {
