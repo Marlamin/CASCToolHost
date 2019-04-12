@@ -19,6 +19,13 @@ namespace CASCToolHost.Controllers
                 throw new ArgumentException("Invalid arguments!");
             }
 
+            // Retrieve CDNConfig from DB if not set in request
+            if (string.IsNullOrEmpty(cdnConfig) && !string.IsNullOrEmpty(buildConfig))
+            {
+                var database = new Database();
+                cdnConfig = database.GetCDNConfigByBuildConfig(buildConfig);
+            }
+
             Logger.WriteLine("Serving file \"" + filename + "\" (" + contenthash + ") for build " + buildConfig + " and cdn " + cdnConfig);
 
             return new FileContentResult(CASC.GetFile(buildConfig, cdnConfig, contenthash), "application/octet-stream")
@@ -84,6 +91,13 @@ namespace CASCToolHost.Controllers
         [HttpGet]
         public ActionResult GetByFileName(string buildConfig, string cdnConfig, string filename)
         {
+            // Retrieve CDNConfig from DB if not set in request
+            if (string.IsNullOrEmpty(cdnConfig) && !string.IsNullOrEmpty(buildConfig))
+            {
+                var database = new Database();
+                cdnConfig = database.GetCDNConfigByBuildConfig(buildConfig);
+            }
+
             if (string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || string.IsNullOrEmpty(filename))
             {
                 throw new ArgumentException("Invalid arguments!");
@@ -95,7 +109,7 @@ namespace CASCToolHost.Controllers
             {
                 return new FileContentResult(CASC.GetFileByFilename(buildConfig, cdnConfig, filename), "application/octet-stream")
                 {
-                    FileDownloadName = filename
+                    FileDownloadName = Path.GetFileName(filename)
                 };
             }
             catch (FileNotFoundException)
