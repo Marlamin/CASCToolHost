@@ -91,6 +91,7 @@ namespace CASCToolHost.Controllers
                 print(patchedFile, "MODIFIED");
             }
 
+            result.Sort();
             return string.Join('\n', result.ToArray());
         }
     }
