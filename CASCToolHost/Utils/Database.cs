@@ -89,6 +89,24 @@ namespace CASCToolHost.Utils
             return fileList.ToArray();
         }
 
+        public Dictionary<ulong, string> GetKnownLookups()
+        {
+            var dict = new Dictionary<ulong, string>();
+
+            using (var cmd = connection.CreateCommand())
+            {
+                cmd.CommandText = "SELECT filename, CONV(lookup, 16, 10) as lookup from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
+                var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    dict.Add(ulong.Parse(reader["lookup"].ToString()), reader["filename"].ToString());
+                }
+                reader.Close();
+            }
+
+            return dict;
+        }
+
         public string[] GetFilesByBuild(string buildConfig)
         {
             var config = Config.GetBuildConfig("http://cdn.blizzard.com/tpr/wow/", buildConfig);
