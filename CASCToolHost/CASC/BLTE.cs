@@ -9,11 +9,10 @@ namespace CASCToolHost
 {
     public static class BLTE
     {
-        public static byte[] Parse(byte[] content)
+        public static byte[] Parse(byte[] content, bool verify = true)
         {
-            MemoryStream result = new MemoryStream();
-
-            using (BinaryReader bin = new BinaryReader(new MemoryStream(content)))
+            using (var result = new MemoryStream())
+            using (var bin = new BinaryReader(new MemoryStream(content)))
             {
                 if (bin.ReadUInt32() != 0x45544c42) { throw new Exception("Not a BLTE file"); }
 
@@ -31,19 +30,9 @@ namespace CASCToolHost
                 }
                 else
                 {
-
                     var bytes = bin.ReadBytes(4);
 
                     var chunkCount = bytes[1] << 16 | bytes[2] << 8 | bytes[3] << 0;
-
-                    //var unk = bin.ReadByte();
-
-                    ////Code by TOM_RUS 
-                    //byte v1 = bin.ReadByte();
-                    //byte v2 = bin.ReadByte();
-                    //byte v3 = bin.ReadByte();
-                    //var chunkCount = v1 << 16 | v2 << 8 | v3 << 0; // 3-byte
-                    ////Retrieved from https://github.com/WoW-Tools/CASCExplorer/blob/cli/CascLib/BLTEHandler.cs#L76
 
                     var supposedHeaderSize = 24 * chunkCount + 12;
 
@@ -73,8 +62,6 @@ namespace CASCToolHost
                 {
                     var chunk = chunkInfos[index];
 
-                    MemoryStream chunkResult = new MemoryStream();
-
                     if (chunk.inFileSize > bin.BaseStream.Length)
                     {
                         throw new Exception("Trying to read more than is available!");
@@ -82,23 +69,30 @@ namespace CASCToolHost
 
                     var chunkBuffer = bin.ReadBytes(chunk.inFileSize);
 
-                    var hasher = MD5.Create();
-                    var md5sum = hasher.ComputeHash(chunkBuffer);
-
-                    if (chunk.isFullChunk && BitConverter.ToString(md5sum) != BitConverter.ToString(chunk.checkSum))
+                    if (verify)
                     {
-                        throw new Exception("MD5 checksum mismatch on BLTE chunk! Sum is " + BitConverter.ToString(md5sum).Replace("-", "") + " but is supposed to be " + BitConverter.ToString(chunk.checkSum).Replace("-", ""));
+                        var hasher = MD5.Create();
+                        var md5sum = hasher.ComputeHash(chunkBuffer);
+
+                        if (chunk.isFullChunk && BitConverter.ToString(md5sum) != BitConverter.ToString(chunk.checkSum))
+                        {
+                            throw new Exception("MD5 checksum mismatch on BLTE chunk! Sum is " + BitConverter.ToString(md5sum).Replace("-", "") + " but is supposed to be " + BitConverter.ToString(chunk.checkSum).Replace("-", ""));
+                        }
                     }
 
-                    HandleDataBlock(chunkBuffer, index, chunk, chunkResult);
-
-                    var chunkres = chunkResult.ToArray();
-                    if (chunk.isFullChunk && chunkres.Length != chunk.actualSize)
+                    using (var chunkResult = new MemoryStream())
                     {
-                        throw new Exception("Decoded result is wrong size!");
-                    }
+                        HandleDataBlock(chunkBuffer, index, chunk, chunkResult);
 
-                    result.Write(chunkres, 0, chunkres.Length);
+                        var chunkres = chunkResult.ToArray();
+
+                        if (chunk.isFullChunk && chunkres.Length != chunk.actualSize)
+                        {
+                            throw new Exception("Decoded result is wrong size!");
+                        }
+
+                        result.Write(chunkres, 0, chunkres.Length);
+                    }
                 }
 
                 foreach (var chunk in chunkInfos)
@@ -112,13 +106,13 @@ namespace CASCToolHost
                         bin.BaseStream.Position += chunk.inFileSize;
                     }
                 }
-            }
 
-            return result.ToArray();
+                return result.ToArray();
+            }
         }
         private static void HandleDataBlock(byte[] chunkBuffer, int index, BLTEChunkInfo chunk, MemoryStream chunkResult)
         {
-            using (BinaryReader chunkreader = new BinaryReader(new MemoryStream(chunkBuffer)))
+            using (var chunkreader = new BinaryReader(new MemoryStream(chunkBuffer)))
             {
                 var mode = chunkreader.ReadChar();
 
@@ -128,9 +122,9 @@ namespace CASCToolHost
                         chunkResult.Write(chunkreader.ReadBytes(chunk.actualSize), 0, chunk.actualSize); //read actual size because we already read the N from chunkreader
                         break;
                     case 'Z': // zlib
-                        using (MemoryStream stream = new MemoryStream(chunkreader.ReadBytes(chunk.inFileSize - 1), 2, chunk.inFileSize - 3))
+                        using (var stream = new MemoryStream(chunkreader.ReadBytes(chunk.inFileSize - 1), 2, chunk.inFileSize - 3))
+                        using (var ds = new DeflateStream(stream, CompressionMode.Decompress))
                         {
-                            var ds = new DeflateStream(stream, CompressionMode.Decompress);
                             ds.CopyTo(chunkResult);
                         }
                         break;
@@ -147,9 +141,6 @@ namespace CASCToolHost
                             chunkResult.Write(new byte[chunk.actualSize], 0, chunk.actualSize);
                             break;
                         }
-
-                        //Console.WriteLine("File is encrypted with key " + ReturnEncryptionKeyName(chunkreader.ReadBytes(chunk.inFileSize)));
-                        //Console.WriteLine("Encrypted chunk size is " + chunk.inFileSize);
 
                         // Override inFileSize with decrypted length because it now differs from original encrypted chunk.inFileSize which breaks decompression
                         chunk.inFileSize = decrypted.Length;
