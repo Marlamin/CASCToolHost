@@ -22,8 +22,7 @@ namespace CASCToolHost.Controllers
             // Retrieve CDNConfig from DB if not set in request
             if (string.IsNullOrEmpty(cdnConfig) && !string.IsNullOrEmpty(buildConfig))
             {
-                var database = new Database();
-                cdnConfig = database.GetCDNConfigByBuildConfig(buildConfig);
+                cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfig);
             }
 
             Logger.WriteLine("Serving file \"" + filename + "\" (" + contenthash + ") for build " + buildConfig + " and cdn " + cdnConfig);
@@ -41,15 +40,13 @@ namespace CASCToolHost.Controllers
             // Retrieve CDNConfig from DB if not set in request
             if (string.IsNullOrEmpty(cdnConfig) && !string.IsNullOrEmpty(buildConfig))
             {
-                var database = new Database();
-                cdnConfig = database.GetCDNConfigByBuildConfig(buildConfig);
+                cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfig);
             }
 
             // Retrieve filename from DB if not set in request
             if (string.IsNullOrEmpty(filename) && filedataid != 0)
             {
-                var database = new Database();
-                filename = Path.GetFileName(database.GetFilenameByFileDataID(filedataid));
+                filename = Path.GetFileName(Database.GetFilenameByFileDataID(filedataid));
                 if (string.IsNullOrEmpty(filename))
                 {
                     filename = filedataid + ".unk";
@@ -94,8 +91,7 @@ namespace CASCToolHost.Controllers
             // Retrieve CDNConfig from DB if not set in request
             if (string.IsNullOrEmpty(cdnConfig) && !string.IsNullOrEmpty(buildConfig))
             {
-                var database = new Database();
-                cdnConfig = database.GetCDNConfigByBuildConfig(buildConfig);
+                cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfig);
             }
 
             if (string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || string.IsNullOrEmpty(filename))

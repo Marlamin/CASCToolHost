@@ -45,8 +45,7 @@ namespace CASCToolHost.Controllers
             Logger.WriteLine("Serving root diff for root " + from + " => " + to);
 
             var result = new List<string>();
-            var database = new Database();
-            var lookups = database.GetKnownLookups();
+            var lookups = Database.GetKnownLookups();
 
             var rootFrom = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), from, true);
             var rootTo = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), to, true);

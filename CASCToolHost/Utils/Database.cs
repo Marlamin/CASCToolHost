@@ -6,123 +6,129 @@ using System.Linq;
 
 namespace CASCToolHost.Utils
 {
-    public class Database
+    public static class Database
     {
-        private MySqlConnection connection;
-        public Database()
-        {
-            connection = new MySqlConnection(SettingsManager.connectionString);
-
-            try
-            {
-                connection.Open();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("An error occured opening a MySQL connection: " + e.Message);
-            }
-        }
-
-        ~Database()
-        {
-            connection.Close();
-        }
-
-        public string GetCDNConfigByBuildConfig(string buildConfig)
+        public static string GetCDNConfigByBuildConfig(string buildConfig)
         {
             var cdnconfig = "";
 
-            using (var cmd = connection.CreateCommand())
+            using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                cmd.CommandText = "SELECT cdnconfig from wow_versions WHERE buildconfig = @hash LIMIT 1";
-                cmd.Parameters.AddWithValue("@hash", buildConfig);
-                var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                connection.Open();
+                using (var cmd = connection.CreateCommand())
                 {
-                    cdnconfig = reader["cdnconfig"].ToString();
+                    cmd.CommandText = "SELECT cdnconfig from wow_versions WHERE buildconfig = @hash LIMIT 1";
+                    cmd.Parameters.AddWithValue("@hash", buildConfig);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            cdnconfig = reader["cdnconfig"].ToString();
+                        }
+                    }
                 }
-                reader.Close();
-            }
 
-            if (string.IsNullOrEmpty(cdnconfig))
-            {
-                throw new FileNotFoundException("Unable to locate proper CDNConfig for BuildConfig " + buildConfig);
+                if (string.IsNullOrEmpty(cdnconfig))
+                {
+                    throw new FileNotFoundException("Unable to locate proper CDNConfig for BuildConfig " + buildConfig);
+                }
             }
 
             return cdnconfig;
         }
 
-        public string GetFilenameByFileDataID(uint filedataid)
+        public static string GetFilenameByFileDataID(uint filedataid)
         {
             var filename = "";
 
-            using (var cmd = connection.CreateCommand())
+            using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                cmd.CommandText = "SELECT filename from wow_rootfiles WHERE id = @id";
-                cmd.Parameters.AddWithValue("@id", filedataid);
-                var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                connection.Open();
+                using (var cmd = connection.CreateCommand())
                 {
-                    filename = reader["filename"].ToString();
+                    cmd.CommandText = "SELECT filename from wow_rootfiles WHERE id = @id";
+                    cmd.Parameters.AddWithValue("@id", filedataid);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            filename = reader["filename"].ToString();
+                        }
+                    }
                 }
-                reader.Close();
             }
-
+            
             return filename;
         }
 
-        public string[] GetFiles()
+        public static string[] GetFiles()
         {
             var fileList = new List<string>();
 
-            using (var cmd = connection.CreateCommand())
+            using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                cmd.CommandText = "SELECT filename from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
-                var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                connection.Open();
+                using (var cmd = connection.CreateCommand())
                 {
-                    fileList.Add(reader["filename"].ToString());
+                    cmd.CommandText = "SELECT filename from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            fileList.Add(reader["filename"].ToString());
+                        }
+                    }
                 }
-                reader.Close();
             }
 
             return fileList.ToArray();
         }
 
-        public Dictionary<ulong, string> GetKnownLookups()
+        public static Dictionary<ulong, string> GetKnownLookups()
         {
             var dict = new Dictionary<ulong, string>();
 
-            using (var cmd = connection.CreateCommand())
+            using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                cmd.CommandText = "SELECT filename, CONV(lookup, 16, 10) as lookup from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
-                var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                connection.Open();
+                using (var cmd = connection.CreateCommand())
                 {
-                    dict.Add(ulong.Parse(reader["lookup"].ToString()), reader["filename"].ToString());
+                    cmd.CommandText = "SELECT filename, CONV(lookup, 16, 10) as lookup from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            dict.Add(ulong.Parse(reader["lookup"].ToString()), reader["filename"].ToString());
+                        }
+                    }
                 }
-                reader.Close();
             }
+            
 
             return dict;
         }
 
-        public string[] GetFilesByBuild(string buildConfig)
+        public static string[] GetFilesByBuild(string buildConfig)
         {
             var config = Config.GetBuildConfig("http://cdn.blizzard.com/tpr/wow/", buildConfig);
 
             var rootHash = "";
 
-            using (var cmd = connection.CreateCommand())
+            using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                cmd.CommandText = "SELECT root_cdn FROM wow_buildconfig WHERE hash = @hash";
-                cmd.Parameters.AddWithValue("@hash", buildConfig);
-                var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                connection.Open();
+                using (var cmd = connection.CreateCommand())
                 {
-                    rootHash = reader["root_cdn"].ToString();
+                    cmd.CommandText = "SELECT root_cdn FROM wow_buildconfig WHERE hash = @hash";
+                    cmd.Parameters.AddWithValue("@hash", buildConfig);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            rootHash = reader["root_cdn"].ToString();
+                        }
+                    }
                 }
-                reader.Close();
             }
 
             if (rootHash == "")
@@ -153,16 +159,22 @@ namespace CASCToolHost.Utils
 
             var fileList = new Dictionary<uint, string>();
 
-            using (var cmd = connection.CreateCommand())
+            using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                cmd.CommandText = "SELECT id, filename from wow_rootfiles WHERE filename IS NOT NULL ORDER BY id DESC";
-                var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                connection.Open();
+                using (var cmd = connection.CreateCommand())
                 {
-                    fileList.Add(uint.Parse(reader["id"].ToString()), reader["filename"].ToString());
+                    cmd.CommandText = "SELECT id, filename from wow_rootfiles WHERE filename IS NOT NULL ORDER BY id DESC";
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            fileList.Add(uint.Parse(reader["id"].ToString()), reader["filename"].ToString());
+                        }
+                    }
                 }
-                reader.Close();
             }
+            
 
             var returnNames = new List<string>();
             foreach (var entry in root.entries)
