@@ -1,5 +1,4 @@
 ﻿using MySql.Data.MySqlClient;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -39,6 +38,7 @@ namespace CASCToolHost.Utils
 
         public static string GetFilenameByFileDataID(uint filedataid)
         {
+            Logger.WriteLine("Looking up filename for " + filedataid);
             var filename = "";
 
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
@@ -57,7 +57,7 @@ namespace CASCToolHost.Utils
                     }
                 }
             }
-            
+
             return filename;
         }
 
@@ -84,6 +84,29 @@ namespace CASCToolHost.Utils
             return fileList.ToArray();
         }
 
+        public static Dictionary<uint, string> GetKnownFiles()
+        {
+            var dict = new Dictionary<uint, string>();
+
+            using (var connection = new MySqlConnection(SettingsManager.connectionString))
+            {
+                connection.Open();
+                using (var cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT id, filename from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            dict.Add(uint.Parse(reader["id"].ToString()), reader["filename"].ToString());
+                        }
+                    }
+                }
+            }
+
+            return dict;
+        }
+
         public static Dictionary<ulong, string> GetKnownLookups()
         {
             var dict = new Dictionary<ulong, string>();
@@ -103,7 +126,6 @@ namespace CASCToolHost.Utils
                     }
                 }
             }
-            
 
             return dict;
         }
@@ -155,6 +177,11 @@ namespace CASCToolHost.Utils
                 }
             }
 
+            return GetFilesByRoot(rootHash);
+        }
+
+        public static string[] GetFilesByRoot(string rootHash)
+        {
             var root = NGDP.GetRoot("http://cdn.blizzard.com/tpr/wow/", rootHash, true);
 
             var fileList = new Dictionary<uint, string>();
@@ -174,7 +201,6 @@ namespace CASCToolHost.Utils
                     }
                 }
             }
-            
 
             var returnNames = new List<string>();
             foreach (var entry in root.entries)

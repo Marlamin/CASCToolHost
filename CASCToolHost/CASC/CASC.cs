@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CASCToolHost.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -18,6 +19,16 @@ namespace CASCToolHost
             public EncodingFile encoding;
             public RootFile root;
             public DateTime loadedAt;
+        }
+
+        public static void LoadBuild(string program, string buildConfigHash)
+        {
+            var cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfigHash);
+            if (string.IsNullOrEmpty(cdnConfig)){
+                throw new Exception("Unable to locate CDNconfig for buildconfig " + buildConfigHash);
+            }
+
+            LoadBuild(program, buildConfigHash, cdnConfig);
         }
 
         public static void LoadBuild(string program, string buildConfigHash, string cdnConfigHash)
