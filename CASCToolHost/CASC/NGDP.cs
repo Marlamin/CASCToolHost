@@ -218,8 +218,23 @@ namespace CASCToolHost
 
             if (!parseIt) return root;
 
+            var hasher = new Jenkins96();
+
             using (BinaryReader bin = new BinaryReader(new MemoryStream(BLTE.Parse(content))))
             {
+                var header = bin.ReadUInt32();
+                uint totalFiles = 0;
+                uint namedFiles = 0;
+                if (header == 1296454484)
+                {
+                    totalFiles = bin.ReadUInt32();
+                    namedFiles = bin.ReadUInt32();
+                }
+                else
+                {
+                    bin.BaseStream.Position = 0;
+                }
+
                 while (bin.BaseStream.Position < bin.BaseStream.Length)
                 {
                     var count = bin.ReadUInt32();
@@ -244,7 +259,14 @@ namespace CASCToolHost
                     for (var i = 0; i < count; ++i)
                     {
                         entries[i].md5 = bin.Read<MD5Hash>();
-                        entries[i].lookup = bin.ReadUInt64();
+                        if (contentFlags.HasFlag(ContentFlags.NoNames))
+                        {
+                            entries[i].lookup = hasher.ComputeHash("BY_FDID_" + entries[i].fileDataID);
+                        }
+                        else
+                        {
+                            entries[i].lookup = bin.ReadUInt64();
+                        }
                         root.entries.Add(entries[i].lookup, entries[i]);
                     }
                 }
@@ -462,8 +484,13 @@ namespace CASCToolHost
 
                 using (BinaryReader bin = new BinaryReader(new MemoryStream(indexContent)))
                 {
+                    bin.BaseStream.Position = bin.BaseStream.Length - 12;
+                    var entryCount = bin.ReadUInt32();
+                    bin.BaseStream.Position = 0;
+
                     int indexEntries = indexContent.Length / 4096;
 
+                    var entriesRead = 0;
                     for (var b = 0; b < indexEntries; b++)
                     {
                         for (var bi = 0; bi < 170; bi++)
@@ -476,6 +503,8 @@ namespace CASCToolHost
                                 size = bin.ReadUInt32(true),
                                 offset = bin.ReadUInt32(true)
                             };
+
+                            entriesRead++;
 
                             cacheLock.EnterUpgradeableReadLock();
                             try
@@ -498,6 +527,11 @@ namespace CASCToolHost
                                 cacheLock.ExitUpgradeableReadLock();
                             }
                         }
+
+                        if (entriesRead == entryCount)
+                            return;
+
+                        // 16 bytes padding that rounds the chunk to 4096 bytes (index entry is 24 bytes, 24 * 170 = 4080 bytes so 16 bytes remain)
                         bin.ReadBytes(16);
                     }
                 }
