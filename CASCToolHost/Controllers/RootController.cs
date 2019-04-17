@@ -45,13 +45,14 @@ namespace CASCToolHost.Controllers
             Logger.WriteLine("Serving root diff for root " + from + " => " + to);
 
             var result = new List<string>();
-            var lookups = Database.GetKnownLookups();
+            var filedataids = Database.GetKnownFiles();
 
-            var rootFrom = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), from, true);
-            var rootTo = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), to, true);
+            // Note the conversion to FDID => Entry at the end.
+            var rootFrom = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), from, true).entries.ToDictionary(x => x.Value.First().fileDataID, x => x.Value);
+            var rootTo = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), to, true).entries.ToDictionary(x => x.Value.First().fileDataID, x => x.Value);
 
-            var fromEntries = rootFrom.entries.Keys.ToHashSet();
-            var toEntries = rootTo.entries.Keys.ToHashSet();
+            var fromEntries = rootFrom.Keys.ToHashSet();
+            var toEntries = rootTo.Keys.ToHashSet();
 
             var commonEntries = fromEntries.Intersect(toEntries);
             var removedEntries = fromEntries.Except(commonEntries);
@@ -61,27 +62,27 @@ namespace CASCToolHost.Controllers
             {
                 var lookup = entry.lookup.ToString("x").PadLeft(16, '0');
                 var md5 = entry.md5.ToHexString().ToLower();
-                var fileName = lookups.ContainsKey(entry.lookup) ? lookups[entry.lookup] : "Unknown File: " + entry.lookup.ToString("x").PadLeft(16, '0');
+                var fileName = filedataids.ContainsKey(entry.fileDataID) ? filedataids[entry.fileDataID] : "Unknown File: " + entry.lookup.ToString("x").PadLeft(16, '0');
 
                 result.Add(string.Format("[{0}] <b>{1}</b> (lookup: {2}, content md5: {3}, FileData ID: {4})", action, fileName, lookup, md5, entry.fileDataID));
             };
 
             foreach (var id in addedEntries)
             {
-                var entry = rootTo.entries[id].First();
+                var entry = rootTo[id].First();
                 print(entry, "ADDED");
             }
 
             foreach (var id in removedEntries)
             {
-                var entry = rootFrom.entries[id].First();
+                var entry = rootFrom[id].First();
                 print(entry, "REMOVED");
             }
 
             foreach (var id in commonEntries)
             {
-                var originalFile = rootFrom.entries[id].First();
-                var patchedFile = rootTo.entries[id].First();
+                var originalFile = rootFrom[id].First();
+                var patchedFile = rootTo[id].First();
 
                 if (originalFile.md5.ToHexString() == patchedFile.md5.ToHexString())
                 {
