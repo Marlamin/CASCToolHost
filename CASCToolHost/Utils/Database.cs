@@ -84,7 +84,7 @@ namespace CASCToolHost.Utils
             return fileList.ToArray();
         }
 
-        public static Dictionary<uint, string> GetKnownFiles()
+        public static Dictionary<uint, string> GetKnownFiles(bool includeUnverified = false)
         {
             var dict = new Dictionary<uint, string>();
 
@@ -99,6 +99,25 @@ namespace CASCToolHost.Utils
                         while (reader.Read())
                         {
                             dict.Add(uint.Parse(reader["id"].ToString()), reader["filename"].ToString());
+                        }
+                    }
+                }
+
+                if (includeUnverified)
+                {
+                    using (var cmd = connection.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT id, filename from wow_communityfiles ORDER BY id DESC";
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var id = uint.Parse(reader["id"].ToString());
+                                if (!dict.ContainsKey(id))
+                                {
+                                    dict.Add(id, reader["filename"].ToString());
+                                }
+                            }
                         }
                     }
                 }
