@@ -220,11 +220,14 @@ namespace CASCToolHost
 
             var hasher = new Jenkins96();
 
+            var namedCount = 0;
+            var unnamedCount = 0;
+            uint totalFiles = 0;
+            uint namedFiles = 0;
+
             using (BinaryReader bin = new BinaryReader(new MemoryStream(BLTE.Parse(content))))
             {
                 var header = bin.ReadUInt32();
-                uint totalFiles = 0;
-                uint namedFiles = 0;
                 if (header == 1296454484)
                 {
                     totalFiles = bin.ReadUInt32();
@@ -252,21 +255,27 @@ namespace CASCToolHost
 
                         filedataIds[i] = fileDataIndex + bin.ReadInt32();
                         entries[i].fileDataID = (uint)filedataIds[i];
-
                         fileDataIndex = filedataIds[i] + 1;
                     }
 
                     for (var i = 0; i < count; ++i)
                     {
                         entries[i].md5 = bin.Read<MD5Hash>();
+                    }
+
+                    for (var i = 0; i < count; ++i)
+                    {
                         if (contentFlags.HasFlag(ContentFlags.NoNames))
                         {
                             entries[i].lookup = hasher.ComputeHash("BY_FDID_" + entries[i].fileDataID);
+                            unnamedCount++;
                         }
                         else
                         {
                             entries[i].lookup = bin.ReadUInt64();
+                            namedCount++;
                         }
+
                         root.entries.Add(entries[i].lookup, entries[i]);
                     }
                 }
