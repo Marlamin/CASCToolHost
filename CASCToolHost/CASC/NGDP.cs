@@ -224,6 +224,7 @@ namespace CASCToolHost
             var unnamedCount = 0;
             uint totalFiles = 0;
             uint namedFiles = 0;
+            var newRoot = false;
 
             using (BinaryReader bin = new BinaryReader(new MemoryStream(BLTE.Parse(content))))
             {
@@ -232,6 +233,7 @@ namespace CASCToolHost
                 {
                     totalFiles = bin.ReadUInt32();
                     namedFiles = bin.ReadUInt32();
+                    newRoot = true;
                 }
                 else
                 {
@@ -258,26 +260,39 @@ namespace CASCToolHost
                         fileDataIndex = filedataIds[i] + 1;
                     }
 
-                    for (var i = 0; i < count; ++i)
+                    if (!newRoot)
                     {
-                        entries[i].md5 = bin.Read<MD5Hash>();
-                    }
-
-                    for (var i = 0; i < count; ++i)
-                    {
-                        if (contentFlags.HasFlag(ContentFlags.NoNames))
+                        for (var i = 0; i < count; ++i)
                         {
-                            entries[i].lookup = hasher.ComputeHash("BY_FDID_" + entries[i].fileDataID);
-                            unnamedCount++;
-                        }
-                        else
-                        {
+                            entries[i].md5 = bin.Read<MD5Hash>();
                             entries[i].lookup = bin.ReadUInt64();
-                            namedCount++;
+                            root.entries.Add(entries[i].lookup, entries[i]);
+                        }
+                    }
+                    else
+                    {
+                        for (var i = 0; i < count; ++i)
+                        {
+                            entries[i].md5 = bin.Read<MD5Hash>();
                         }
 
-                        root.entries.Add(entries[i].lookup, entries[i]);
+                        for (var i = 0; i < count; ++i)
+                        {
+                            if (contentFlags.HasFlag(ContentFlags.NoNames))
+                            {
+                                entries[i].lookup = hasher.ComputeHash("BY_FDID_" + entries[i].fileDataID);
+                                unnamedCount++;
+                            }
+                            else
+                            {
+                                entries[i].lookup = bin.ReadUInt64();
+                                namedCount++;
+                            }
+
+                            root.entries.Add(entries[i].lookup, entries[i]);
+                        }
                     }
+                    
                 }
             }
 
