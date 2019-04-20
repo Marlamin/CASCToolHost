@@ -37,6 +37,12 @@ namespace CASCToolHost
 
             var unloadList = new List<string>();
 
+            if (buildDictionary.Count > 15)
+            {
+                Logger.WriteLine("More than 15 builds loaded. Unloading all builds!");
+                buildDictionary.Clear();
+            }
+
             foreach (var loadedBuild in buildDictionary)
             {
                 if (loadedBuild.Value.loadedAt < DateTime.Now.AddHours(-1))
