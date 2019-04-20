@@ -70,7 +70,7 @@ namespace CASCToolHost.Utils
                 connection.Open();
                 using (var cmd = connection.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT filename from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
+                    cmd.CommandText = "SELECT filename from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' AND verified = 1 ORDER BY id DESC";
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
@@ -93,31 +93,19 @@ namespace CASCToolHost.Utils
                 connection.Open();
                 using (var cmd = connection.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT id, filename from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
+                    if (!includeUnverified)
+                    {
+                        cmd.CommandText = "SELECT id, filename from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' AND verified = 1 ORDER BY id DESC";
+                    }
+                    else
+                    {
+                        cmd.CommandText = "SELECT id, filename from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
+                    }
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
                         {
                             dict.Add(uint.Parse(reader["id"].ToString()), reader["filename"].ToString());
-                        }
-                    }
-                }
-
-                if (includeUnverified)
-                {
-                    using (var cmd = connection.CreateCommand())
-                    {
-                        cmd.CommandText = "SELECT id, filename from wow_communityfiles ORDER BY id DESC";
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                var id = uint.Parse(reader["id"].ToString());
-                                if (!dict.ContainsKey(id))
-                                {
-                                    dict.Add(id, reader["filename"].ToString());
-                                }
-                            }
                         }
                     }
                 }
