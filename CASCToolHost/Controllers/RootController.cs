@@ -39,6 +39,13 @@ namespace CASCToolHost.Controllers
             return CASC.GetFileDataIDsInBuild(buildConfig, cdnConfig);
         }
 
+        [Route("fdidcount")]
+        public int Get(string rootcdn)
+        {
+            Logger.WriteLine("Serving filedataid count for root_cdn " + rootcdn);
+            return NGDP.GetRoot(Path.Combine(SettingsManager.cacheDir, "tpr", "wow"), rootcdn, true).entries.Count;
+        }
+
         [Route("diff")]
         public string Diff(string from, string to)
         {
