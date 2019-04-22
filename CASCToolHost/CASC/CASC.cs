@@ -305,13 +305,31 @@ namespace CASCToolHost
 
         public static uint[] GetFileDataIDsInBuild(string buildConfig, string cdnConfig)
         {
-            if (!buildDictionary.ContainsKey(buildConfig))
+            var rootcdn = Database.GetRootCDNByBuildConfig(buildConfig);
+
+            RootFile root;
+
+            if (!string.IsNullOrEmpty(rootcdn))
             {
-                LoadBuild("wowt", buildConfig, cdnConfig);
+                root = NGDP.GetRoot(Path.Combine(SettingsManager.cacheDir, "tpr", "wow"), rootcdn, true);
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(cdnConfig))
+                {
+                    cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfig);
+                }
+
+                if (!buildDictionary.ContainsKey(buildConfig))
+                {
+                    LoadBuild("wowt", buildConfig, cdnConfig);
+                }
+
+                root = buildDictionary[buildConfig].root;
             }
 
             var filedataids = new List<uint>();
-            foreach (var entry in buildDictionary[buildConfig].root.entries)
+            foreach (var entry in root.entries)
             {
                 filedataids.Add(entry.Value[0].fileDataID);
             }

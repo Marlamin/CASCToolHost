@@ -7,6 +7,29 @@ namespace CASCToolHost.Utils
 {
     public static class Database
     {
+        public static string GetRootCDNByBuildConfig(string buildConfig)
+        {
+            var rootcdn = "";
+
+            using (var connection = new MySqlConnection(SettingsManager.connectionString))
+            {
+                connection.Open();
+                using (var cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT root_cdn from wow_buildconfig WHERE hash = @hash LIMIT 1";
+                    cmd.Parameters.AddWithValue("@hash", buildConfig);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            rootcdn = reader["root_cdn"].ToString();
+                        }
+                    }
+                }
+            }
+
+            return rootcdn;
+        }
         public static string GetCDNConfigByBuildConfig(string buildConfig)
         {
             var cdnconfig = "";
