@@ -52,7 +52,7 @@ namespace CASCToolHost.Controllers
             Logger.WriteLine("Serving root diff for root " + from + " => " + to);
 
             var result = new List<string>();
-            var filedataids = Database.GetKnownFiles();
+            var filedataids = Database.GetKnownFiles(true);
 
             // Note the conversion to FDID => Entry at the end.
             var rootFrom = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), from, true).entries.ToDictionary(x => x.Value.First().fileDataID, x => x.Value);
