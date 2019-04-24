@@ -91,7 +91,7 @@ namespace CASCToolHost.Controllers
                 var originalFile = rootFrom[id].First();
                 var patchedFile = rootTo[id].First();
 
-                if (originalFile.md5.ToHexString() == patchedFile.md5.ToHexString())
+                if (originalFile.md5.Equals(patchedFile.md5))
                 {
                     continue;
                 }
