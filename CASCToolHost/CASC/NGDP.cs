@@ -202,7 +202,8 @@ namespace CASCToolHost
         {
             var root = new RootFile
             {
-                entries = new MultiDictionary<ulong, RootEntry>()
+                entriesLookup = new MultiDictionary<ulong, RootEntry>(),
+                entriesFDID = new MultiDictionary<uint, RootEntry>(),
             };
 
             byte[] content;
@@ -266,7 +267,8 @@ namespace CASCToolHost
                         {
                             entries[i].md5 = bin.Read<MD5Hash>();
                             entries[i].lookup = bin.ReadUInt64();
-                            root.entries.Add(entries[i].lookup, entries[i]);
+                            root.entriesLookup.Add(entries[i].lookup, entries[i]);
+                            root.entriesFDID.Add(entries[i].fileDataID, entries[i]);
                         }
                     }
                     else
@@ -289,7 +291,8 @@ namespace CASCToolHost
                                 namedCount++;
                             }
 
-                            root.entries.Add(entries[i].lookup, entries[i]);
+                            root.entriesLookup.Add(entries[i].lookup, entries[i]);
+                            root.entriesFDID.Add(entries[i].fileDataID, entries[i]);
                         }
                     }
                     

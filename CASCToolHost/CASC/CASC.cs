@@ -111,12 +111,9 @@ namespace CASCToolHost
                 LoadBuild("wowt", buildConfig, cdnConfig);
             }
 
-            foreach (var entry in buildDictionary[buildConfig].root.entries)
+            if (buildDictionary[buildConfig].root.entriesFDID.ContainsKey(filedataid))
             {
-                if (entry.Value[0].fileDataID == filedataid)
-                {
-                    return true;
-                }
+                return true;
             }
 
             return false;
@@ -132,12 +129,9 @@ namespace CASCToolHost
             var hasher = new Jenkins96();
             var lookup = hasher.ComputeHash(filename, true);
 
-            foreach (var entry in buildDictionary[buildConfig].root.entries)
+            if (buildDictionary[buildConfig].root.entriesLookup.ContainsKey(lookup))
             {
-                if (entry.Value[0].lookup == lookup)
-                {
-                    return true;
-                }
+                return true;
             }
 
             return false;
@@ -152,17 +146,14 @@ namespace CASCToolHost
 
             var target = "";
 
-            foreach (var entry in buildDictionary[buildConfig].root.entries)
+            if (buildDictionary[buildConfig].root.entriesFDID.TryGetValue(filedataid, out var entry))
             {
-                if (entry.Value[0].fileDataID == filedataid)
-                {
-                    RootEntry? prioritizedEntry = entry.Value.First(subentry =>
+                RootEntry? prioritizedEntry = entry.FirstOrDefault(subentry =>
                         subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
                     );
 
-                    var selectedEntry = (prioritizedEntry != null) ? prioritizedEntry.Value : entry.Value.First();
-                    target = selectedEntry.md5.ToHexString().ToLower();
-                }
+                var selectedEntry = (prioritizedEntry != null) ? prioritizedEntry.Value : entry.First();
+                target = selectedEntry.md5.ToHexString().ToLower();
             }
 
             if (string.IsNullOrEmpty(target))
@@ -265,7 +256,7 @@ namespace CASCToolHost
             var lookup = hasher.ComputeHash(filename, true);
             var target = "";
 
-            if (build.root.entries.TryGetValue(lookup, out var entry))
+            if (build.root.entriesLookup.TryGetValue(lookup, out var entry))
             {
                 RootEntry? prioritizedEntry = entry.FirstOrDefault(subentry =>
                         subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
@@ -295,7 +286,7 @@ namespace CASCToolHost
             var hasher = new Jenkins96();
             var lookup = hasher.ComputeHash(filename, true);
 
-            if (build.root.entries.TryGetValue(lookup, out var entry))
+            if (build.root.entriesLookup.TryGetValue(lookup, out var entry))
             {
                 return entry[0].fileDataID;
             }
@@ -328,12 +319,7 @@ namespace CASCToolHost
                 root = buildDictionary[buildConfig].root;
             }
 
-            var filedataids = new List<uint>();
-            foreach (var entry in root.entries)
-            {
-                filedataids.Add(entry.Value[0].fileDataID);
-            }
-            return filedataids.ToArray();
+            return root.entriesFDID.Keys.ToArray();
         }
     }
 }

@@ -233,9 +233,9 @@ namespace CASCToolHost.Utils
             }
 
             var returnNames = new List<string>();
-            foreach (var entry in root.entries)
+            foreach (var entry in root.entriesFDID)
             {
-                if (fileList.TryGetValue(entry.Value[0].fileDataID, out string filename))
+                if (fileList.TryGetValue(entry.Key, out string filename))
                 {
                     returnNames.Add(filename);
                 }

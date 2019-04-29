@@ -193,7 +193,8 @@ namespace CASCToolHost
 
     public struct RootFile
     {
-        public MultiDictionary<ulong, RootEntry> entries;
+        public MultiDictionary<ulong, RootEntry> entriesLookup;
+        public MultiDictionary<uint, RootEntry> entriesFDID;
     }
 
     public struct RootEntry

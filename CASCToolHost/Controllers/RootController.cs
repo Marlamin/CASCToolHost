@@ -43,7 +43,7 @@ namespace CASCToolHost.Controllers
         public int Get(string rootcdn)
         {
             Logger.WriteLine("Serving filedataid count for root_cdn " + rootcdn);
-            return NGDP.GetRoot(Path.Combine(SettingsManager.cacheDir, "tpr", "wow"), rootcdn, true).entries.Count;
+            return NGDP.GetRoot(Path.Combine(SettingsManager.cacheDir, "tpr", "wow"), rootcdn, true).entriesFDID.Count;
         }
 
         [Route("diff")]
@@ -54,15 +54,24 @@ namespace CASCToolHost.Controllers
             var result = new List<string>();
             var filedataids = Database.GetKnownFiles(true);
 
+            Logger.WriteLine("Loading both roots");
             // Note the conversion to FDID => Entry at the end.
-            var rootFrom = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), from, true).entries.ToDictionary(x => x.Value.First().fileDataID, x => x.Value);
-            var rootTo = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), to, true).entries.ToDictionary(x => x.Value.First().fileDataID, x => x.Value);
+            var rootFrom = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), from, true);
+            var rootTo = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), to, true);
 
-            var fromEntries = rootFrom.Keys.ToHashSet();
-            var toEntries = rootTo.Keys.ToHashSet();
+            Logger.WriteLine("Converting to dictionary");
+            var rootFromEntries = rootFrom.entriesFDID;
+            var rootToEntries = rootTo.entriesFDID;
 
+            Logger.WriteLine("Converting to hashset");
+            var fromEntries = rootFromEntries.Keys.ToHashSet();
+            var toEntries = rootToEntries.Keys.ToHashSet();
+
+            Logger.WriteLine("Running intersect for common entries..");
             var commonEntries = fromEntries.Intersect(toEntries);
+            Logger.WriteLine("Running except for removed entries..");
             var removedEntries = fromEntries.Except(commonEntries);
+            Logger.WriteLine("Running except for added entries..");
             var addedEntries = toEntries.Except(commonEntries);
 
             Action<RootEntry, string> print = delegate (RootEntry entry, string action)
@@ -74,22 +83,25 @@ namespace CASCToolHost.Controllers
                 result.Add(string.Format("[{0}] <b>{1}</b> (lookup: {2}, content md5: {3}, FileData ID: {4})", action, fileName, lookup, md5, entry.fileDataID));
             };
 
+            Logger.WriteLine("AddedEntries");
             foreach (var id in addedEntries)
             {
-                var entry = rootTo[id].First();
+                var entry = rootToEntries[id].First();
                 print(entry, "ADDED");
             }
 
+            Logger.WriteLine("RemovedEntries");
             foreach (var id in removedEntries)
             {
-                var entry = rootFrom[id].First();
+                var entry = rootFromEntries[id].First();
                 print(entry, "REMOVED");
             }
 
+            Logger.WriteLine("CommonEntries");
             foreach (var id in commonEntries)
             {
-                var originalFile = rootFrom[id].First();
-                var patchedFile = rootTo[id].First();
+                var originalFile = rootFromEntries[id].First();
+                var patchedFile = rootToEntries[id].First();
 
                 if (originalFile.md5.Equals(patchedFile.md5))
                 {
@@ -99,7 +111,9 @@ namespace CASCToolHost.Controllers
                 print(patchedFile, "MODIFIED");
             }
 
+            Logger.WriteLine("Sorting");
             result.Sort();
+            Logger.WriteLine("Done");
             return string.Join('\n', result.ToArray());
         }
 
@@ -138,7 +152,7 @@ namespace CASCToolHost.Controllers
 
             var build = CASC.buildDictionary[buildConfig];
 
-            result.recordsTotal = build.root.entries.Count;
+            result.recordsTotal = build.root.entriesLookup.Count;
 
             result.data = new List<List<string>>();
 
@@ -148,7 +162,7 @@ namespace CASCToolHost.Controllers
             {
                 var filenameMap = Database.GetKnownLookups();
 
-                foreach (var entry in build.root.entries)
+                foreach (var entry in build.root.entriesLookup)
                 {
                     var matches = false;
                     var row = new List<string>();
@@ -198,7 +212,7 @@ namespace CASCToolHost.Controllers
             {
                 result.recordsFiltered = result.recordsTotal;
 
-                var entries = build.root.entries.ToList();
+                var entries = build.root.entriesFDID.ToList();
                 foreach (var entry in entries.GetRange(start, length))
                 {
                     var row = new List<string>();
