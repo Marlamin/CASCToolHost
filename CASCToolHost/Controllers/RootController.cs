@@ -152,7 +152,7 @@ namespace CASCToolHost.Controllers
 
             var build = CASC.buildDictionary[buildConfig];
 
-            result.recordsTotal = build.root.entriesLookup.Count;
+            result.recordsTotal = build.root.entriesFDID.Count;
 
             result.data = new List<List<string>>();
 
@@ -160,9 +160,9 @@ namespace CASCToolHost.Controllers
 
             if (searching)
             {
-                var filenameMap = Database.GetKnownLookups();
+                //var filenameMap = Database.GetKnownLookups();
 
-                foreach (var entry in build.root.entriesLookup)
+                foreach (var entry in build.root.entriesFDID)
                 {
                     var matches = false;
                     var row = new List<string>();
@@ -173,7 +173,8 @@ namespace CASCToolHost.Controllers
                         matches = true;
                     }
 
-                    if (filenameMap.TryGetValue(entry.Key, out var filename))
+                    /*
+                     * if (filenameMap.TryGetValue(entry.Key, out var filename))
                     {
                         row.Add(filename);
                         if (filename.Contains(Request.Query["search[value]"]))
@@ -182,9 +183,9 @@ namespace CASCToolHost.Controllers
                         }
                     }
                     else
-                    {
+                    {*/
                         row.Add("");
-                    }
+                    /*}*/
 
                     row.Add(entry.Key.ToString("x"));
                     row.Add("");

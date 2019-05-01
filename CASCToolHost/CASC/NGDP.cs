@@ -282,16 +282,18 @@ namespace CASCToolHost
                         {
                             if (contentFlags.HasFlag(ContentFlags.NoNames))
                             {
-                                entries[i].lookup = hasher.ComputeHash("BY_FDID_" + entries[i].fileDataID);
+                                //entries[i].lookup = hasher.ComputeHash("BY_FDID_" + entries[i].fileDataID);
+                                entries[i].lookup = 0;
                                 unnamedCount++;
                             }
                             else
                             {
                                 entries[i].lookup = bin.ReadUInt64();
                                 namedCount++;
+
+                                root.entriesLookup.Add(entries[i].lookup, entries[i]);
                             }
 
-                            root.entriesLookup.Add(entries[i].lookup, entries[i]);
                             root.entriesFDID.Add(entries[i].fileDataID, entries[i]);
                         }
                     }
