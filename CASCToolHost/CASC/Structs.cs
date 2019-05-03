@@ -286,6 +286,7 @@ namespace CASCToolHost
         F00000008 = 0x8, // added in 7.2.0.23436
         F00000010 = 0x10, // added in 7.2.0.23436
         LowViolence = 0x80, // many models have this flag
+        Encrypted = 0x8000000,
         NoNames = 0x10000000,
         F20000000 = 0x20000000, // added in 21737
         Bundle = 0x40000000,
