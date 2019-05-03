@@ -1,4 +1,5 @@
 ﻿using MySql.Data.MySqlClient;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -82,6 +83,31 @@ namespace CASCToolHost.Utils
             }
 
             return filename;
+        }
+
+        public static uint GetFileDataIDByFilename(string filename)
+        {
+            Logger.WriteLine("Looking up filedataid for " + filename);
+            uint filedataid = 0;
+
+            using (var connection = new MySqlConnection(SettingsManager.connectionString))
+            {
+                connection.Open();
+                using (var cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT id from wow_rootfiles WHERE filename = @filename";
+                    cmd.Parameters.AddWithValue("@filename", filename.Replace('\\', '/').ToLower());
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            filedataid = uint.Parse(reader["id"].ToString());
+                        }
+                    }
+                }
+            }
+
+            return filedataid;
         }
 
         public static string[] GetFiles()

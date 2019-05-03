@@ -24,7 +24,8 @@ namespace CASCToolHost
         public static void LoadBuild(string program, string buildConfigHash)
         {
             var cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfigHash);
-            if (string.IsNullOrEmpty(cdnConfig)){
+            if (string.IsNullOrEmpty(cdnConfig))
+            {
                 throw new Exception("Unable to locate CDNconfig for buildconfig " + buildConfigHash);
             }
 
@@ -259,11 +260,28 @@ namespace CASCToolHost
             if (build.root.entriesLookup.TryGetValue(lookup, out var entry))
             {
                 RootEntry? prioritizedEntry = entry.FirstOrDefault(subentry =>
-                        subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
-                    );
+                    subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
+                );
 
                 var selectedEntry = (prioritizedEntry != null) ? prioritizedEntry.Value : entry.First();
                 target = selectedEntry.md5.ToHexString().ToLower();
+            }
+
+            if (string.IsNullOrEmpty(target))
+            {
+                var filedataid = Database.GetFileDataIDByFilename(filename);
+                if (filedataid != 0)
+                {
+                    if (build.root.entriesFDID.TryGetValue(filedataid, out var fdidentry))
+                    {
+                        RootEntry? prioritizedEntry = fdidentry.FirstOrDefault(subentry =>
+                            subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
+                        );
+
+                        var selectedEntry = (prioritizedEntry != null) ? prioritizedEntry.Value : fdidentry.First();
+                        target = selectedEntry.md5.ToHexString().ToLower();
+                    }
+                }
             }
 
             if (string.IsNullOrEmpty(target))
