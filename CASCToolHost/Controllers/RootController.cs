@@ -54,54 +54,75 @@ namespace CASCToolHost.Controllers
             var result = new List<string>();
             var filedataids = Database.GetKnownFiles(true);
 
-            Logger.WriteLine("Loading both roots");
-            // Note the conversion to FDID => Entry at the end.
             var rootFrom = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), from, true);
             var rootTo = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), to, true);
 
-            Logger.WriteLine("Converting to dictionary");
             var rootFromEntries = rootFrom.entriesFDID;
             var rootToEntries = rootTo.entriesFDID;
 
-            Logger.WriteLine("Converting to hashset");
             var fromEntries = rootFromEntries.Keys.ToHashSet();
             var toEntries = rootToEntries.Keys.ToHashSet();
 
-            Logger.WriteLine("Running intersect for common entries..");
             var commonEntries = fromEntries.Intersect(toEntries);
-            Logger.WriteLine("Running except for removed entries..");
             var removedEntries = fromEntries.Except(commonEntries);
-            Logger.WriteLine("Running except for added entries..");
             var addedEntries = toEntries.Except(commonEntries);
 
             Action<RootEntry, string> print = delegate (RootEntry entry, string action)
             {
-                var lookup = entry.lookup.ToString("x").PadLeft(16, '0');
                 var md5 = entry.md5.ToHexString().ToLower();
-                var fileName = filedataids.ContainsKey(entry.fileDataID) ? filedataids[entry.fileDataID] : "Unknown File: " + entry.lookup.ToString("x").PadLeft(16, '0');
 
-                result.Add(string.Format("[{0}] <b>{1}</b> (lookup: {2}, content md5: {3}, FileData ID: {4})", action, fileName, lookup, md5, entry.fileDataID));
+                var fileName = filedataids.ContainsKey(entry.fileDataID) ? filedataids[entry.fileDataID] : "Unknown File: " + entry.fileDataID;
+
+                if (entry.lookup == 0)
+                {
+                    result.Add(string.Format("[{0}] <b>{1}</b> (content md5: {2}, FileData ID: {3})", action, fileName, md5, entry.fileDataID));
+                }
+                else
+                {
+                    var lookup = entry.lookup.ToString("x").PadLeft(16, '0');
+                    result.Add(string.Format("[{0}] <b>{1}</b> (lookup: {2}, content md5: {3}, FileData ID: {4})", action, fileName, lookup, md5, entry.fileDataID));
+                }
             };
 
-            Logger.WriteLine("AddedEntries");
             foreach (var id in addedEntries)
             {
-                var entry = rootToEntries[id].First();
-                print(entry, "ADDED");
+                var toEntry = rootToEntries[id];
+                RootEntry? toPrio = toEntry.FirstOrDefault(subentry =>
+                        subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
+                    );
+
+                var addedEntry = (toPrio != null) ? toPrio.Value : toEntry.First();
+                print(addedEntry, "ADDED");
             }
 
-            Logger.WriteLine("RemovedEntries");
             foreach (var id in removedEntries)
             {
-                var entry = rootFromEntries[id].First();
-                print(entry, "REMOVED");
+                var fromEntry = rootFromEntries[id];
+                RootEntry? fromPrio = fromEntry.FirstOrDefault(subentry =>
+                        subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
+                    );
+                var removedEntry = (fromPrio != null) ? fromPrio.Value : fromEntry.First();
+
+                print(removedEntry, "REMOVED");
             }
 
-            Logger.WriteLine("CommonEntries");
             foreach (var id in commonEntries)
             {
-                var originalFile = rootFromEntries[id].First();
-                var patchedFile = rootToEntries[id].First();
+                var fromEntry = rootFromEntries[id];
+                var toEntry = rootToEntries[id];
+
+                RootEntry? fromPrio = fromEntry.FirstOrDefault(subentry =>
+                        subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
+                    );
+
+                var originalFile = (fromPrio != null) ? fromPrio.Value : fromEntry.First();
+
+                RootEntry? toPrio = toEntry.FirstOrDefault(subentry =>
+                        subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
+                    );
+
+                var patchedFile = (toPrio != null) ? toPrio.Value : toEntry.First();
+
 
                 if (originalFile.md5.Equals(patchedFile.md5))
                 {
@@ -111,9 +132,7 @@ namespace CASCToolHost.Controllers
                 print(patchedFile, "MODIFIED");
             }
 
-            Logger.WriteLine("Sorting");
             result.Sort();
-            Logger.WriteLine("Done");
             return string.Join('\n', result.ToArray());
         }
 
@@ -168,7 +187,7 @@ namespace CASCToolHost.Controllers
                     var row = new List<string>();
                     row.Add(entry.Value[0].fileDataID.ToString());
 
-                    if(entry.Value[0].fileDataID == Request.Query["search[value]"])
+                    if (entry.Value[0].fileDataID == Request.Query["search[value]"])
                     {
                         matches = true;
                     }
@@ -184,7 +203,7 @@ namespace CASCToolHost.Controllers
                     }
                     else
                     {*/
-                        row.Add("");
+                    row.Add("");
                     /*}*/
 
                     row.Add(entry.Key.ToString("x"));
