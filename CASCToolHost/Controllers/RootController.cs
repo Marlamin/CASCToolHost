@@ -50,8 +50,15 @@ namespace CASCToolHost.Controllers
         public string Diff(string from, string to)
         {
             Logger.WriteLine("Serving root diff for root " + from + " => " + to);
-
             var result = new List<string>();
+            var csv = false;
+
+            if (Request.Query.ContainsKey("csv"))
+            {
+                csv = true;
+                result.Add("Action;Name;FileDataID");
+            }
+
             var filedataids = Database.GetKnownFiles(true);
 
             var rootFrom = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), from, true);
@@ -73,14 +80,21 @@ namespace CASCToolHost.Controllers
 
                 var fileName = filedataids.ContainsKey(entry.fileDataID) ? filedataids[entry.fileDataID] : "Unknown File: " + entry.fileDataID;
 
-                if (entry.lookup == 0)
+                if (csv)
                 {
-                    result.Add(string.Format("[{0}] <b>{1}</b> (content md5: {2}, FileData ID: {3})", action, fileName, md5, entry.fileDataID));
+                    result.Add(string.Format("{0};{1};{2}", action, fileName, entry.fileDataID));
                 }
                 else
                 {
-                    var lookup = entry.lookup.ToString("x").PadLeft(16, '0');
-                    result.Add(string.Format("[{0}] <b>{1}</b> (lookup: {2}, content md5: {3}, FileData ID: {4})", action, fileName, lookup, md5, entry.fileDataID));
+                    if (entry.lookup == 0)
+                    {
+                        result.Add(string.Format("[{0}] <b>{1}</b> (content md5: {2}, FileData ID: {3})", action, fileName, md5, entry.fileDataID));
+                    }
+                    else
+                    {
+                        var lookup = entry.lookup.ToString("x").PadLeft(16, '0');
+                        result.Add(string.Format("[{0}] <b>{1}</b> (lookup: {2}, content md5: {3}, FileData ID: {4})", action, fileName, lookup, md5, entry.fileDataID));
+                    }
                 }
             };
 
