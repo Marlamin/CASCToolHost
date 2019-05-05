@@ -105,7 +105,7 @@ namespace CASCToolHost.Controllers
                         subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
                     );
 
-                var addedEntry = (toPrio != null) ? toPrio.Value : toEntry.First();
+                var addedEntry = (toPrio.Value.fileDataID != 0) ? toPrio.Value : toEntry.First();
                 print(addedEntry, "ADDED");
             }
 
@@ -115,7 +115,7 @@ namespace CASCToolHost.Controllers
                 RootEntry? fromPrio = fromEntry.FirstOrDefault(subentry =>
                         subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
                     );
-                var removedEntry = (fromPrio != null) ? fromPrio.Value : fromEntry.First();
+                var removedEntry = (fromPrio.Value.fileDataID != 0) ? fromPrio.Value : fromEntry.First();
 
                 print(removedEntry, "REMOVED");
             }
@@ -129,13 +129,13 @@ namespace CASCToolHost.Controllers
                         subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
                     );
 
-                var originalFile = (fromPrio != null) ? fromPrio.Value : fromEntry.First();
+                var originalFile = (fromPrio.Value.fileDataID != 0) ? fromPrio.Value : fromEntry.First();
 
                 RootEntry? toPrio = toEntry.FirstOrDefault(subentry =>
                         subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
                     );
 
-                var patchedFile = (toPrio != null) ? toPrio.Value : toEntry.First();
+                var patchedFile = (toPrio.Value.fileDataID != 0) ? toPrio.Value : toEntry.First();
 
 
                 if (originalFile.md5.Equals(patchedFile.md5))
