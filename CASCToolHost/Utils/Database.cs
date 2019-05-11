@@ -186,7 +186,7 @@ namespace CASCToolHost.Utils
             return dict;
         }
 
-        public static string[] GetFilesByBuild(string buildConfig)
+        public static Dictionary<uint, string> GetFilesByBuild(string buildConfig)
         {
             var config = Config.GetBuildConfig("http://cdn.blizzard.com/tpr/wow/", buildConfig);
 
@@ -236,7 +236,7 @@ namespace CASCToolHost.Utils
             return GetFilesByRoot(rootHash);
         }
 
-        public static string[] GetFilesByRoot(string rootHash)
+        public static Dictionary<uint, string> GetFilesByRoot(string rootHash)
         {
             var root = NGDP.GetRoot("http://cdn.blizzard.com/tpr/wow/", rootHash, true);
 
@@ -258,15 +258,15 @@ namespace CASCToolHost.Utils
                 }
             }
 
-            var returnNames = new List<string>();
+            var returnNames = new Dictionary<uint, string>();
             foreach (var entry in root.entriesFDID)
             {
                 if (fileList.TryGetValue(entry.Key, out string filename))
                 {
-                    returnNames.Add(filename);
+                    returnNames.Add(entry.Key, filename);
                 }
             }
-            return returnNames.ToArray();
+            return returnNames;
         }
     }
 }

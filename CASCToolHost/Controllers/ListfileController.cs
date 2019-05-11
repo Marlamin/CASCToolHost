@@ -30,7 +30,7 @@ namespace CASCToolHost.Controllers
         public ActionResult DownloadByBuild(string buildConfig)
         {
             Logger.WriteLine("Serving listfile for build " + buildConfig);
-            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', Database.GetFilesByBuild(buildConfig))), "text/plain")
+            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', Database.GetFilesByBuild(buildConfig).Values)), "text/plain")
             {
                 FileDownloadName = "listfile.txt"
             };
@@ -58,6 +58,25 @@ namespace CASCToolHost.Controllers
         {
             Logger.WriteLine("Serving unverified CSV listfile");
             var knownFiles = Database.GetKnownFiles(true);
+            var nameList = new List<string>();
+            foreach (var entry in knownFiles)
+            {
+                nameList.Add(entry.Key + ";" + entry.Value);
+            }
+
+            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', nameList.ToArray())), "text/plain")
+            {
+                FileDownloadName = "listfile.csv"
+            };
+        }
+
+        [Route("download/csv/build")]
+        public ActionResult DownloadCSVByBuild(string buildConfig)
+        {
+            Logger.WriteLine("Serving CSV listfile for build " + buildConfig);
+
+            var knownFiles = Database.GetFilesByBuild(buildConfig);
+
             var nameList = new List<string>();
             foreach (var entry in knownFiles)
             {
