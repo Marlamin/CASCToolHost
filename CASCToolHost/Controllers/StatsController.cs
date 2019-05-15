@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using CASCToolHost.Utils;
+using Microsoft.AspNetCore.Mvc;
 using System;
 
 namespace CASCToolHost.Controllers
@@ -11,7 +12,7 @@ namespace CASCToolHost.Controllers
         public string Get()
         {
             Console.WriteLine("[" + DateTime.Now + "] Serving stats!");
-            return "Builds loaded: " + CASC.buildDictionary.Count + "\nIndexes loaded: " + CASC.indexNames.Count + "\nFiles indexed: " + CASC.indexDictionary.Count;
+            return "Builds loaded: " + BuildCache.GetCount() + "\nIndexes loaded: " + CASC.indexNames.Count + "\nFiles indexed: " + CASC.indexDictionary.Count;
         }
     }
 }

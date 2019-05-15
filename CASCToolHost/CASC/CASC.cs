@@ -8,7 +8,6 @@ namespace CASCToolHost
 {
     public static class CASC
     {
-        public static Dictionary<string, Build> buildDictionary = new Dictionary<string, Build>();
         public static Dictionary<MD5Hash, IndexEntry> indexDictionary = new Dictionary<MD5Hash, IndexEntry>(new MD5HashComparer());
         public static List<MD5Hash> indexNames = new List<MD5Hash>();
 
@@ -21,7 +20,7 @@ namespace CASCToolHost
             public DateTime loadedAt;
         }
 
-        public static void LoadBuild(string program, string buildConfigHash)
+        public static Build LoadBuild(string program, string buildConfigHash)
         {
             var cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfigHash);
             if (string.IsNullOrEmpty(cdnConfig))
@@ -29,34 +28,12 @@ namespace CASCToolHost
                 throw new Exception("Unable to locate CDNconfig for buildconfig " + buildConfigHash);
             }
 
-            LoadBuild(program, buildConfigHash, cdnConfig);
+            return LoadBuild(program, buildConfigHash, cdnConfig);
         }
 
-        public static void LoadBuild(string program, string buildConfigHash, string cdnConfigHash)
+        public static Build LoadBuild(string program, string buildConfigHash, string cdnConfigHash)
         {
             Logger.WriteLine("Loading build " + buildConfigHash + "..");
-
-            var unloadList = new List<string>();
-
-            if (buildDictionary.Count > 15)
-            {
-                Logger.WriteLine("More than 15 builds loaded. Unloading all builds!");
-                buildDictionary.Clear();
-            }
-
-            foreach (var loadedBuild in buildDictionary)
-            {
-                if (loadedBuild.Value.loadedAt < DateTime.Now.AddHours(-1))
-                {
-                    Logger.WriteLine("Unloading build " + loadedBuild.Key + " as it its been loaded over an hour ago.");
-                    unloadList.Add(loadedBuild.Key);
-                }
-            }
-
-            foreach (var unloadBuild in unloadList)
-            {
-                buildDictionary.Remove(unloadBuild);
-            }
 
             var build = new Build();
 
@@ -94,25 +71,14 @@ namespace CASCToolHost
             Logger.WriteLine("Loading indexes..");
             NGDP.GetIndexes(Path.Combine(CDN.cacheDir, cdnsFile.entries[0].path), build.cdnConfig.archives);
 
-            if (buildDictionary.ContainsKey(buildConfigHash))
-            {
-                Logger.WriteLine("Build was already loaded while this iteration was loading, not adding to cache!");
-            }
-            else
-            {
-                buildDictionary.Add(buildConfigHash, build);
-                Logger.WriteLine("Loaded build " + build.buildConfig.buildName + "!");
-            }
+            return build;
         }
 
         public static bool FileExists(string buildConfig, string cdnConfig, uint filedataid)
         {
-            if (!buildDictionary.ContainsKey(buildConfig))
-            {
-                LoadBuild("wowt", buildConfig, cdnConfig);
-            }
+            var build = BuildCache.GetOrCreate(buildConfig);
 
-            if (buildDictionary[buildConfig].root.entriesFDID.ContainsKey(filedataid))
+            if (build.root.entriesFDID.ContainsKey(filedataid))
             {
                 return true;
             }
@@ -122,15 +88,12 @@ namespace CASCToolHost
 
         public static bool FileExists(string buildConfig, string cdnConfig, string filename)
         {
-            if (!buildDictionary.ContainsKey(buildConfig))
-            {
-                LoadBuild("wowt", buildConfig, cdnConfig);
-            }
+            var build = BuildCache.GetOrCreate(buildConfig);
 
             var hasher = new Jenkins96();
             var lookup = hasher.ComputeHash(filename, true);
 
-            if (buildDictionary[buildConfig].root.entriesLookup.ContainsKey(lookup))
+            if (build.root.entriesLookup.ContainsKey(lookup))
             {
                 return true;
             }
@@ -140,14 +103,11 @@ namespace CASCToolHost
 
         public static byte[] GetFile(string buildConfig, string cdnConfig, uint filedataid)
         {
-            if (!buildDictionary.ContainsKey(buildConfig))
-            {
-                LoadBuild("wowt", buildConfig, cdnConfig);
-            }
+            var build = BuildCache.GetOrCreate(buildConfig, cdnConfig);
 
             var target = "";
 
-            if (buildDictionary[buildConfig].root.entriesFDID.TryGetValue(filedataid, out var entry))
+            if (build.root.entriesFDID.TryGetValue(filedataid, out var entry))
             {
                 RootEntry? prioritizedEntry = entry.FirstOrDefault(subentry =>
                         subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
@@ -167,14 +127,11 @@ namespace CASCToolHost
 
         public static byte[] GetFile(string buildConfig, string cdnConfig, string contenthash)
         {
-            if (!buildDictionary.ContainsKey(buildConfig))
-            {
-                LoadBuild("wowt", buildConfig, cdnConfig);
-            }
+            var build = BuildCache.GetOrCreate(buildConfig, cdnConfig);
 
             string target;
 
-            if (buildDictionary[buildConfig].encoding.aEntries.TryGetValue(contenthash.ToByteArray().ToMD5(), out var entry))
+            if (build.encoding.aEntries.TryGetValue(contenthash.ToByteArray().ToMD5(), out var entry))
             {
                 target = entry.eKey.ToHexString().ToLower();
             }
@@ -246,12 +203,7 @@ namespace CASCToolHost
 
         public static byte[] GetFileByFilename(string buildConfig, string cdnConfig, string filename)
         {
-            if (!buildDictionary.ContainsKey(buildConfig))
-            {
-                LoadBuild("wowt", buildConfig, cdnConfig);
-            }
-
-            var build = buildDictionary[buildConfig];
+            var build = BuildCache.GetOrCreate(buildConfig, cdnConfig);
 
             var hasher = new Jenkins96();
             var lookup = hasher.ComputeHash(filename, true);
@@ -294,12 +246,7 @@ namespace CASCToolHost
 
         public static uint GetFileDataIDByFilename(string buildConfig, string cdnConfig, string filename)
         {
-            if (!buildDictionary.ContainsKey(buildConfig))
-            {
-                LoadBuild("wowt", buildConfig, cdnConfig);
-            }
-
-            var build = buildDictionary[buildConfig];
+            var build = BuildCache.GetOrCreate(buildConfig, cdnConfig);
 
             var hasher = new Jenkins96();
             var lookup = hasher.ComputeHash(filename, true);
@@ -329,12 +276,8 @@ namespace CASCToolHost
                     cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfig);
                 }
 
-                if (!buildDictionary.ContainsKey(buildConfig))
-                {
-                    LoadBuild("wowt", buildConfig, cdnConfig);
-                }
-
-                root = buildDictionary[buildConfig].root;
+                var build = BuildCache.GetOrCreate(buildConfig, cdnConfig);
+                root = build.root;
             }
 
             return root.entriesFDID.Keys.ToArray();

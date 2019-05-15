@@ -178,13 +178,8 @@ namespace CASCToolHost.Controllers
                 Logger.WriteLine("Serving file table data " + start + "," + length + " for build " + buildConfig + " for draw " + draw + " with filter " + Request.Query["search[value]"]);
 
             }
-            if (!CASC.buildDictionary.ContainsKey(buildConfig))
-            {
-                CASC.LoadBuild("wowt", buildConfig);
-            }
 
-            var build = CASC.buildDictionary[buildConfig];
-
+            var build = BuildCache.GetOrCreate(buildConfig);
             result.recordsTotal = build.root.entriesFDID.Count;
 
             result.data = new List<List<string>>();
