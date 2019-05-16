@@ -48,9 +48,14 @@ namespace CASCToolHost.Utils
             return cachedBuild;
         }
 
-        public static int GetCount()
+        public static int Count()
         {
             return Cache.Count;
+        }
+
+        public static bool Exists(string buildConfig)
+        {
+            return Cache.TryGetValue(buildConfig, out _);
         }
     }
 }
