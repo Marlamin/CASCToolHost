@@ -200,7 +200,7 @@ namespace CASCToolHost.Controllers
                 {
                     if (entry.lookup == 0)
                     {
-                        result.Add(string.Format("[{0}] <b>{1}</b> (content md5: {2}, FileData ID: {3})", action, entry.fileDataID, file.filename, md5));
+                        result.Add(string.Format("[{0}] <b>{1}</b> (content md5: {2}, FileData ID: {3})", action, file.filename, md5, entry.fileDataID));
                     }
                     else
                     {
