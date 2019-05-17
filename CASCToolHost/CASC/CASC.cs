@@ -109,11 +109,11 @@ namespace CASCToolHost
 
             if (build.root.entriesFDID.TryGetValue(filedataid, out var entry))
             {
-                RootEntry? prioritizedEntry = entry.FirstOrDefault(subentry =>
+                var prioritizedEntry = entry.FirstOrDefault(subentry =>
                         subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
                     );
 
-                var selectedEntry = (prioritizedEntry != null) ? prioritizedEntry.Value : entry.First();
+                var selectedEntry = (prioritizedEntry.fileDataID != 0) ? prioritizedEntry : entry.First();
                 target = selectedEntry.md5.ToHexString().ToLower();
             }
 
@@ -137,7 +137,7 @@ namespace CASCToolHost
             }
             else
             {
-                throw new KeyNotFoundException("Key not found in encoding!");
+                throw new KeyNotFoundException("Key " + contenthash + " not found in encoding!");
             }
 
             if (string.IsNullOrEmpty(target))
@@ -211,11 +211,11 @@ namespace CASCToolHost
 
             if (build.root.entriesLookup.TryGetValue(lookup, out var entry))
             {
-                RootEntry? prioritizedEntry = entry.FirstOrDefault(subentry =>
+                var prioritizedEntry = entry.FirstOrDefault(subentry =>
                     subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
                 );
 
-                var selectedEntry = (prioritizedEntry != null) ? prioritizedEntry.Value : entry.First();
+                var selectedEntry = (prioritizedEntry.fileDataID != 0) ? prioritizedEntry : entry.First();
                 target = selectedEntry.md5.ToHexString().ToLower();
             }
 
@@ -226,11 +226,11 @@ namespace CASCToolHost
                 {
                     if (build.root.entriesFDID.TryGetValue(filedataid, out var fdidentry))
                     {
-                        RootEntry? prioritizedEntry = fdidentry.FirstOrDefault(subentry =>
+                        var prioritizedEntry = fdidentry.FirstOrDefault(subentry =>
                             subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
                         );
 
-                        var selectedEntry = (prioritizedEntry != null) ? prioritizedEntry.Value : fdidentry.First();
+                        var selectedEntry = (prioritizedEntry.fileDataID != 0) ? prioritizedEntry : fdidentry.First();
                         target = selectedEntry.md5.ToHexString().ToLower();
                     }
                 }
