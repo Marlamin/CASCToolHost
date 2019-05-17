@@ -78,22 +78,22 @@ namespace CASCToolHost.Controllers
             {
                 var md5 = entry.md5.ToHexString().ToLower();
 
-                var fileName = filedataids.ContainsKey(entry.fileDataID) ? filedataids[entry.fileDataID] : "Unknown File: " + entry.fileDataID;
+                var file = filedataids.ContainsKey(entry.fileDataID) ? filedataids[entry.fileDataID] : new CASCFile { filename = "Unknown File: " + entry.fileDataID, id = entry.fileDataID, type = "unk" };
 
                 if (csv)
                 {
-                    result.Add(string.Format("{0};{1};{2}", action, fileName, entry.fileDataID));
+                    result.Add(string.Format("{0};{1};{2}", action, file.filename, entry.fileDataID));
                 }
                 else
                 {
                     if (entry.lookup == 0)
                     {
-                        result.Add(string.Format("[{0}] <b>{1}</b> (content md5: {2}, FileData ID: {3})", action, fileName, md5, entry.fileDataID));
+                        result.Add(string.Format("[{0}] <b>{1}</b> (content md5: {2}, FileData ID: {3})", action, entry.fileDataID, file.filename, md5));
                     }
                     else
                     {
                         var lookup = entry.lookup.ToString("x").PadLeft(16, '0');
-                        result.Add(string.Format("[{0}] <b>{1}</b> (lookup: {2}, content md5: {3}, FileData ID: {4})", action, fileName, lookup, md5, entry.fileDataID));
+                        result.Add(string.Format("[{0}] <b>{1}</b> (lookup: {2}, content md5: {3}, FileData ID: {4})", action, file.filename, lookup, md5, entry.fileDataID));
                     }
                 }
             };
