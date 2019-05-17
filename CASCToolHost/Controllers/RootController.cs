@@ -9,7 +9,7 @@ namespace CASCToolHost.Controllers
 {
     [Route("casc/root")]
     [ApiController]
-    public class RootController : ControllerBase
+    public class RootController : Controller
     {
         [Route("getfdid")]
         public uint GetFileDataIDByFilename(string buildConfig, string cdnConfig, string filename)
@@ -44,6 +44,119 @@ namespace CASCToolHost.Controllers
         {
             Logger.WriteLine("Serving filedataid count for root_cdn " + rootcdn);
             return NGDP.GetRoot(Path.Combine(SettingsManager.cacheDir, "tpr", "wow"), rootcdn, true).entriesFDID.Count;
+        }
+
+        [Route("diff_api_invalidate")]
+        public ActionResult DiffApiInvalidateCache()
+        {
+            BuildDiffCache.Invalidate();
+
+            return Ok();
+        }
+
+        [Route("diff_api")]
+        public ActionResult DiffApi(string from, string to, int start = 0)
+        {
+            Logger.WriteLine("Serving root diff for root " + from + " => " + to);
+
+            ApiDiff diff;
+
+            if (BuildDiffCache.Get(from, to, out diff))
+            {
+                Logger.WriteLine("Serving cached diff for root " + from + " => " + to);
+
+                return Json(new
+                {
+                    data = diff.all.ToArray()
+                });
+            }
+
+            var filedataids = Database.GetKnownFiles(true);
+
+            var rootFrom = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), from, true);
+            var rootTo = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), to, true);
+
+            var rootFromEntries = rootFrom.entriesFDID;
+            var rootToEntries = rootTo.entriesFDID;
+
+            var fromEntries = rootFromEntries.Keys.ToHashSet();
+            var toEntries = rootToEntries.Keys.ToHashSet();
+
+            var commonEntries = fromEntries.Intersect(toEntries);
+            var removedEntries = fromEntries.Except(commonEntries);
+            var addedEntries = toEntries.Except(commonEntries);
+
+            Func<List<RootEntry>, RootEntry> prioritize = delegate (List<RootEntry> entries)
+            {
+                var prioritized = entries.FirstOrDefault(subentry =>
+                       subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
+                );
+
+                if (prioritized.fileDataID != 0)
+                {
+                    return prioritized;
+                }
+                else
+                {
+                    return entries.First();
+                }
+            };
+
+            Func<string, Func<RootEntry, DiffEntry>> toDiffEntry = delegate (string action)
+            {
+                return delegate (RootEntry entry)
+                {
+                    var file = filedataids.ContainsKey(entry.fileDataID) ? filedataids[entry.fileDataID] : new CASCFile { filename = "Unknown", id = entry.fileDataID, type = "unk" };
+
+                    return new DiffEntry
+                    {
+                        action = action,
+                        filename = file.filename,
+                        id = file.id.ToString(),
+                        content_hash = entry.md5.ToHexString().ToLower(),
+                        type = file.type,
+                    };
+                };
+            };
+
+            var addedFiles = addedEntries.Select(entry => rootToEntries[entry]).Select(prioritize);
+            var removedFiles = removedEntries.Select(entry => rootFromEntries[entry]).Select(prioritize);
+
+            // Modified files are a little bit more tricky, so we can't just throw a LINQ expression at it
+            var modifiedFiles = new List<RootEntry>();
+
+            foreach (var entry in commonEntries)
+            {
+                var originalFile = prioritize(rootFromEntries[entry]);
+                var patchedFile = prioritize(rootToEntries[entry]);
+
+                if (originalFile.md5.Equals(patchedFile.md5))
+                {
+                    continue;
+                }
+
+                modifiedFiles.Add(patchedFile);
+            }
+
+            var toAddedDiffEntryDelegate = toDiffEntry("added");
+            var toRemovedDiffEntryDelegate = toDiffEntry("removed");
+            var toModifiedDiffEntryDelegate = toDiffEntry("modified");
+
+            diff = new ApiDiff
+            {
+                added = addedFiles.Select(toAddedDiffEntryDelegate),
+                removed = removedFiles.Select(toRemovedDiffEntryDelegate),
+                modified = modifiedFiles.Select(toModifiedDiffEntryDelegate)
+            };
+
+            Logger.WriteLine($"Added: {diff.added.Count()}, removed: {diff.removed.Count()}, modified: {diff.modified.Count()}, common: {commonEntries.Count()}");
+
+            BuildDiffCache.Add(from, to, diff);
+
+            return Json(new
+            {
+                data = diff.all.ToArray()
+            });
         }
 
         [Route("diff")]
