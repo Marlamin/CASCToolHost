@@ -42,9 +42,9 @@ namespace CASCToolHost.Controllers
             Logger.WriteLine("Serving CSV listfile");
             var knownFiles = Database.GetKnownFiles();
             var nameList = new List<string>();
-            foreach(var entry in knownFiles)
+            foreach (var entry in knownFiles)
             {
-                nameList.Add(entry.Key + ";" + entry.Value);
+                nameList.Add(entry.Key + ";" + entry.Value.filename);
             }
 
             return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', nameList.ToArray())), "text/plain")
@@ -61,7 +61,7 @@ namespace CASCToolHost.Controllers
             var nameList = new List<string>();
             foreach (var entry in knownFiles)
             {
-                nameList.Add(entry.Key + ";" + entry.Value);
+                nameList.Add(entry.Key + ";" + entry.Value.filename);
             }
 
             return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', nameList.ToArray())), "text/plain")

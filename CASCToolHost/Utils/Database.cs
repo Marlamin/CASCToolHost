@@ -6,6 +6,13 @@ using System.Linq;
 
 namespace CASCToolHost.Utils
 {
+    public struct CASCFile
+    {
+        public uint id;
+        public string filename;
+        public string type;
+    }
+
     public static class Database
     {
         public static string GetRootCDNByBuildConfig(string buildConfig)
@@ -133,9 +140,9 @@ namespace CASCToolHost.Utils
             return fileList.ToArray();
         }
 
-        public static Dictionary<uint, string> GetKnownFiles(bool includeUnverified = false)
+        public static Dictionary<uint, CASCFile> GetKnownFiles(bool includeUnverified = false)
         {
-            var dict = new Dictionary<uint, string>();
+            var dict = new Dictionary<uint, CASCFile>();
 
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
@@ -144,17 +151,18 @@ namespace CASCToolHost.Utils
                 {
                     if (!includeUnverified)
                     {
-                        cmd.CommandText = "SELECT id, filename from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' AND verified = 1 ORDER BY id DESC";
+                        cmd.CommandText = "SELECT id, filename, type from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' AND verified = 1 ORDER BY id DESC";
                     }
                     else
                     {
-                        cmd.CommandText = "SELECT id, filename from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
+                        cmd.CommandText = "SELECT id, filename, type from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
                     }
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
                         {
-                            dict.Add(uint.Parse(reader["id"].ToString()), reader["filename"].ToString());
+                            var row = new CASCFile { id = uint.Parse(reader["id"].ToString()), filename = reader["filename"].ToString(), type = reader["type"].ToString() };
+                            dict.Add(uint.Parse(reader["id"].ToString()), row);
                         }
                     }
                 }
