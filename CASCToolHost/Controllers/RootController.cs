@@ -71,7 +71,7 @@ namespace CASCToolHost.Controllers
                 });
             }
 
-            var filedataids = Database.GetKnownFiles(true);
+            var filedataids = Database.GetAllFiles();
 
             var rootFrom = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), from, true);
             var rootTo = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), to, true);
@@ -106,14 +106,13 @@ namespace CASCToolHost.Controllers
             {
                 return delegate (RootEntry entry)
                 {
-                    var file = filedataids.ContainsKey(entry.fileDataID) ? filedataids[entry.fileDataID] : new CASCFile { filename = "Unknown", id = entry.fileDataID, type = "unk" };
+                    var file = filedataids.ContainsKey(entry.fileDataID) ? filedataids[entry.fileDataID] : new CASCFile { filename = "", id = entry.fileDataID, type = "unk" };
 
                     return new DiffEntry
                     {
                         action = action,
                         filename = file.filename,
                         id = file.id.ToString(),
-                        content_hash = entry.md5.ToHexString().ToLower(),
                         type = file.type,
                     };
                 };

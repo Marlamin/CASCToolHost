@@ -11,7 +11,6 @@ namespace CASCToolHost.Utils
         public string action;
         public string filename;
         public string id;
-        public string content_hash;
         public string type;
     }
 

@@ -171,6 +171,30 @@ namespace CASCToolHost.Utils
             return dict;
         }
 
+        public static Dictionary<uint, CASCFile> GetAllFiles()
+        {
+            var dict = new Dictionary<uint, CASCFile>();
+
+            using (var connection = new MySqlConnection(SettingsManager.connectionString))
+            {
+                connection.Open();
+                using (var cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT id, filename, type from wow_rootfiles ORDER BY id DESC";
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var row = new CASCFile { id = uint.Parse(reader["id"].ToString()), filename = reader["filename"].ToString(), type = reader["type"].ToString() };
+                            dict.Add(uint.Parse(reader["id"].ToString()), row);
+                        }
+                    }
+                }
+            }
+
+            return dict;
+        }
+
         public static Dictionary<ulong, string> GetKnownLookups()
         {
             var dict = new Dictionary<ulong, string>();
