@@ -62,7 +62,7 @@ namespace CASCToolHost
                 {
                     var chunk = chunkInfos[index];
 
-                    if (chunk.inFileSize > bin.BaseStream.Length)
+                    if (chunk.inFileSize > (bin.BaseStream.Length - bin.BaseStream.Position))
                     {
                         throw new Exception("Trying to read more than is available!");
                     }
@@ -92,18 +92,6 @@ namespace CASCToolHost
                         }
 
                         result.Write(chunkres, 0, chunkres.Length);
-                    }
-                }
-
-                foreach (var chunk in chunkInfos)
-                {
-                    if (chunk.inFileSize > bin.BaseStream.Length)
-                    {
-                        throw new Exception("Trying to read more than is available!");
-                    }
-                    else
-                    {
-                        bin.BaseStream.Position += chunk.inFileSize;
                     }
                 }
 
