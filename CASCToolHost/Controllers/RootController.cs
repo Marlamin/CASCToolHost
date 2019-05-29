@@ -67,6 +67,9 @@ namespace CASCToolHost.Controllers
 
                 return Json(new
                 {
+                    added = diff.added.Count(),
+                    modified = diff.modified.Count(),
+                    removed = diff.removed.Count(),
                     data = diff.all.ToArray()
                 });
             }
@@ -154,6 +157,9 @@ namespace CASCToolHost.Controllers
 
             return Json(new
             {
+                added = diff.added.Count(),
+                modified = diff.modified.Count(),
+                removed = diff.removed.Count(),
                 data = diff.all.ToArray()
             });
         }
