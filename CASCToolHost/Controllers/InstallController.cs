@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using CASCToolHost.Utils;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace CASCToolHost.Controllers
@@ -8,6 +10,32 @@ namespace CASCToolHost.Controllers
     [ApiController]
     public class InstallController : Controller
     {
+        [Route("dumpbybuild")]
+        public ActionResult DumpByBuild(string buildConfig)
+        {
+            var build = BuildCache.GetOrCreate(buildConfig);
+
+            string installHash;
+
+            if(build.buildConfig.install.Length == 2)
+            {
+                installHash = build.buildConfig.install[1].ToHexString().ToLower();
+            }
+            else
+            {
+                if (build.encoding.aEntries.TryGetValue(build.buildConfig.install[0], out var installEntry))
+                {
+                    installHash = installEntry.eKey.ToHexString().ToLower();
+                }
+                else
+                {
+                    throw new KeyNotFoundException("Root encoding key not found!");
+                }
+            }
+
+            return DumpByHash(installHash);
+        }
+
         [Route("dump")]
         public ActionResult DumpByHash(string hash)
         {
