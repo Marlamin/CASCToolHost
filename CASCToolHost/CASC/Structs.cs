@@ -164,7 +164,7 @@ namespace CASCToolHost
     public struct InstallFileEntry
     {
         public string name;
-        public byte[] contentHash;
+        public string contentHash;
         public uint size;
         public List<string> tags;
     }
