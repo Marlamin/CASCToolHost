@@ -181,8 +181,14 @@ namespace CASCToolHost
             using (var bin = new BinaryReader(stream))
             {
                 bin.BaseStream.Position = entry.offset;
+
                 try
                 {
+                    if (entry.offset > bin.BaseStream.Length || entry.offset + entry.size > bin.BaseStream.Length)
+                    {
+                        throw new Exception("File is beyond archive length, incomplete archive!");
+                    }
+
                     if (!raw)
                     {
                         return BLTE.Parse(bin.ReadBytes((int)entry.size));

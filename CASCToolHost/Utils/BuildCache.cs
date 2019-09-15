@@ -35,7 +35,7 @@ namespace CASCToolHost.Utils
                     if (!Cache.TryGetValue(buildConfig, out cachedBuild))
                     {
                         // Key not in cache, load build
-                        cachedBuild = LoadBuild("wowt", buildConfig);
+                        cachedBuild = LoadBuild("wowt", buildConfig, cdnConfig);
                         Cache.Set(buildConfig, cachedBuild, new MemoryCacheEntryOptions().SetSize(1));
                     }
                 }

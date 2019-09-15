@@ -472,6 +472,12 @@ namespace CASCToolHost
                 uint indexID;
                 string indexName = archive.ToHexString().ToLower();
 
+                if (!File.Exists(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)))
+                {
+                    Console.WriteLine("Archive " + indexName + " not found, skipping index loading!");
+                    return;
+                }
+
                 try
                 {
                     cacheLock.EnterUpgradeableReadLock();
@@ -488,7 +494,6 @@ namespace CASCToolHost
                         {
                             cacheLock.ExitWriteLock();
                         }
-
                     }
                     else
                     {
@@ -500,17 +505,9 @@ namespace CASCToolHost
                     cacheLock.ExitUpgradeableReadLock();
                 }
 
+                var archiveLength = new FileInfo(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)).Length;
 
-                byte[] indexContent;
-
-                if (url.StartsWith("http"))
-                {
-                    indexContent = CDN.Get(url + "data/" + indexName[0] + indexName[1] + "/" + indexName[2] + indexName[3] + "/" + indexName + ".index");
-                }
-                else
-                {
-                    indexContent = File.ReadAllBytes(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName + ".index"));
-                }
+                var indexContent = File.ReadAllBytes(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName + ".index"));
 
                 using (BinaryReader bin = new BinaryReader(new MemoryStream(indexContent)))
                 {
@@ -536,25 +533,32 @@ namespace CASCToolHost
 
                             entriesRead++;
 
-                            cacheLock.EnterUpgradeableReadLock();
-                            try
+                            if ((entry.offset + entry.size) > archiveLength)
                             {
-                                if (!CASC.indexDictionary.ContainsKey(headerHash))
+                                Console.WriteLine("Read index entry at " + entry.offset + " of size " + entry.size + " that goes beyond size of archive " + indexName + " " + archiveLength + ", skipping..");
+                            }
+                            else
+                            {
+                                cacheLock.EnterUpgradeableReadLock();
+                                try
                                 {
-                                    cacheLock.EnterWriteLock();
-                                    try
+                                    if (!CASC.indexDictionary.ContainsKey(headerHash))
                                     {
-                                        CASC.indexDictionary.Add(headerHash, entry);
-                                    }
-                                    finally
-                                    {
-                                        cacheLock.ExitWriteLock();
+                                        cacheLock.EnterWriteLock();
+                                        try
+                                        {
+                                            CASC.indexDictionary.Add(headerHash, entry);
+                                        }
+                                        finally
+                                        {
+                                            cacheLock.ExitWriteLock();
+                                        }
                                     }
                                 }
-                            }
-                            finally
-                            {
-                                cacheLock.ExitUpgradeableReadLock();
+                                finally
+                                {
+                                    cacheLock.ExitUpgradeableReadLock();
+                                }
                             }
                         }
 
