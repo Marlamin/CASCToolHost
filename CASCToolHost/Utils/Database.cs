@@ -300,5 +300,26 @@ namespace CASCToolHost.Utils
             }
             return returnNames;
         }
+
+        public static Dictionary<ulong, byte[]> GetKnownTACTKeys()
+        {
+            var keys = new Dictionary<ulong, byte[]>();
+            using (var connection = new MySqlConnection(SettingsManager.connectionString))
+            {
+                connection.Open();
+                using (var cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT keyname, keybytes FROM wow_tactkey WHERE keybytes IS NOT NULL";
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            keys.Add(ulong.Parse(reader["keyname"].ToString(), System.Globalization.NumberStyles.HexNumber), reader["keybytes"].ToString().ToByteArray());
+                        }
+                    }
+                }
+            }
+            return keys;
+        }
     }
 }
