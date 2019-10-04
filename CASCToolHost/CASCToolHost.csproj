@@ -28,15 +28,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="SereniaBLPLib">
-      <HintPath>..\..\..\Visual Studio 2013\Projects\WoWFormatTest\CASCExplorer\SereniaBLPLib\SereniaBLPLib\bin\Debug\SereniaBLPLib.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="keys.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="SereniaBLPLib">
+      <HintPath>SereniaBLPLib.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
