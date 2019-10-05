@@ -74,7 +74,7 @@ namespace CASCToolHost
             return build;
         }
 
-        public static bool FileExists(string buildConfig, string cdnConfig, uint filedataid)
+        public static bool FileExists(string buildConfig, uint filedataid)
         {
             var build = BuildCache.GetOrCreate(buildConfig);
 
@@ -86,16 +86,18 @@ namespace CASCToolHost
             return false;
         }
 
-        public static bool FileExists(string buildConfig, string cdnConfig, string filename)
+        public static bool FileExists(string buildConfig, string filename)
         {
             var build = BuildCache.GetOrCreate(buildConfig);
 
-            var hasher = new Jenkins96();
-            var lookup = hasher.ComputeHash(filename, true);
-
-            if (build.root.entriesLookup.ContainsKey(lookup))
+            using (var hasher = new Jenkins96())
             {
-                return true;
+                var lookup = hasher.ComputeHash(filename, true);
+
+                if (build.root.entriesLookup.ContainsKey(lookup))
+                {
+                    return true;
+                }
             }
 
             return false;
@@ -211,7 +213,7 @@ namespace CASCToolHost
         {
             var build = BuildCache.GetOrCreate(buildConfig, cdnConfig);
 
-            var hasher = new Jenkins96();
+            using var hasher = new Jenkins96();
             var lookup = hasher.ComputeHash(filename, true);
             var target = "";
 
@@ -254,7 +256,7 @@ namespace CASCToolHost
         {
             var build = BuildCache.GetOrCreate(buildConfig, cdnConfig);
 
-            var hasher = new Jenkins96();
+            using var hasher = new Jenkins96();
             var lookup = hasher.ComputeHash(filename, true);
 
             if (build.root.entriesLookup.TryGetValue(lookup, out var entry))

@@ -13,7 +13,7 @@ namespace CASCToolHost
     public class NGDP
     {
         private static readonly Uri baseUrl = new Uri("http://us.patch.battle.net:1119/");
-        private static ReaderWriterLockSlim cacheLock = new ReaderWriterLockSlim();
+        private static readonly ReaderWriterLockSlim cacheLock = new ReaderWriterLockSlim();
 
         public static VersionsFile GetVersions(string program)
         {
@@ -22,13 +22,9 @@ namespace CASCToolHost
 
             try
             {
-                using (HttpResponseMessage response = CDN.client.GetAsync(new Uri(baseUrl + program + "/" + "versions")).Result)
-                {
-                    using (HttpContent res = response.Content)
-                    {
-                        content = res.ReadAsStringAsync().Result;
-                    }
-                }
+                using HttpResponseMessage response = CDN.client.GetAsync(new Uri(baseUrl + program + "/" + "versions")).Result;
+                using HttpContent res = response.Content;
+                content = res.ReadAsStringAsync().Result;
             }
             catch (Exception e)
             {
@@ -107,19 +103,15 @@ namespace CASCToolHost
 
             try
             {
-                using (HttpResponseMessage response = CDN.client.GetAsync(new Uri(baseUrl + program + "/" + "cdns")).Result)
+                using HttpResponseMessage response = CDN.client.GetAsync(new Uri(baseUrl + program + "/" + "cdns")).Result;
+                if (response.IsSuccessStatusCode)
                 {
-                    if (response.IsSuccessStatusCode)
-                    {
-                        using (HttpContent res = response.Content)
-                        {
-                            content = res.ReadAsStringAsync().Result;
-                        }
-                    }
-                    else
-                    {
-                        throw new Exception("Bad HTTP code while retrieving");
-                    }
+                    using HttpContent res = response.Content;
+                    content = res.ReadAsStringAsync().Result;
+                }
+                else
+                {
+                    throw new Exception("Bad HTTP code while retrieving");
                 }
             }
             catch (Exception e)
@@ -220,12 +212,8 @@ namespace CASCToolHost
 
             if (!parseIt) return root;
 
-            var hasher = new Jenkins96();
-
             var namedCount = 0;
             var unnamedCount = 0;
-            uint totalFiles = 0;
-            uint namedFiles = 0;
             var newRoot = false;
 
             using (BinaryReader bin = new BinaryReader(new MemoryStream(BLTE.Parse(content))))
@@ -233,8 +221,8 @@ namespace CASCToolHost
                 var header = bin.ReadUInt32();
                 if (header == 1296454484)
                 {
-                    totalFiles = bin.ReadUInt32();
-                    namedFiles = bin.ReadUInt32();
+                    uint totalFiles = bin.ReadUInt32();
+                    uint namedFiles = bin.ReadUInt32();
                     newRoot = true;
                 }
                 else
@@ -283,7 +271,6 @@ namespace CASCToolHost
                         {
                             if (contentFlags.HasFlag(ContentFlags.NoNames))
                             {
-                                //entries[i].lookup = hasher.ComputeHash("BY_FDID_" + entries[i].fileDataID);
                                 entries[i].lookup = 0;
                                 unnamedCount++;
                             }
@@ -509,65 +496,63 @@ namespace CASCToolHost
 
                 var indexContent = File.ReadAllBytes(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName + ".index"));
 
-                using (BinaryReader bin = new BinaryReader(new MemoryStream(indexContent)))
+                using BinaryReader bin = new BinaryReader(new MemoryStream(indexContent));
+                bin.BaseStream.Position = bin.BaseStream.Length - 12;
+                var entryCount = bin.ReadUInt32();
+                bin.BaseStream.Position = 0;
+
+                int indexEntries = indexContent.Length / 4096;
+
+                var entriesRead = 0;
+                for (var b = 0; b < indexEntries; b++)
                 {
-                    bin.BaseStream.Position = bin.BaseStream.Length - 12;
-                    var entryCount = bin.ReadUInt32();
-                    bin.BaseStream.Position = 0;
-
-                    int indexEntries = indexContent.Length / 4096;
-
-                    var entriesRead = 0;
-                    for (var b = 0; b < indexEntries; b++)
+                    for (var bi = 0; bi < 170; bi++)
                     {
-                        for (var bi = 0; bi < 170; bi++)
+                        var headerHash = bin.Read<MD5Hash>();
+
+                        var entry = new IndexEntry()
                         {
-                            var headerHash = bin.Read<MD5Hash>();
+                            indexID = indexID,
+                            size = bin.ReadUInt32(true),
+                            offset = bin.ReadUInt32(true)
+                        };
 
-                            var entry = new IndexEntry()
-                            {
-                                indexID = indexID,
-                                size = bin.ReadUInt32(true),
-                                offset = bin.ReadUInt32(true)
-                            };
+                        entriesRead++;
 
-                            entriesRead++;
-
-                            if ((entry.offset + entry.size) > archiveLength)
+                        if ((entry.offset + entry.size) > archiveLength)
+                        {
+                            Console.WriteLine("Read index entry at " + entry.offset + " of size " + entry.size + " that goes beyond size of archive " + indexName + " " + archiveLength + ", skipping..");
+                        }
+                        else
+                        {
+                            cacheLock.EnterUpgradeableReadLock();
+                            try
                             {
-                                Console.WriteLine("Read index entry at " + entry.offset + " of size " + entry.size + " that goes beyond size of archive " + indexName + " " + archiveLength + ", skipping..");
-                            }
-                            else
-                            {
-                                cacheLock.EnterUpgradeableReadLock();
-                                try
+                                if (!CASC.indexDictionary.ContainsKey(headerHash))
                                 {
-                                    if (!CASC.indexDictionary.ContainsKey(headerHash))
+                                    cacheLock.EnterWriteLock();
+                                    try
                                     {
-                                        cacheLock.EnterWriteLock();
-                                        try
-                                        {
-                                            CASC.indexDictionary.Add(headerHash, entry);
-                                        }
-                                        finally
-                                        {
-                                            cacheLock.ExitWriteLock();
-                                        }
+                                        CASC.indexDictionary.Add(headerHash, entry);
+                                    }
+                                    finally
+                                    {
+                                        cacheLock.ExitWriteLock();
                                     }
                                 }
-                                finally
-                                {
-                                    cacheLock.ExitUpgradeableReadLock();
-                                }
+                            }
+                            finally
+                            {
+                                cacheLock.ExitUpgradeableReadLock();
                             }
                         }
-
-                        if (entriesRead == entryCount)
-                            return;
-
-                        // 16 bytes padding that rounds the chunk to 4096 bytes (index entry is 24 bytes, 24 * 170 = 4080 bytes so 16 bytes remain)
-                        bin.ReadBytes(16);
                     }
+
+                    if (entriesRead == entryCount)
+                        return;
+
+                    // 16 bytes padding that rounds the chunk to 4096 bytes (index entry is 24 bytes, 24 * 170 = 4080 bytes so 16 bytes remain)
+                    bin.ReadBytes(16);
                 }
             });
         }
@@ -579,33 +564,31 @@ namespace CASCToolHost
             foreach (var file in Directory.GetFiles(Path.Combine(CDN.cacheDir, "tpr", "wow", "data"), "*.index", SearchOption.AllDirectories))
             {
                 var indexName = Path.GetFileNameWithoutExtension(file);
-                using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read))
-                using (var bin = new BinaryReader(stream))
+                using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read);
+                using var bin = new BinaryReader(stream);
+                bin.BaseStream.Position = bin.BaseStream.Length - 16;
+                // 0 = loose file index, 4 = archive index, 6 = group archive index
+                if (bin.ReadChar() == 4)
                 {
-                    bin.BaseStream.Position = bin.BaseStream.Length - 16;
-                    // 0 = loose file index, 4 = archive index, 6 = group archive index
-                    if (bin.ReadChar() == 4)
+                    if (!File.Exists(Path.Combine(CDN.cacheDir, "tpr", "wow", "patch", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName + ".index")))
                     {
-                        if (!File.Exists(Path.Combine(CDN.cacheDir, "tpr", "wow", "patch", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName + ".index")))
+                        if (File.Exists(Path.Combine(CDN.cacheDir, "tpr", "wow", "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)))
                         {
-                            if (File.Exists(Path.Combine(CDN.cacheDir, "tpr", "wow", "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)))
-                            {
-                                archiveList.Add(Path.GetFileNameWithoutExtension(file).ToByteArray().ToMD5());
-                            }
-                            else
-                            {
-                                Logger.WriteLine("Skipping archive index without archive " + file);
-                            }
+                            archiveList.Add(Path.GetFileNameWithoutExtension(file).ToByteArray().ToMD5());
                         }
                         else
                         {
-                            Logger.WriteLine("Skipping patch index " + file);
+                            Logger.WriteLine("Skipping archive index without archive " + file);
                         }
                     }
                     else
                     {
-                        Logger.WriteLine("Skipping non-archive index " + file);
+                        Logger.WriteLine("Skipping patch index " + file);
                     }
+                }
+                else
+                {
+                    Logger.WriteLine("Skipping non-archive index " + file);
                 }
             }
 

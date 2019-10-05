@@ -22,17 +22,13 @@ namespace CASCToolHost.Utils
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
                 connection.Open();
-                using (var cmd = connection.CreateCommand())
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT root_cdn from wow_buildconfig WHERE hash = @hash LIMIT 1";
+                cmd.Parameters.AddWithValue("@hash", buildConfig);
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
                 {
-                    cmd.CommandText = "SELECT root_cdn from wow_buildconfig WHERE hash = @hash LIMIT 1";
-                    cmd.Parameters.AddWithValue("@hash", buildConfig);
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            rootcdn = reader["root_cdn"].ToString();
-                        }
-                    }
+                    rootcdn = reader["root_cdn"].ToString();
                 }
             }
 
@@ -49,12 +45,10 @@ namespace CASCToolHost.Utils
                 {
                     cmd.CommandText = "SELECT cdnconfig from wow_versions WHERE buildconfig = @hash LIMIT 1";
                     cmd.Parameters.AddWithValue("@hash", buildConfig);
-                    using (var reader = cmd.ExecuteReader())
+                    using var reader = cmd.ExecuteReader();
+                    while (reader.Read())
                     {
-                        while (reader.Read())
-                        {
-                            cdnconfig = reader["cdnconfig"].ToString();
-                        }
+                        cdnconfig = reader["cdnconfig"].ToString();
                     }
                 }
 
@@ -75,17 +69,13 @@ namespace CASCToolHost.Utils
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
                 connection.Open();
-                using (var cmd = connection.CreateCommand())
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT filename from wow_rootfiles WHERE id = @id";
+                cmd.Parameters.AddWithValue("@id", filedataid);
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
                 {
-                    cmd.CommandText = "SELECT filename from wow_rootfiles WHERE id = @id";
-                    cmd.Parameters.AddWithValue("@id", filedataid);
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            filename = reader["filename"].ToString();
-                        }
-                    }
+                    filename = reader["filename"].ToString();
                 }
             }
 
@@ -100,17 +90,13 @@ namespace CASCToolHost.Utils
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
                 connection.Open();
-                using (var cmd = connection.CreateCommand())
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT id from wow_rootfiles WHERE filename = @filename";
+                cmd.Parameters.AddWithValue("@filename", filename.Replace('\\', '/').ToLower());
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
                 {
-                    cmd.CommandText = "SELECT id from wow_rootfiles WHERE filename = @filename";
-                    cmd.Parameters.AddWithValue("@filename", filename.Replace('\\', '/').ToLower());
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            filedataid = uint.Parse(reader["id"].ToString());
-                        }
-                    }
+                    filedataid = uint.Parse(reader["id"].ToString());
                 }
             }
 
@@ -124,16 +110,12 @@ namespace CASCToolHost.Utils
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
                 connection.Open();
-                using (var cmd = connection.CreateCommand())
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT filename from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' AND verified = 1 ORDER BY id DESC";
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
                 {
-                    cmd.CommandText = "SELECT filename from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' AND verified = 1 ORDER BY id DESC";
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            fileList.Add(reader["filename"].ToString());
-                        }
-                    }
+                    fileList.Add(reader["filename"].ToString());
                 }
             }
 
@@ -147,24 +129,20 @@ namespace CASCToolHost.Utils
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
                 connection.Open();
-                using (var cmd = connection.CreateCommand())
+                using var cmd = connection.CreateCommand();
+                if (!includeUnverified)
                 {
-                    if (!includeUnverified)
-                    {
-                        cmd.CommandText = "SELECT id, filename, type from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' AND verified = 1 ORDER BY id DESC";
-                    }
-                    else
-                    {
-                        cmd.CommandText = "SELECT id, filename, type from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
-                    }
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            var row = new CASCFile { id = uint.Parse(reader["id"].ToString()), filename = reader["filename"].ToString(), type = reader["type"].ToString() };
-                            dict.Add(uint.Parse(reader["id"].ToString()), row);
-                        }
-                    }
+                    cmd.CommandText = "SELECT id, filename, type from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' AND verified = 1 ORDER BY id DESC";
+                }
+                else
+                {
+                    cmd.CommandText = "SELECT id, filename, type from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
+                }
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    var row = new CASCFile { id = uint.Parse(reader["id"].ToString()), filename = reader["filename"].ToString(), type = reader["type"].ToString() };
+                    dict.Add(uint.Parse(reader["id"].ToString()), row);
                 }
             }
 
@@ -178,17 +156,13 @@ namespace CASCToolHost.Utils
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
                 connection.Open();
-                using (var cmd = connection.CreateCommand())
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT id, filename, type from wow_rootfiles ORDER BY id DESC";
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
                 {
-                    cmd.CommandText = "SELECT id, filename, type from wow_rootfiles ORDER BY id DESC";
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            var row = new CASCFile { id = uint.Parse(reader["id"].ToString()), filename = reader["filename"].ToString(), type = reader["type"].ToString() };
-                            dict.Add(uint.Parse(reader["id"].ToString()), row);
-                        }
-                    }
+                    var row = new CASCFile { id = uint.Parse(reader["id"].ToString()), filename = reader["filename"].ToString(), type = reader["type"].ToString() };
+                    dict.Add(uint.Parse(reader["id"].ToString()), row);
                 }
             }
 
@@ -202,16 +176,12 @@ namespace CASCToolHost.Utils
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
                 connection.Open();
-                using (var cmd = connection.CreateCommand())
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT filename, CONV(lookup, 16, 10) as lookup from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
                 {
-                    cmd.CommandText = "SELECT filename, CONV(lookup, 16, 10) as lookup from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            dict.Add(ulong.Parse(reader["lookup"].ToString()), reader["filename"].ToString());
-                        }
-                    }
+                    dict.Add(ulong.Parse(reader["lookup"].ToString()), reader["filename"].ToString());
                 }
             }
 
@@ -227,17 +197,13 @@ namespace CASCToolHost.Utils
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
                 connection.Open();
-                using (var cmd = connection.CreateCommand())
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT root_cdn FROM wow_buildconfig WHERE hash = @hash";
+                cmd.Parameters.AddWithValue("@hash", buildConfig);
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
                 {
-                    cmd.CommandText = "SELECT root_cdn FROM wow_buildconfig WHERE hash = @hash";
-                    cmd.Parameters.AddWithValue("@hash", buildConfig);
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            rootHash = reader["root_cdn"].ToString();
-                        }
-                    }
+                    rootHash = reader["root_cdn"].ToString();
                 }
             }
 
@@ -277,16 +243,12 @@ namespace CASCToolHost.Utils
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
                 connection.Open();
-                using (var cmd = connection.CreateCommand())
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT id, filename from wow_rootfiles WHERE filename IS NOT NULL ORDER BY id DESC";
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
                 {
-                    cmd.CommandText = "SELECT id, filename from wow_rootfiles WHERE filename IS NOT NULL ORDER BY id DESC";
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            fileList.Add(uint.Parse(reader["id"].ToString()), reader["filename"].ToString());
-                        }
-                    }
+                    fileList.Add(uint.Parse(reader["id"].ToString()), reader["filename"].ToString());
                 }
             }
 
@@ -306,17 +268,20 @@ namespace CASCToolHost.Utils
             var keys = new Dictionary<ulong, byte[]>();
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                connection.Open();
-                using (var cmd = connection.CreateCommand())
+                try
                 {
+                    connection.Open();
+                    using var cmd = connection.CreateCommand();
                     cmd.CommandText = "SELECT keyname, keybytes FROM wow_tactkey WHERE keybytes IS NOT NULL";
-                    using (var reader = cmd.ExecuteReader())
+                    using var reader = cmd.ExecuteReader();
+                    while (reader.Read())
                     {
-                        while (reader.Read())
-                        {
-                            keys.Add(ulong.Parse(reader["keyname"].ToString(), System.Globalization.NumberStyles.HexNumber), reader["keybytes"].ToString().ToByteArray());
-                        }
+                        keys.Add(ulong.Parse(reader["keyname"].ToString(), System.Globalization.NumberStyles.HexNumber), reader["keybytes"].ToString().ToByteArray());
                     }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
                 }
             }
             return keys;

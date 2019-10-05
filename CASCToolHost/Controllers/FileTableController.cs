@@ -23,8 +23,15 @@ namespace CASCToolHost.Controllers
         [Route("files")]
         public DataTablesResult Get(string buildConfig, int draw, int start, int length)
         {
-            var result = new DataTablesResult();
-            result.draw = draw;
+            if (string.IsNullOrEmpty(buildConfig))
+            {
+                throw new ArgumentException("Invalid arguments!");
+            }
+
+            var result = new DataTablesResult
+            {
+                draw = draw
+            };
 
             Logger.WriteLine("Serving file table data for build " + buildConfig);
 
@@ -55,8 +62,10 @@ namespace CASCToolHost.Controllers
                 foreach (var entry in build.root.entriesFDID)
                 {
                     var matches = false;
-                    var row = new List<string>();
-                    row.Add(entry.Value[0].fileDataID.ToString());
+                    var row = new List<string>
+                    {
+                        entry.Value[0].fileDataID.ToString()
+                    };
 
                     if (entry.Value[0].fileDataID == Request.Query["search[value]"])
                     {
@@ -106,8 +115,10 @@ namespace CASCToolHost.Controllers
                 var entries = build.root.entriesFDID.ToList();
                 foreach (var entry in entries.GetRange(start, length))
                 {
-                    var row = new List<string>();
-                    row.Add(entry.Value[0].fileDataID.ToString());
+                    var row = new List<string>
+                    {
+                        entry.Value[0].fileDataID.ToString()
+                    };
 
                     var filename = Database.GetFilenameByFileDataID(entry.Value[0].fileDataID);
 

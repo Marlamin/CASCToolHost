@@ -8,13 +8,11 @@ namespace CASCToolHost.Utils
 {
     public static class BuildCache
     {
-        private static MemoryCache Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 15 });
-        private static ConcurrentDictionary<string, SemaphoreSlim> Locks = new ConcurrentDictionary<string, SemaphoreSlim>();
+        private static readonly MemoryCache Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 15 });
+        private static readonly ConcurrentDictionary<string, SemaphoreSlim> Locks = new ConcurrentDictionary<string, SemaphoreSlim>();
 
         public static Build GetOrCreate(string buildConfig, string cdnConfig = "")
         {
-            Build cachedBuild;
-
             if (string.IsNullOrEmpty(cdnConfig))
             {
                 cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfig);
@@ -24,7 +22,7 @@ namespace CASCToolHost.Utils
                 }
             }
 
-            if (!Cache.TryGetValue(buildConfig, out cachedBuild))
+            if (!Cache.TryGetValue(buildConfig, out Build cachedBuild))
             {
                 SemaphoreSlim mylock = Locks.GetOrAdd(buildConfig, k => new SemaphoreSlim(1, 1));
 

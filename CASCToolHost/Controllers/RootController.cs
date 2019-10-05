@@ -21,15 +21,15 @@ namespace CASCToolHost.Controllers
         [Route("exists/{filedataid}")]
         public bool Get(string buildConfig, string cdnConfig, uint filedataid)
         {
-            Logger.WriteLine("Serving existence check of fdid " + filedataid + " for build " + buildConfig + " and cdn " + cdnConfig);
-            return CASC.FileExists(buildConfig, cdnConfig, filedataid);
+            Logger.WriteLine("Serving existence check of fdid " + filedataid + " for build " + buildConfig);
+            return CASC.FileExists(buildConfig, filedataid);
         }
 
         [Route("exists")]
         public bool Get(string buildConfig, string cdnConfig, string filename)
         {
-            Logger.WriteLine("Serving existence check of \"" + filename + "\" for build " + buildConfig + " and cdn " + cdnConfig);
-            return CASC.FileExists(buildConfig, cdnConfig, filename);
+            Logger.WriteLine("Serving existence check of \"" + filename + "\" for build " + buildConfig);
+            return CASC.FileExists(buildConfig, filename);
         }
 
         [Route("fdids")]
@@ -59,9 +59,7 @@ namespace CASCToolHost.Controllers
         {
             Logger.WriteLine("Serving root diff for root " + from + " => " + to);
 
-            ApiDiff diff;
-
-            if (BuildDiffCache.Get(from, to, out diff))
+            if (BuildDiffCache.Get(from, to, out ApiDiff diff))
             {
                 Logger.WriteLine("Serving cached diff for root " + from + " => " + to);
 
@@ -89,7 +87,7 @@ namespace CASCToolHost.Controllers
             var removedEntries = fromEntries.Except(commonEntries);
             var addedEntries = toEntries.Except(commonEntries);
 
-            Func<List<RootEntry>, RootEntry> prioritize = delegate (List<RootEntry> entries)
+            static RootEntry prioritize(List<RootEntry> entries)
             {
                 var prioritized = entries.FirstOrDefault(subentry =>
                        subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
@@ -103,9 +101,9 @@ namespace CASCToolHost.Controllers
                 {
                     return entries.First();
                 }
-            };
+            }
 
-            Func<string, Func<RootEntry, DiffEntry>> toDiffEntry = delegate (string action)
+            Func<RootEntry, DiffEntry> toDiffEntry(string action)
             {
                 return delegate (RootEntry entry)
                 {
@@ -119,7 +117,7 @@ namespace CASCToolHost.Controllers
                         type = file.type,
                     };
                 };
-            };
+            }
 
             var addedFiles = addedEntries.Select(entry => rootToEntries[entry]).Select(prioritize);
             var removedFiles = removedEntries.Select(entry => rootFromEntries[entry]).Select(prioritize);
@@ -192,7 +190,7 @@ namespace CASCToolHost.Controllers
             var removedEntries = fromEntries.Except(commonEntries);
             var addedEntries = toEntries.Except(commonEntries);
 
-            Action<RootEntry, string> print = delegate (RootEntry entry, string action)
+            void print(RootEntry entry, string action)
             {
                 var md5 = entry.md5.ToHexString().ToLower();
 
@@ -214,7 +212,7 @@ namespace CASCToolHost.Controllers
                         result.Add(string.Format("[{0}] <b>{1}</b> (lookup: {2}, content md5: {3}, FileData ID: {4})", action, file.filename, lookup, md5, entry.fileDataID));
                     }
                 }
-            };
+            }
 
             foreach (var id in addedEntries)
             {
