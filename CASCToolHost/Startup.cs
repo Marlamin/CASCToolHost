@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,7 +22,7 @@ namespace CASCToolHost
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddResponseCompression();
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+            services.AddMvc().AddNewtonsoftJson();
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowSpecificOrigin", builder => builder.WithOrigins("https://wow.tools", "https://bnet.marlam.in", "http://localhost:27631"));
