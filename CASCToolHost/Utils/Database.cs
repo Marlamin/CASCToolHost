@@ -207,6 +207,15 @@ namespace CASCToolHost.Utils
                 }
             }
 
+            if (NGDP.encodingDictionary.TryGetValue(config.root, out var rootEntry))
+            {
+                rootHash = rootEntry.ToHexString().ToLower();
+            }
+            else
+            {
+                throw new KeyNotFoundException("Root encoding key not found!");
+            }
+
             if (rootHash == "")
             {
                 EncodingFile encoding;
@@ -220,10 +229,9 @@ namespace CASCToolHost.Utils
                     encoding = NGDP.GetEncoding("http://cdn.blizzard.com/tpr/wow/", config.encoding[1].ToHexString(), int.Parse(config.encodingSize[1]));
                 }
 
-
-                if (encoding.aEntries.TryGetValue(config.root, out var rootEntry))
+                if (encoding.aEntries.TryGetValue(config.root, out var bakRootEntry))
                 {
-                    rootHash = rootEntry.eKey.ToHexString().ToLower();
+                    rootHash = bakRootEntry.eKey.ToHexString().ToLower();
                 }
                 else
                 {

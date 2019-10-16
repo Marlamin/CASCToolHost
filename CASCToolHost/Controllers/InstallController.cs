@@ -23,9 +23,9 @@ namespace CASCToolHost.Controllers
             }
             else
             {
-                if (build.encoding.aEntries.TryGetValue(build.buildConfig.install[0], out var installEntry))
+                if (NGDP.encodingDictionary.TryGetValue(build.buildConfig.install[0], out var installEntry))
                 {
-                    installHash = installEntry.eKey.ToHexString().ToLower();
+                    installHash = installEntry.ToHexString().ToLower();
                 }
                 else
                 {

@@ -10,10 +10,13 @@ using System.Threading.Tasks;
 
 namespace CASCToolHost
 {
-    public class NGDP
+    public static class NGDP
     {
         private static readonly Uri baseUrl = new Uri("http://us.patch.battle.net:1119/");
-        private static readonly ReaderWriterLockSlim cacheLock = new ReaderWriterLockSlim();
+        private static readonly ReaderWriterLockSlim indexCacheLock = new ReaderWriterLockSlim();
+        private static readonly ReaderWriterLockSlim encodingCacheLock = new ReaderWriterLockSlim();
+
+        public static Dictionary<MD5Hash, MD5Hash> encodingDictionary = new Dictionary<MD5Hash, MD5Hash>(new MD5HashComparer());
 
         public static VersionsFile GetVersions(string program)
         {
@@ -285,7 +288,7 @@ namespace CASCToolHost
                             root.entriesFDID.Add(entries[i].fileDataID, entries[i]);
                         }
                     }
-                    
+
                 }
             }
 
@@ -392,6 +395,28 @@ namespace CASCToolHost
                             }
                         }
                         entries.Add(cKey, entry);
+
+                        try
+                        {
+                            encodingCacheLock.EnterUpgradeableReadLock();
+
+                            if (!encodingDictionary.ContainsKey(cKey))
+                            {
+                                try
+                                {
+                                    encodingCacheLock.EnterWriteLock();
+                                    encodingDictionary.Add(cKey, entry.eKey);
+                                }
+                                finally
+                                {
+                                    encodingCacheLock.ExitWriteLock();
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            encodingCacheLock.ExitUpgradeableReadLock();
+                        }
                     }
 
                     var remaining = 4096 - ((bin.BaseStream.Position - tableAstart) % 4096);
@@ -467,19 +492,19 @@ namespace CASCToolHost
 
                 try
                 {
-                    cacheLock.EnterUpgradeableReadLock();
+                    indexCacheLock.EnterUpgradeableReadLock();
 
                     if (!CASC.indexNames.Contains(archives[i], new MD5HashComparer()))
                     {
                         try
                         {
-                            cacheLock.EnterWriteLock();
+                            indexCacheLock.EnterWriteLock();
                             CASC.indexNames.Add(archive);
                             indexID = (uint)CASC.indexNames.Count - 1;
                         }
                         finally
                         {
-                            cacheLock.ExitWriteLock();
+                            indexCacheLock.ExitWriteLock();
                         }
                     }
                     else
@@ -489,7 +514,7 @@ namespace CASCToolHost
                 }
                 finally
                 {
-                    cacheLock.ExitUpgradeableReadLock();
+                    indexCacheLock.ExitUpgradeableReadLock();
                 }
 
                 var archiveLength = new FileInfo(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)).Length;
@@ -525,25 +550,25 @@ namespace CASCToolHost
                         }
                         else
                         {
-                            cacheLock.EnterUpgradeableReadLock();
+                            indexCacheLock.EnterUpgradeableReadLock();
                             try
                             {
                                 if (!CASC.indexDictionary.ContainsKey(headerHash))
                                 {
-                                    cacheLock.EnterWriteLock();
+                                    indexCacheLock.EnterWriteLock();
                                     try
                                     {
                                         CASC.indexDictionary.Add(headerHash, entry);
                                     }
                                     finally
                                     {
-                                        cacheLock.ExitWriteLock();
+                                        indexCacheLock.ExitWriteLock();
                                     }
                                 }
                             }
                             finally
                             {
-                                cacheLock.ExitUpgradeableReadLock();
+                                indexCacheLock.ExitUpgradeableReadLock();
                             }
                         }
                     }

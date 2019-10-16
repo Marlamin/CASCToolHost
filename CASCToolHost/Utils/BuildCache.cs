@@ -21,7 +21,7 @@ namespace CASCToolHost.Utils
                     throw new Exception("Unable to locate CDNconfig for buildconfig " + buildConfig);
                 }
             }
-
+            
             if (!Cache.TryGetValue(buildConfig, out Build cachedBuild))
             {
                 SemaphoreSlim mylock = Locks.GetOrAdd(buildConfig, k => new SemaphoreSlim(1, 1));
@@ -54,6 +54,11 @@ namespace CASCToolHost.Utils
         public static bool Exists(string buildConfig)
         {
             return Cache.TryGetValue(buildConfig, out _);
+        }
+
+        public static void Remove(object key)
+        {
+            Cache.Remove(key);
         }
     }
 }

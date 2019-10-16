@@ -14,23 +14,34 @@ namespace CASCToolHost.Controllers
         [HttpGet]
         public FileContentResult GetByContentHash(string buildConfig, string cdnConfig, string contenthash, string filename)
         {
-            if (string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || string.IsNullOrEmpty(contenthash) || string.IsNullOrEmpty(filename))
+            if (NGDP.encodingDictionary.TryGetValue(contenthash.ToByteArray().ToMD5(), out var entry))
             {
-                throw new ArgumentException("Invalid arguments!");
+                Logger.WriteLine("Serving cached file \"" + filename + "\" (" + contenthash + ")", ConsoleColor.Green);
+
+                return new FileContentResult(CASC.RetrieveFileBytes(entry), "application/octet-stream")
+                {
+                    FileDownloadName = filename
+                };
             }
-
-            // Retrieve CDNConfig from DB if not set in request
-            if (string.IsNullOrEmpty(cdnConfig) && !string.IsNullOrEmpty(buildConfig))
+            else
             {
-                cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfig);
+                Logger.WriteLine("Looking up and serving file \"" + filename + "\" (" + contenthash + ") for build " + buildConfig + " and cdn " + cdnConfig, ConsoleColor.Yellow);
+                if (string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || string.IsNullOrEmpty(contenthash) || string.IsNullOrEmpty(filename))
+                {
+                    throw new ArgumentException("Invalid arguments!");
+                }
+
+                // Retrieve CDNConfig from DB if not set in request
+                if (string.IsNullOrEmpty(cdnConfig) && !string.IsNullOrEmpty(buildConfig))
+                {
+                    cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfig);
+                }
+
+                return new FileContentResult(CASC.GetFile(buildConfig, cdnConfig, contenthash), "application/octet-stream")
+                {
+                    FileDownloadName = filename
+                };
             }
-
-            Logger.WriteLine("Serving file \"" + filename + "\" (" + contenthash + ") for build " + buildConfig + " and cdn " + cdnConfig);
-
-            return new FileContentResult(CASC.GetFile(buildConfig, cdnConfig, contenthash), "application/octet-stream")
-            {
-                FileDownloadName = filename
-            };
         }
 
         [Route("fdid")]
@@ -72,7 +83,6 @@ namespace CASCToolHost.Controllers
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Logger.WriteLine("File " + filedataid + " not found in root of buildconfig " + buildConfig + " cdnconfig " + cdnConfig);
                 Console.ResetColor();
-                return NotFound();
             }
             catch (Exception e)
             {

@@ -55,9 +55,9 @@ namespace CASCToolHost
 
             string rootHash;
 
-            if (build.encoding.aEntries.TryGetValue(build.buildConfig.root, out var rootEntry))
+            if (NGDP.encodingDictionary.TryGetValue(build.buildConfig.root, out var rootEntry))
             {
-                rootHash = rootEntry.eKey.ToHexString().ToLower();
+                rootHash = rootEntry.ToHexString().ToLower();
             }
             else
             {
@@ -129,30 +129,42 @@ namespace CASCToolHost
 
         public static byte[] GetFile(string buildConfig, string cdnConfig, string contenthash)
         {
-            var build = BuildCache.GetOrCreate(buildConfig, cdnConfig);
+            MD5Hash target;
 
-            string target;
+            var foundTarget = false;
+            var contenthashMD5 = contenthash.ToByteArray().ToMD5();
 
-            if (build.encoding.aEntries.TryGetValue(contenthash.ToByteArray().ToMD5(), out var entry))
+            if (!NGDP.encodingDictionary.TryGetValue(contenthashMD5, out target))
             {
-                target = entry.eKey.ToHexString().ToLower();
+                Logger.WriteLine("Contenthash " + contenthash + " not found in current encoding, loading build " + buildConfig + "..");
+                
+                var build = BuildCache.GetOrCreate(buildConfig, cdnConfig);
+                if (build.encoding.aEntries.TryGetValue(contenthashMD5, out var bakEntry))
+                {
+                    foundTarget = true;
+                    target = bakEntry.eKey;
+                }
+
+                // Remove build from cache, all encoding entries will be in encodingDictionary now for future reference
+                BuildCache.Remove(buildConfig);
             }
             else
             {
-                throw new KeyNotFoundException("Key " + contenthash + " not found in encoding!");
+                foundTarget = true;
             }
 
-            if (string.IsNullOrEmpty(target))
+            if (!foundTarget)
             {
-                throw new FileNotFoundException("Unable to find file in encoding!");
+                throw new FileNotFoundException("Unable to find contenthash " + contenthash + " in encoding!");
             }
 
             return RetrieveFileBytes(target);
         }
 
-        public static byte[] RetrieveFileBytes(string target, bool raw = false, string cdndir = "tpr/wow")
+        public static byte[] RetrieveFileBytes(MD5Hash target, bool raw = false, string cdndir = "tpr/wow")
         {
-            var unarchivedName = Path.Combine(CDN.cacheDir, cdndir, "data", target[0] + "" + target[1], target[2] + "" + target[3], target);
+            var targetString = target.ToHexString().ToLower();
+            var unarchivedName = Path.Combine(CDN.cacheDir, cdndir, "data", targetString[0] + "" + targetString[1], targetString[2] + "" + targetString[3], targetString);
 
             if (File.Exists(unarchivedName))
             {
@@ -166,7 +178,7 @@ namespace CASCToolHost
                 }
             }
 
-            if (!indexDictionary.TryGetValue(target.ToByteArray().ToMD5(), out IndexEntry entry))
+            if (!indexDictionary.TryGetValue(target, out IndexEntry entry))
             {
                 throw new Exception("Unable to find file in archives. File is not available!?");
             }

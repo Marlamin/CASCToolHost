@@ -62,8 +62,8 @@ namespace CASCToolHost.Controllers
             Response.Headers[HeaderNames.ContentDisposition] = cd.ToString();
 
             var fileBytes = CASC.GetFile(buildConfig, cdnConfig, contenthash);
-            var ext = Path.GetExtension(filename);
 
+            var ext = Path.GetExtension(filename);
             var mime = GetMimeTypeByExt(ext);
 
             if (ext == ".blp")
