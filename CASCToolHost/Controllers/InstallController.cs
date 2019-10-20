@@ -29,7 +29,7 @@ namespace CASCToolHost.Controllers
                 }
                 else
                 {
-                    throw new KeyNotFoundException("Root encoding key not found!");
+                    throw new KeyNotFoundException("Install encoding key not found!");
                 }
             }
 

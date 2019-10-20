@@ -211,10 +211,6 @@ namespace CASCToolHost.Utils
             {
                 rootHash = rootEntry.ToHexString().ToLower();
             }
-            else
-            {
-                throw new KeyNotFoundException("Root encoding key not found!");
-            }
 
             if (rootHash == "")
             {
