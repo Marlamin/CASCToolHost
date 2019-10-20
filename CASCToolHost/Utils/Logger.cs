@@ -6,13 +6,13 @@ namespace CASCToolHost
     {
         public static void WriteLine(string line)
         {
-            Console.WriteLine("[" + DateTime.Now.ToString() + "] " + line);
+            Console.WriteLine("[" + DateTime.Now.ToString() + "." + DateTime.Now.Millisecond.ToString() + "] " + line);
         }
 
         public static void WriteLine(string line, ConsoleColor color)
         {
             Console.ForegroundColor = color;
-            Console.WriteLine("[" + DateTime.Now.ToString() + "] " + line);
+            WriteLine(line);
             Console.ResetColor();
         }
     }

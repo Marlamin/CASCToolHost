@@ -9,7 +9,7 @@ namespace CASCToolHost
 {
     public static class BLTE
     {
-        public static byte[] Parse(byte[] content, bool verify = true)
+        public static byte[] Parse(byte[] content, bool verify = false)
         {
             using (var result = new MemoryStream())
             using (var bin = new BinaryReader(new MemoryStream(content)))
@@ -94,7 +94,6 @@ namespace CASCToolHost
                         result.Write(chunkres, 0, chunkres.Length);
                     }
                 }
-
                 return result.ToArray();
             }
         }

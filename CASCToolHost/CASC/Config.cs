@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace CASCToolHost
 {
@@ -9,26 +8,9 @@ namespace CASCToolHost
     {
         public static CDNConfigFile GetCDNConfig(string url, string hash)
         {
-            string content;
             var cdnConfig = new CDNConfigFile();
 
-            if (url.StartsWith("http"))
-            {
-                try
-                {
-                    content = Encoding.UTF8.GetString(CDN.Get(url + "/config/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash));
-                }
-                catch (Exception e)
-                {
-                    Logger.WriteLine("Error retrieving CDN config: " + e.Message);
-                    return cdnConfig;
-                }
-            }
-            else
-            {
-                content = File.ReadAllText(Path.Combine(url, "config", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
-            }
-
+            string content = File.ReadAllText(Path.Combine(url, "config", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
 
             var cdnConfigLines = content.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -92,26 +74,9 @@ namespace CASCToolHost
         }
         public static BuildConfigFile GetBuildConfig(string url, string hash)
         {
-            string content;
-
             var buildConfig = new BuildConfigFile();
 
-            if (url.StartsWith("http"))
-            {
-                try
-                {
-                    content = Encoding.UTF8.GetString(CDN.Get(url + "/config/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash));
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Error retrieving CDN config: " + e.Message);
-                    return buildConfig;
-                }
-            }
-            else
-            {
-                content = File.ReadAllText(Path.Combine(url, "config", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
-            }
+            string content = File.ReadAllText(Path.Combine(url, "config", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
 
             if (string.IsNullOrEmpty(content) || !content.StartsWith("# Build"))
             {

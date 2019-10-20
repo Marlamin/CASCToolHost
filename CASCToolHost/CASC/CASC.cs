@@ -128,12 +128,10 @@ namespace CASCToolHost
 
         public static byte[] GetFile(string buildConfig, string cdnConfig, string contenthash)
         {
-            MD5Hash target;
-
             var foundTarget = false;
             var contenthashMD5 = contenthash.ToByteArray().ToMD5();
 
-            if (!NGDP.encodingDictionary.TryGetValue(contenthashMD5, out target))
+            if (!NGDP.encodingDictionary.TryGetValue(contenthashMD5, out MD5Hash target))
             {
                 Logger.WriteLine("Contenthash " + contenthash + " not found in current encoding, loading build " + buildConfig + "..");
                 

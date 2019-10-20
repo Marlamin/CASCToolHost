@@ -546,7 +546,7 @@ namespace CASCToolHost
 
                         if ((entry.offset + entry.size) > archiveLength)
                         {
-                            Console.WriteLine("Read index entry at " + entry.offset + " of size " + entry.size + " that goes beyond size of archive " + indexName + " " + archiveLength + ", skipping..");
+                            //Console.WriteLine("Read index entry at " + entry.offset + " of size " + entry.size + " that goes beyond size of archive " + indexName + " " + archiveLength + ", skipping..");
                         }
                         else
                         {
