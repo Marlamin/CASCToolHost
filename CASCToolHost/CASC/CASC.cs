@@ -15,7 +15,6 @@ namespace CASCToolHost
         {
             public BuildConfigFile buildConfig;
             public CDNConfigFile cdnConfig;
-            public EncodingFile encoding;
             public RootFile root;
             public DateTime loadedAt;
         }
@@ -44,11 +43,11 @@ namespace CASCToolHost
             Logger.WriteLine("Loading encoding..");
             if (build.buildConfig.encodingSize == null || build.buildConfig.encodingSize.Count() < 2)
             {
-                build.encoding = NGDP.GetEncoding("http://" + cdnsFile.entries[0].hosts[0] + "/" + cdnsFile.entries[0].path + "/", build.buildConfig.encoding[1].ToHexString(), 0);
+                NGDP.GetEncoding("http://" + cdnsFile.entries[0].hosts[0] + "/" + cdnsFile.entries[0].path + "/", build.buildConfig.encoding[1].ToHexString(), 0);
             }
             else
             {
-                build.encoding = NGDP.GetEncoding("http://" + cdnsFile.entries[0].hosts[0] + "/" + cdnsFile.entries[0].path + "/", build.buildConfig.encoding[1].ToHexString(), int.Parse(build.buildConfig.encodingSize[1]));
+                NGDP.GetEncoding("http://" + cdnsFile.entries[0].hosts[0] + "/" + cdnsFile.entries[0].path + "/", build.buildConfig.encoding[1].ToHexString(), int.Parse(build.buildConfig.encodingSize[1]));
             }
 
             Logger.WriteLine("Loading root..");
@@ -138,11 +137,10 @@ namespace CASCToolHost
             {
                 Logger.WriteLine("Contenthash " + contenthash + " not found in current encoding, loading build " + buildConfig + "..");
                 
-                var build = BuildCache.GetOrCreate(buildConfig, cdnConfig);
-                if (build.encoding.aEntries.TryGetValue(contenthashMD5, out var bakEntry))
+                BuildCache.GetOrCreate(buildConfig, cdnConfig);
+                if (NGDP.encodingDictionary.TryGetValue(contenthashMD5, out target))
                 {
                     foundTarget = true;
-                    target = bakEntry.eKey;
                 }
 
                 // Remove build from cache, all encoding entries will be in encodingDictionary now for future reference
