@@ -115,6 +115,7 @@ namespace CASCToolHost.Controllers
                         filename = file.filename,
                         id = file.id.ToString(),
                         type = file.type,
+                        md5 = entry.md5.ToHexString().ToLower()
                     };
                 };
             }

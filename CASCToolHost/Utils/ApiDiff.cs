@@ -1,8 +1,5 @@
-using System;
-using System.Linq;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
+using System.Linq;
 
 namespace CASCToolHost.Utils
 {
@@ -12,6 +9,7 @@ namespace CASCToolHost.Utils
         public string filename;
         public string id;
         public string type;
+        public string md5;
     }
 
     public struct ApiDiff
