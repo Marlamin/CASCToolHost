@@ -10,7 +10,7 @@ namespace CASCToolHost
         {
             var cdnConfig = new CDNConfigFile();
 
-            string content = File.ReadAllText(Path.Combine(url, "config", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
+            string content = File.ReadAllText(Path.Combine(CDN.cacheDir, "tpr", "wow", "config", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
 
             var cdnConfigLines = content.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -76,7 +76,7 @@ namespace CASCToolHost
         {
             var buildConfig = new BuildConfigFile();
 
-            string content = File.ReadAllText(Path.Combine(url, "config", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
+            string content = File.ReadAllText(Path.Combine(CDN.cacheDir, "tpr", "wow", "config", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
 
             if (string.IsNullOrEmpty(content) || !content.StartsWith("# Build"))
             {
