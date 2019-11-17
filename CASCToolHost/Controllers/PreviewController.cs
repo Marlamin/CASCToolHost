@@ -3,6 +3,7 @@ using Microsoft.Net.Http.Headers;
 using System;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace CASCToolHost.Controllers
 {
@@ -12,7 +13,7 @@ namespace CASCToolHost.Controllers
     {
         [Route("fdid")]
         [HttpGet]
-        public FileContentResult GetByFileDataID(string buildConfig, string cdnConfig, uint filedataid, string filename)
+        public async Task<FileContentResult> GetByFileDataID(string buildConfig, string cdnConfig, uint filedataid, string filename)
         {
             Logger.WriteLine("Serving preview of \"" + filename + "\" for build " + buildConfig + " and cdn " + cdnConfig);
 
@@ -24,7 +25,7 @@ namespace CASCToolHost.Controllers
 
             Response.Headers[HeaderNames.ContentDisposition] = cd.ToString();
 
-            var fileBytes = CASC.GetFile(buildConfig, cdnConfig, filedataid);
+            var fileBytes = await CASC.GetFile(buildConfig, cdnConfig, filedataid);
             var ext = Path.GetExtension(filename);
 
             var mime = GetMimeTypeByExt(ext);
@@ -49,7 +50,7 @@ namespace CASCToolHost.Controllers
         [Route("")]
         [Route("chash")]
         [HttpGet]
-        public FileContentResult GetByContentHash(string buildConfig, string cdnConfig, string contenthash, string filename)
+        public async Task<FileContentResult> GetByContentHash(string buildConfig, string cdnConfig, string contenthash, string filename)
         {
             Console.WriteLine("[" + DateTime.Now + "] Serving preview of \"" + filename + "\" (" + contenthash + ") for build " + buildConfig + " and cdn " + cdnConfig);
 
@@ -61,7 +62,7 @@ namespace CASCToolHost.Controllers
 
             Response.Headers[HeaderNames.ContentDisposition] = cd.ToString();
 
-            var fileBytes = CASC.GetFile(buildConfig, cdnConfig, contenthash);
+            var fileBytes = await CASC.GetFile(buildConfig, cdnConfig, contenthash);
 
             var ext = Path.GetExtension(filename);
             var mime = GetMimeTypeByExt(ext);

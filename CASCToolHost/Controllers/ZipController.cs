@@ -6,6 +6,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CASCToolHost.Controllers
 {
@@ -15,7 +16,7 @@ namespace CASCToolHost.Controllers
     {
         [Route("fdids")]
         [HttpGet]
-        public ActionResult GetByFileDataID(string buildConfig, string cdnConfig, string ids, string filename)
+        public async Task<ActionResult> GetByFileDataID(string buildConfig, string cdnConfig, string ids, string filename)
         {
             var filedataidlist = new List<uint>();
             foreach(var fdid in ids.Split(','))
@@ -49,7 +50,7 @@ namespace CASCToolHost.Controllers
 
                         try
                         {
-                            using (var cascStream = new MemoryStream(CASC.GetFile(buildConfig, cdnConfig, filedataid)))
+                            using (var cascStream = new MemoryStream(await CASC.GetFile(buildConfig, cdnConfig, filedataid)))
                             {
                                 var entryname = Path.GetFileName(Database.GetFilenameByFileDataID(filedataid));
                                 if(entryname == "")

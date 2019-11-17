@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CASCToolHost
 {
@@ -102,7 +103,7 @@ namespace CASCToolHost
             return false;
         }
 
-        public static byte[] GetFile(string buildConfig, string cdnConfig, uint filedataid)
+        public async static Task<byte[]> GetFile(string buildConfig, string cdnConfig, uint filedataid)
         {
             var build = BuildCache.GetOrCreate(buildConfig, cdnConfig);
 
@@ -123,10 +124,10 @@ namespace CASCToolHost
                 throw new FileNotFoundException("No file found in root for FileDataID " + filedataid);
             }
 
-            return GetFile(buildConfig, cdnConfig, target);
+            return await GetFile(buildConfig, cdnConfig, target);
         }
 
-        public static byte[] GetFile(string buildConfig, string cdnConfig, string contenthash)
+        public async static Task<byte[]> GetFile(string buildConfig, string cdnConfig, string contenthash)
         {
             var foundTarget = false;
             var contenthashMD5 = contenthash.ToByteArray().ToMD5();
@@ -154,10 +155,10 @@ namespace CASCToolHost
                 throw new FileNotFoundException("Unable to find contenthash " + contenthash + " in encoding!");
             }
 
-            return RetrieveFileBytes(target);
+            return await RetrieveFileBytes(target);
         }
 
-        public static byte[] RetrieveFileBytes(MD5Hash target, bool raw = false, string cdndir = "tpr/wow")
+        public async static Task<byte[]> RetrieveFileBytes(MD5Hash target, bool raw = false, string cdndir = "tpr/wow")
         {
             var targetString = target.ToHexString().ToLower();
             var unarchivedName = Path.Combine(CDN.cacheDir, cdndir, "data", targetString[0] + "" + targetString[1], targetString[2] + "" + targetString[3], targetString);
@@ -170,7 +171,7 @@ namespace CASCToolHost
                 }
                 else
                 {
-                    return File.ReadAllBytes(unarchivedName);
+                    return await File.ReadAllBytesAsync(unarchivedName);
                 }
             }
 
@@ -217,7 +218,7 @@ namespace CASCToolHost
             return new byte[0];
         }
 
-        public static byte[] GetFileByFilename(string buildConfig, string cdnConfig, string filename)
+        public async static Task<byte[]> GetFileByFilename(string buildConfig, string cdnConfig, string filename)
         {
             var build = BuildCache.GetOrCreate(buildConfig, cdnConfig);
 
@@ -257,7 +258,7 @@ namespace CASCToolHost
                 throw new FileNotFoundException("No file found in root for filename " + filename);
             }
 
-            return GetFile(buildConfig, cdnConfig, target);
+            return await GetFile(buildConfig, cdnConfig, target);
         }
 
         public static uint GetFileDataIDByFilename(string buildConfig, string cdnConfig, string filename)

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace CASCToolHost.Controllers
 {
@@ -12,13 +13,13 @@ namespace CASCToolHost.Controllers
         [Route("")]
         [Route("chash")]
         [HttpGet]
-        public FileContentResult GetByContentHash(string buildConfig, string cdnConfig, string contenthash, string filename)
+        public async Task<FileContentResult> GetByContentHash(string buildConfig, string cdnConfig, string contenthash, string filename)
         {
             if (NGDP.encodingDictionary.TryGetValue(contenthash.ToByteArray().ToMD5(), out var entry))
             {
                 Logger.WriteLine("Serving cached file \"" + filename + "\" (" + contenthash + ")", ConsoleColor.Green);
 
-                return new FileContentResult(CASC.RetrieveFileBytes(entry), "application/octet-stream")
+                return new FileContentResult(await CASC.RetrieveFileBytes(entry), "application/octet-stream")
                 {
                     FileDownloadName = filename
                 };
@@ -37,7 +38,7 @@ namespace CASCToolHost.Controllers
                     cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfig);
                 }
 
-                return new FileContentResult(CASC.GetFile(buildConfig, cdnConfig, contenthash), "application/octet-stream")
+                return new FileContentResult(await CASC.GetFile(buildConfig, cdnConfig, contenthash), "application/octet-stream")
                 {
                     FileDownloadName = filename
                 };
@@ -46,7 +47,7 @@ namespace CASCToolHost.Controllers
 
         [Route("fdid")]
         [HttpGet]
-        public ActionResult GetByFileDataID(string buildConfig, string cdnConfig, uint filedataid, string filename)
+        public async Task<ActionResult> GetByFileDataID(string buildConfig, string cdnConfig, uint filedataid, string filename)
         {
             // Retrieve CDNConfig from DB if not set in request
             if (string.IsNullOrEmpty(cdnConfig) && !string.IsNullOrEmpty(buildConfig))
@@ -71,9 +72,11 @@ namespace CASCToolHost.Controllers
 
             Logger.WriteLine("Serving file \"" + filename + "\" (fdid " + filedataid + ") for build " + buildConfig + " and cdn " + cdnConfig);
 
+            var file = await CASC.GetFile(buildConfig, cdnConfig, filedataid);
+
             try
             {
-                return new FileContentResult(CASC.GetFile(buildConfig, cdnConfig, filedataid), "application/octet-stream")
+                return new FileContentResult(file, "application/octet-stream")
                 {
                     FileDownloadName = filename
                 };
@@ -96,7 +99,7 @@ namespace CASCToolHost.Controllers
 
         [Route("fname")]
         [HttpGet]
-        public ActionResult GetByFileName(string buildConfig, string cdnConfig, string filename)
+        public async Task<ActionResult> GetByFileName(string buildConfig, string cdnConfig, string filename)
         {
             // Retrieve CDNConfig from DB if not set in request
             if (string.IsNullOrEmpty(cdnConfig) && !string.IsNullOrEmpty(buildConfig))
@@ -113,7 +116,7 @@ namespace CASCToolHost.Controllers
 
             try
             {
-                return new FileContentResult(CASC.GetFileByFilename(buildConfig, cdnConfig, filename), "application/octet-stream")
+                return new FileContentResult(await CASC.GetFileByFilename(buildConfig, cdnConfig, filename), "application/octet-stream")
                 {
                     FileDownloadName = Path.GetFileName(filename)
                 };
