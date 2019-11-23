@@ -9,7 +9,7 @@ namespace CASCToolHost
 {
     public static class BLTE
     {
-        public static byte[] Parse(byte[] content, bool verify = false)
+        public static byte[] Parse(byte[] content)
         {
             using (var result = new MemoryStream())
             using (var bin = new BinaryReader(new MemoryStream(content)))
@@ -22,11 +22,12 @@ namespace CASCToolHost
 
                 if (blteSize == 0)
                 {
+                    // These are always uncompressed
                     chunkInfos = new BLTEChunkInfo[1];
                     chunkInfos[0].isFullChunk = false;
-                    chunkInfos[0].inFileSize = Convert.ToInt32(bin.BaseStream.Length - bin.BaseStream.Position);
-                    chunkInfos[0].actualSize = Convert.ToInt32(bin.BaseStream.Length - bin.BaseStream.Position);
-                    chunkInfos[0].checkSum = new byte[16]; ;
+                    chunkInfos[0].compSize = Convert.ToInt32(bin.BaseStream.Length - 8);
+                    chunkInfos[0].decompSize = Convert.ToInt32(bin.BaseStream.Length - 8 - 1);
+                    chunkInfos[0].checkSum = new byte[16];
                 }
                 else
                 {
@@ -51,8 +52,8 @@ namespace CASCToolHost
                     for (int i = 0; i < chunkCount; i++)
                     {
                         chunkInfos[i].isFullChunk = true;
-                        chunkInfos[i].inFileSize = bin.ReadInt32(true);
-                        chunkInfos[i].actualSize = bin.ReadInt32(true);
+                        chunkInfos[i].compSize = bin.ReadInt32(true);
+                        chunkInfos[i].decompSize = bin.ReadInt32(true);
                         chunkInfos[i].checkSum = new byte[16];
                         chunkInfos[i].checkSum = bin.ReadBytes(16);
                     }
@@ -62,102 +63,56 @@ namespace CASCToolHost
                 {
                     var chunk = chunkInfos[index];
 
-                    if (chunk.inFileSize > (bin.BaseStream.Length - bin.BaseStream.Position))
+                    if (chunk.compSize > (bin.BaseStream.Length - bin.BaseStream.Position))
                     {
                         throw new Exception("Trying to read more than is available!");
                     }
 
-                    var chunkBuffer = bin.ReadBytes(chunk.inFileSize);
-
-                    if (verify)
-                    {
-                        var hasher = MD5.Create();
-                        var md5sum = hasher.ComputeHash(chunkBuffer);
-
-                        if (chunk.isFullChunk && BitConverter.ToString(md5sum) != BitConverter.ToString(chunk.checkSum))
-                        {
-                            throw new Exception("MD5 checksum mismatch on BLTE chunk! Sum is " + BitConverter.ToString(md5sum).Replace("-", "") + " but is supposed to be " + BitConverter.ToString(chunk.checkSum).Replace("-", ""));
-                        }
-                    }
-
-                    using (var chunkResult = new MemoryStream())
-                    {
-                        HandleDataBlock(chunkBuffer, index, chunk, chunkResult);
-
-                        var chunkres = chunkResult.ToArray();
-
-                        if (chunk.isFullChunk && chunkres.Length != chunk.actualSize)
-                        {
-                            throw new Exception("Decoded result is wrong size!");
-                        }
-
-                        result.Write(chunkres, 0, chunkres.Length);
-                    }
+                    HandleDataBlock(bin.ReadBytes(chunk.compSize), index, chunk, result);
                 }
+
                 return result.ToArray();
             }
         }
-        private static void HandleDataBlock(byte[] chunkBuffer, int index, BLTEChunkInfo chunk, MemoryStream chunkResult)
+        private static void HandleDataBlock(byte[] data, int index, BLTEChunkInfo chunk, MemoryStream result)
         {
-            using (var chunkreader = new BinaryReader(new MemoryStream(chunkBuffer)))
+            switch (data[0])
             {
-                var mode = chunkreader.ReadChar();
-
-                switch (mode)
-                {
-                    case 'N': // none
-                        chunkResult.Write(chunkreader.ReadBytes(chunk.actualSize), 0, chunk.actualSize); //read actual size because we already read the N from chunkreader
+                case 0x4E: // N (no compression)
+                    result.Write(data, 1, data.Length - 1);
+                    break;
+                case 0x5A: // Z (zlib, compressed)
+                    using (var stream = new MemoryStream(data, 3, chunk.compSize - 3))
+                    using (var ds = new DeflateStream(stream, CompressionMode.Decompress))
+                    {
+                        ds.CopyTo(result);
+                    }
+                    break;
+                case 0x45: // E (encrypted)
+                    byte[] decrypted = new byte[data.Length - 15];
+                    decrypted[0] = 0x4E; // N
+                    try
+                    {
+                        decrypted = Decrypt(data, index);
+                    }
+                    catch (KeyNotFoundException e)
+                    {
+                        Console.WriteLine(e.Message);
+                        result.Write(new byte[chunk.decompSize], 0, chunk.decompSize);
                         break;
-                    case 'Z': // zlib
-                        using (var stream = new MemoryStream(chunkreader.ReadBytes(chunk.inFileSize - 1), 2, chunk.inFileSize - 3))
-                        using (var ds = new DeflateStream(stream, CompressionMode.Decompress))
-                        {
-                            ds.CopyTo(chunkResult);
-                        }
-                        break;
-                    case 'E': // encrypted
-                        byte[] decrypted = new byte[chunkBuffer.Length - 15];
-                        decrypted[0] = Convert.ToByte('N');
-                        try
-                        {
-                            decrypted = Decrypt(chunkBuffer, index);
-                        }
-                        catch (KeyNotFoundException e)
-                        {
-                            Console.WriteLine(e.Message);
-                            chunkResult.Write(new byte[chunk.actualSize], 0, chunk.actualSize);
-                            break;
-                        }
+                    }
 
-                        // Override inFileSize with decrypted length because it now differs from original encrypted chunk.inFileSize which breaks decompression
-                        chunk.inFileSize = decrypted.Length;
+                    // Override inFileSize with decrypted length because it now differs from original encrypted chunk.compSize which breaks decompression
+                    chunk.compSize = decrypted.Length;
 
-                        //Console.WriteLine("Decrypted chunk size is " + chunk.inFileSize);
-                        HandleDataBlock(decrypted, index, chunk, chunkResult);
-                        break;
-                    case 'F': // frame
-                    default:
-                        throw new Exception("Unsupported mode " + mode + "!");
-                }
+                    HandleDataBlock(decrypted, index, chunk, result);
+                    break;
+                case 0x46: // F (frame)
+                default:
+                    throw new Exception("Unsupported mode " + data[0].ToString("X") + "!");
             }
         }
-        private static string ReturnEncryptionKeyName(byte[] data)
-        {
-            byte keyNameSize = data[0];
 
-            if (keyNameSize == 0 || keyNameSize != 8)
-            {
-                Console.WriteLine(keyNameSize.ToString());
-                throw new Exception("keyNameSize == 0 || keyNameSize != 8");
-            }
-
-            byte[] keyNameBytes = new byte[keyNameSize];
-            Array.Copy(data, 1, keyNameBytes, 0, keyNameSize);
-
-            Array.Reverse(keyNameBytes);
-
-            return BitConverter.ToString(keyNameBytes).Replace("-", "");
-        }
         private static byte[] Decrypt(byte[] data, int index)
         {
             byte keyNameSize = data[1];
@@ -232,10 +187,11 @@ namespace CASCToolHost
             Array.Copy(IV, 8, IV, 0, 8);
             Array.Resize(ref IV, 8);
 
-            var salsa = new Salsa20();
-            var decryptor = salsa.CreateDecryptor(key, IV);
-
-            return decryptor.TransformFinalBlock(data, 0, data.Length);
+            using (Salsa20 salsa = new Salsa20())
+            {
+                var decryptor = salsa.CreateDecryptor(key, IV);
+                return decryptor.TransformFinalBlock(data, 0, data.Length);
+            }
         }
     }
 }

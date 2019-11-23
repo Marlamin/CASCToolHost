@@ -167,7 +167,7 @@ namespace CASCToolHost
             {
                 if (!raw)
                 {
-                    return BLTE.Parse(File.ReadAllBytes(unarchivedName));
+                    return BLTE.Parse(await File.ReadAllBytesAsync(unarchivedName));
                 }
                 else
                 {

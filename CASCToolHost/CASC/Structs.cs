@@ -186,8 +186,8 @@ namespace CASCToolHost
     public struct BLTEChunkInfo
     {
         public bool isFullChunk;
-        public int inFileSize;
-        public int actualSize;
+        public int compSize;
+        public int decompSize;
         public byte[] checkSum;
     }
 
