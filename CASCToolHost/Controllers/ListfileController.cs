@@ -88,5 +88,18 @@ namespace CASCToolHost.Controllers
                 FileDownloadName = "listfile.csv"
             };
         }
+
+        [Route("download/csv/unknown")]
+        public ActionResult DownloadUnknownCSV()
+        {
+            Logger.WriteLine("Serving unknown listfile");
+
+            var unkFiles = Database.GetUnknownFiles();
+
+            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', unkFiles)), "text/plain")
+            {
+                FileDownloadName = "unknown.csv"
+            };
+        }
     }
 }

@@ -14,7 +14,12 @@ namespace CASCToolHost
             Host.CreateDefaultBuilder(args)
             .ConfigureWebHostDefaults(webBuilder =>
             {
-                webBuilder.UseStartup<Startup>()
+                webBuilder.ConfigureKestrel(serverOptions =>
+                {
+                    serverOptions.Limits.MaxConcurrentConnections = 500;
+                    serverOptions.Limits.MaxConcurrentUpgradedConnections = 500;
+                })
+                .UseStartup<Startup>()
                 .UseUrls("http://localhost:5005/");
             });
     }

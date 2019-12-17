@@ -122,6 +122,25 @@ namespace CASCToolHost.Utils
             return fileList.ToArray();
         }
 
+        public static uint[] GetUnknownFiles()
+        {
+            var fileList = new List<uint>();
+
+            using (var connection = new MySqlConnection(SettingsManager.connectionString))
+            {
+                connection.Open();
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT id from wow_rootfiles WHERE filename IS NULL ORDER BY id DESC";
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    fileList.Add(uint.Parse(reader["id"].ToString()));
+                }
+            }
+
+            return fileList.ToArray();
+        }
+
         public static Dictionary<uint, CASCFile> GetKnownFiles(bool includeUnverified = false)
         {
             var dict = new Dictionary<uint, CASCFile>();

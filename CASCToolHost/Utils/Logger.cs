@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
 
 namespace CASCToolHost
 {
@@ -6,7 +8,9 @@ namespace CASCToolHost
     {
         public static void WriteLine(string line)
         {
-            Console.WriteLine("[" + DateTime.Now.ToString() + "." + DateTime.Now.Millisecond.ToString() + "] " + line);
+            ThreadPool.GetAvailableThreads(out int availableWorkerThreads, out int availableAsyncIOThreads);
+
+            Console.WriteLine("[" + DateTime.Now.ToString() + "] [AW=" + availableWorkerThreads + ", AIO=" + availableAsyncIOThreads + "] " + line);
         }
 
         public static void WriteLine(string line, ConsoleColor color)
