@@ -309,5 +309,34 @@ namespace CASCToolHost.Utils
             }
             return keys;
         }
+
+        public static string GetBuildConfigByFullBuild(string fullBuild)
+        {
+            string buildConfig = "";
+
+            var buildParts = fullBuild.Split('.');
+            var tactBuild = "WOW-" + buildParts[3] + "patch" + buildParts[0] + "." + buildParts[1] + "." + buildParts[2];
+            using (var connection = new MySqlConnection(SettingsManager.connectionString))
+            {
+                try
+                {
+                    connection.Open();
+                    using var cmd = connection.CreateCommand();
+                    cmd.CommandText = "SELECT hash FROM wow_buildconfig WHERE description LIKE @description";
+                    cmd.Parameters.AddWithValue("@description", tactBuild + "%");
+                    using var reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        buildConfig = reader["hash"].ToString();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+
+            return buildConfig;
+        }
     }
 }

@@ -137,5 +137,43 @@ namespace CASCToolHost.Controllers
 
             return NotFound();
         }
+
+        [Route("db2")]
+        [HttpGet]
+        public async Task<ActionResult> GetDB2ByTableName(string tableName, string fullBuild)
+        {
+            var buildConfig = Database.GetBuildConfigByFullBuild(fullBuild);
+            var cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfig);
+
+            if (string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || string.IsNullOrEmpty(tableName))
+            {
+                throw new ArgumentException("Invalid arguments!");
+            }
+
+            Logger.WriteLine("Serving DB2 \"" + tableName + "\" for build " + fullBuild);
+
+            try
+            {
+                return new FileContentResult(await CASC.GetFileByFilename(buildConfig, cdnConfig, "dbfilesclient/" + tableName.ToLower() + ".db2"), "application/octet-stream")
+                {
+                    FileDownloadName = Path.GetFileName(tableName.ToLower() + ".db2")
+                };
+            }
+            catch (FileNotFoundException)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Logger.WriteLine("Table " + tableName + " not found in root of buildconfig " + buildConfig + " cdnconfig " + cdnConfig);
+                Console.ResetColor();
+                return NotFound();
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Logger.WriteLine("Error " + e.Message + " occured when getting file " + tableName + " of buildconfig " + buildConfig + " cdnconfig " + cdnConfig);
+                Console.ResetColor();
+            }
+
+            return NotFound();
+        }
     }
 }
