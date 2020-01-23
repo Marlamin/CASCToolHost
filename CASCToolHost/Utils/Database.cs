@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CASCToolHost.Utils
 {
@@ -15,18 +16,18 @@ namespace CASCToolHost.Utils
 
     public static class Database
     {
-        public static string GetRootCDNByBuildConfig(string buildConfig)
+        public static async Task<string> GetRootCDNByBuildConfig(string buildConfig)
         {
             var rootcdn = "";
 
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using var cmd = connection.CreateCommand();
                 cmd.CommandText = "SELECT root_cdn from wow_buildconfig WHERE hash = @hash LIMIT 1";
                 cmd.Parameters.AddWithValue("@hash", buildConfig);
-                using var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
                     rootcdn = reader["root_cdn"].ToString();
                 }
@@ -34,19 +35,19 @@ namespace CASCToolHost.Utils
 
             return rootcdn;
         }
-        public static string GetCDNConfigByBuildConfig(string buildConfig)
+        public static async Task<string> GetCDNConfigByBuildConfig(string buildConfig)
         {
             var cdnconfig = "";
 
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using (var cmd = connection.CreateCommand())
                 {
                     cmd.CommandText = "SELECT cdnconfig from wow_versions WHERE buildconfig = @hash LIMIT 1";
                     cmd.Parameters.AddWithValue("@hash", buildConfig);
-                    using var reader = cmd.ExecuteReader();
-                    while (reader.Read())
+                    using var reader = await cmd.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
                     {
                         cdnconfig = reader["cdnconfig"].ToString();
                     }
@@ -61,19 +62,19 @@ namespace CASCToolHost.Utils
             return cdnconfig;
         }
 
-        public static string GetFilenameByFileDataID(uint filedataid)
+        public static async Task<string> GetFilenameByFileDataID(uint filedataid)
         {
             Logger.WriteLine("Looking up filename for " + filedataid);
             var filename = "";
 
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using var cmd = connection.CreateCommand();
                 cmd.CommandText = "SELECT filename from wow_rootfiles WHERE id = @id";
                 cmd.Parameters.AddWithValue("@id", filedataid);
-                using var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
                     filename = reader["filename"].ToString();
                 }
@@ -82,19 +83,19 @@ namespace CASCToolHost.Utils
             return filename;
         }
 
-        public static uint GetFileDataIDByFilename(string filename)
+        public static async Task<uint> GetFileDataIDByFilename(string filename)
         {
             Logger.WriteLine("Looking up filedataid for " + filename);
             uint filedataid = 0;
 
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using var cmd = connection.CreateCommand();
                 cmd.CommandText = "SELECT id from wow_rootfiles WHERE filename = @filename";
                 cmd.Parameters.AddWithValue("@filename", filename.Replace('\\', '/').ToLower());
-                using var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
                     filedataid = uint.Parse(reader["id"].ToString());
                 }
@@ -103,17 +104,17 @@ namespace CASCToolHost.Utils
             return filedataid;
         }
 
-        public static string[] GetFiles()
+        public static async Task<string[]> GetFiles()
         {
             var fileList = new List<string>();
 
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using var cmd = connection.CreateCommand();
                 cmd.CommandText = "SELECT filename from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' AND verified = 1 ORDER BY id DESC";
-                using var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
                     fileList.Add(reader["filename"].ToString());
                 }
@@ -122,17 +123,17 @@ namespace CASCToolHost.Utils
             return fileList.ToArray();
         }
 
-        public static uint[] GetUnknownFiles()
+        public static async Task<uint[]> GetUnknownFiles()
         {
             var fileList = new List<uint>();
 
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using var cmd = connection.CreateCommand();
                 cmd.CommandText = "SELECT id from wow_rootfiles WHERE filename IS NULL ORDER BY id DESC";
-                using var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
                     fileList.Add(uint.Parse(reader["id"].ToString()));
                 }
@@ -141,13 +142,13 @@ namespace CASCToolHost.Utils
             return fileList.ToArray();
         }
 
-        public static Dictionary<uint, CASCFile> GetKnownFiles(bool includeUnverified = false)
+        public static async Task<Dictionary<uint, CASCFile>> GetKnownFiles(bool includeUnverified = false)
         {
             var dict = new Dictionary<uint, CASCFile>();
 
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using var cmd = connection.CreateCommand();
                 if (!includeUnverified)
                 {
@@ -157,8 +158,8 @@ namespace CASCToolHost.Utils
                 {
                     cmd.CommandText = "SELECT id, filename, type from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
                 }
-                using var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
                     var row = new CASCFile { id = uint.Parse(reader["id"].ToString()), filename = reader["filename"].ToString(), type = reader["type"].ToString() };
                     dict.Add(uint.Parse(reader["id"].ToString()), row);
@@ -168,17 +169,17 @@ namespace CASCToolHost.Utils
             return dict;
         }
 
-        public static Dictionary<uint, CASCFile> GetAllFiles()
+        public static async Task<Dictionary<uint, CASCFile>> GetAllFiles()
         {
             var dict = new Dictionary<uint, CASCFile>();
 
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using var cmd = connection.CreateCommand();
                 cmd.CommandText = "SELECT id, filename, type from wow_rootfiles ORDER BY id DESC";
-                using var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
                     var row = new CASCFile { id = uint.Parse(reader["id"].ToString()), filename = reader["filename"].ToString(), type = reader["type"].ToString() };
                     dict.Add(uint.Parse(reader["id"].ToString()), row);
@@ -188,17 +189,17 @@ namespace CASCToolHost.Utils
             return dict;
         }
 
-        public static Dictionary<ulong, string> GetKnownLookups()
+        public static async Task<Dictionary<ulong, string>> GetKnownLookups()
         {
             var dict = new Dictionary<ulong, string>();
 
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using var cmd = connection.CreateCommand();
                 cmd.CommandText = "SELECT filename, CONV(lookup, 16, 10) as lookup from wow_rootfiles WHERE filename IS NOT NULL AND filename != '' ORDER BY id DESC";
-                using var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
                     dict.Add(ulong.Parse(reader["lookup"].ToString()), reader["filename"].ToString());
                 }
@@ -207,7 +208,7 @@ namespace CASCToolHost.Utils
             return dict;
         }
 
-        public static Dictionary<uint, string> GetFilesByBuild(string buildConfig)
+        public static async Task<Dictionary<uint, string>> GetFilesByBuild(string buildConfig)
         {
             var config = Config.GetBuildConfig("http://cdn.blizzard.com/tpr/wow/", buildConfig);
 
@@ -215,12 +216,12 @@ namespace CASCToolHost.Utils
 
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using var cmd = connection.CreateCommand();
                 cmd.CommandText = "SELECT root_cdn FROM wow_buildconfig WHERE hash = @hash";
                 cmd.Parameters.AddWithValue("@hash", buildConfig);
-                using var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
                     rootHash = reader["root_cdn"].ToString();
                 }
@@ -237,11 +238,11 @@ namespace CASCToolHost.Utils
 
                 if (config.encodingSize == null || config.encodingSize.Count() < 2)
                 {
-                    encoding = NGDP.GetEncoding("http://cdn.blizzard.com/tpr/wow/", config.encoding[1].ToHexString(), 0);
+                    encoding = await NGDP.GetEncoding("http://cdn.blizzard.com/tpr/wow/", config.encoding[1].ToHexString(), 0);
                 }
                 else
                 {
-                    encoding = NGDP.GetEncoding("http://cdn.blizzard.com/tpr/wow/", config.encoding[1].ToHexString(), int.Parse(config.encodingSize[1]));
+                    encoding = await NGDP.GetEncoding("http://cdn.blizzard.com/tpr/wow/", config.encoding[1].ToHexString(), int.Parse(config.encodingSize[1]));
                 }
 
                 if (encoding.aEntries.TryGetValue(config.root, out var bakRootEntry))
@@ -254,22 +255,22 @@ namespace CASCToolHost.Utils
                 }
             }
 
-            return GetFilesByRoot(rootHash);
+            return await GetFilesByRoot(rootHash);
         }
 
-        public static Dictionary<uint, string> GetFilesByRoot(string rootHash)
+        public static async Task<Dictionary<uint, string>> GetFilesByRoot(string rootHash)
         {
-            var root = NGDP.GetRoot("http://cdn.blizzard.com/tpr/wow/", rootHash, true);
+            var root = await NGDP.GetRoot("http://cdn.blizzard.com/tpr/wow/", rootHash, true);
 
             var fileList = new Dictionary<uint, string>();
 
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using var cmd = connection.CreateCommand();
                 cmd.CommandText = "SELECT id, filename from wow_rootfiles WHERE filename IS NOT NULL ORDER BY id DESC";
-                using var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
                     fileList.Add(uint.Parse(reader["id"].ToString()), reader["filename"].ToString());
                 }
@@ -286,18 +287,18 @@ namespace CASCToolHost.Utils
             return returnNames;
         }
 
-        public static Dictionary<ulong, byte[]> GetKnownTACTKeys()
+        public static async Task<Dictionary<ulong, byte[]>> GetKnownTACTKeys()
         {
             var keys = new Dictionary<ulong, byte[]>();
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
                 try
                 {
-                    connection.Open();
+                    await connection.OpenAsync();
                     using var cmd = connection.CreateCommand();
                     cmd.CommandText = "SELECT keyname, keybytes FROM wow_tactkey WHERE keybytes IS NOT NULL";
-                    using var reader = cmd.ExecuteReader();
-                    while (reader.Read())
+                    using var reader = await cmd.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
                     {
                         keys.Add(ulong.Parse(reader["keyname"].ToString(), System.Globalization.NumberStyles.HexNumber), reader["keybytes"].ToString().ToByteArray());
                     }
@@ -310,7 +311,7 @@ namespace CASCToolHost.Utils
             return keys;
         }
 
-        public static string GetBuildConfigByFullBuild(string fullBuild)
+        public static async Task<string> GetBuildConfigByFullBuild(string fullBuild)
         {
             string buildConfig = "";
 
@@ -320,12 +321,12 @@ namespace CASCToolHost.Utils
             {
                 try
                 {
-                    connection.Open();
+                    await connection.OpenAsync();
                     using var cmd = connection.CreateCommand();
                     cmd.CommandText = "SELECT hash FROM wow_buildconfig WHERE description LIKE @description";
                     cmd.Parameters.AddWithValue("@description", tactBuild + "%");
-                    using var reader = cmd.ExecuteReader();
-                    while (reader.Read())
+                    using var reader = await cmd.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
                     {
                         buildConfig = reader["hash"].ToString();
                     }

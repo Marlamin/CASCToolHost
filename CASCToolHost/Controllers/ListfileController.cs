@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CASCToolHost.Controllers
 {
@@ -17,30 +18,31 @@ namespace CASCToolHost.Controllers
         }
 
         [Route("download")]
-        public ActionResult Download()
+        public async Task<ActionResult> Download()
         {
             Logger.WriteLine("Serving listfile");
-            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', Database.GetFiles())), "text/plain")
+            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', await Database.GetFiles())), "text/plain")
             {
                 FileDownloadName = "listfile.txt"
             };
         }
 
         [Route("download/build/{buildConfig}")]
-        public ActionResult DownloadByBuild(string buildConfig)
+        public async Task<ActionResult> DownloadByBuild(string buildConfig)
         {
             Logger.WriteLine("Serving listfile for build " + buildConfig);
-            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', Database.GetFilesByBuild(buildConfig).Values)), "text/plain")
+            var filesPerBuild = await Database.GetFilesByBuild(buildConfig);
+            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', filesPerBuild.Values)), "text/plain")
             {
                 FileDownloadName = "listfile.txt"
             };
         }
 
         [Route("download/csv")]
-        public ActionResult DownloadCSV()
+        public async Task<ActionResult> DownloadCSV()
         {
             Logger.WriteLine("Serving CSV listfile");
-            var knownFiles = Database.GetKnownFiles();
+            var knownFiles = await Database.GetKnownFiles();
             var nameList = new List<string>();
             foreach (var entry in knownFiles)
             {
@@ -54,10 +56,10 @@ namespace CASCToolHost.Controllers
         }
 
         [Route("download/csv/unverified")]
-        public ActionResult DownloadCSVUnverified()
+        public async Task<ActionResult> DownloadCSVUnverified()
         {
             Logger.WriteLine("Serving unverified CSV listfile");
-            var knownFiles = Database.GetKnownFiles(true);
+            var knownFiles = await Database.GetKnownFiles(true);
             var nameList = new List<string>();
             foreach (var entry in knownFiles)
             {
@@ -71,11 +73,11 @@ namespace CASCToolHost.Controllers
         }
 
         [Route("download/csv/build")]
-        public ActionResult DownloadCSVByBuild(string buildConfig)
+        public async Task<ActionResult> DownloadCSVByBuild(string buildConfig)
         {
             Logger.WriteLine("Serving CSV listfile for build " + buildConfig);
 
-            var knownFiles = Database.GetFilesByBuild(buildConfig);
+            var knownFiles = await Database.GetFilesByBuild(buildConfig);
 
             var nameList = new List<string>();
             foreach (var entry in knownFiles)
@@ -90,11 +92,11 @@ namespace CASCToolHost.Controllers
         }
 
         [Route("download/csv/unknown")]
-        public ActionResult DownloadUnknownCSV()
+        public async Task<ActionResult> DownloadUnknownCSV()
         {
             Logger.WriteLine("Serving unknown listfile");
 
-            var unkFiles = Database.GetUnknownFiles();
+            var unkFiles = await Database.GetUnknownFiles();
 
             return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', unkFiles)), "text/plain")
             {

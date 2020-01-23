@@ -9,9 +9,9 @@ namespace CASCToolHost
     {
         private static Dictionary<ulong, byte[]> keys = new Dictionary<ulong, byte[]>();
 
-        public static void LoadKeys()
+        public static async void LoadKeys()
         {
-            keys = Database.GetKnownTACTKeys();
+            keys = await Database.GetKnownTACTKeys();
         }
 
         private static Salsa20 salsa = new Salsa20();

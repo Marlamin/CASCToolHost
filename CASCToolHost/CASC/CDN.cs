@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace CASCToolHost
 {
@@ -17,7 +18,7 @@ namespace CASCToolHost
             client = new HttpClient();
         }
 
-        public static byte[] Get(string url, bool returnstream = true, bool redownload = false)
+        public static async Task<byte[]> Get(string url, bool returnstream = true, bool redownload = false)
         {
             var uri = new Uri(url.ToLower());
 
@@ -28,34 +29,34 @@ namespace CASCToolHost
                 try
                 {
                     if (!Directory.Exists(cacheDir + cleanname)) { Directory.CreateDirectory(Path.GetDirectoryName(cacheDir + cleanname)); }
-                    Logger.WriteLine("Downloading " + cleanname);
-                    using (HttpResponseMessage response = client.GetAsync(uri).Result)
+                    Logger.WriteLine("WARNING! Downloading " + cleanname);
+                    using (HttpResponseMessage response = await client.GetAsync(uri))
                     {
                         if (response.IsSuccessStatusCode)
                         {
                             using (MemoryStream mstream = new MemoryStream())
                             using (HttpContent res = response.Content)
                             {
-                                res.CopyToAsync(mstream);
+                                await res.CopyToAsync(mstream);
 
                                 if (isEncrypted)
                                 {
                                     var cleaned = Path.GetFileNameWithoutExtension(cleanname);
                                     var decrypted = BLTE.DecryptFile(cleaned, mstream.ToArray(), decryptionKeyName);
 
-                                    File.WriteAllBytes(cacheDir + cleanname, decrypted);
+                                    await File.WriteAllBytesAsync(cacheDir + cleanname, decrypted);
                                     return decrypted;
                                 }
                                 else
                                 {
-                                    File.WriteAllBytes(cacheDir + cleanname, mstream.ToArray());
+                                    await File.WriteAllBytesAsync(cacheDir + cleanname, mstream.ToArray());
                                 }
                             }
                         }
                         else if (response.StatusCode == System.Net.HttpStatusCode.NotFound && !url.StartsWith("http://client04"))
                         {
                             Logger.WriteLine("Not found on primary mirror, retrying on secondary mirror...");
-                            return Get("http://client04.pdl.wow.battlenet.com.cn/" + cleanname, returnstream, redownload);
+                            return await Get("http://client04.pdl.wow.battlenet.com.cn/" + cleanname, returnstream, redownload);
                         }
                         else
                         {
@@ -72,7 +73,7 @@ namespace CASCToolHost
 
             if (returnstream)
             {
-                return File.ReadAllBytes(cacheDir + cleanname);
+                return await File.ReadAllBytesAsync(cacheDir + cleanname);
             }
             else
             {

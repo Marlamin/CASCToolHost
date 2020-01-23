@@ -21,7 +21,7 @@ namespace CASCToolHost.Controllers
         }
 
         [Route("files")]
-        public DataTablesResult Get(string buildConfig, int draw, int start, int length)
+        public async Task<DataTablesResult> Get(string buildConfig, int draw, int start, int length)
         {
             if (string.IsNullOrEmpty(buildConfig))
             {
@@ -48,7 +48,7 @@ namespace CASCToolHost.Controllers
 
             }
 
-            var build = BuildCache.GetOrCreate(buildConfig);
+            var build = await BuildCache.GetOrCreate(buildConfig);
             result.recordsTotal = build.root.entriesFDID.Count;
 
             result.data = new List<List<string>>();
@@ -120,7 +120,7 @@ namespace CASCToolHost.Controllers
                         entry.Value[0].fileDataID.ToString()
                     };
 
-                    var filename = Database.GetFilenameByFileDataID(entry.Value[0].fileDataID);
+                    var filename = await Database.GetFilenameByFileDataID(entry.Value[0].fileDataID);
 
                     if (!string.IsNullOrEmpty(filename))
                     {

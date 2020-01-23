@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CASCToolHost.Controllers
 {
@@ -12,38 +13,39 @@ namespace CASCToolHost.Controllers
     public class RootController : Controller
     {
         [Route("getfdid")]
-        public uint GetFileDataIDByFilename(string buildConfig, string cdnConfig, string filename)
+        public async Task<uint> GetFileDataIDByFilename(string buildConfig, string cdnConfig, string filename)
         {
             Logger.WriteLine("Serving filedataid for \"" + filename + "\" for build " + buildConfig + " and cdn " + cdnConfig);
-            return CASC.GetFileDataIDByFilename(buildConfig, cdnConfig, filename);
+            return await CASC.GetFileDataIDByFilename(buildConfig, cdnConfig, filename);
         }
 
         [Route("exists/{filedataid}")]
-        public bool Get(string buildConfig, string cdnConfig, uint filedataid)
+        public async Task<bool> Get(string buildConfig, string cdnConfig, uint filedataid)
         {
             Logger.WriteLine("Serving existence check of fdid " + filedataid + " for build " + buildConfig);
-            return CASC.FileExists(buildConfig, filedataid);
+            return await CASC.FileExists(buildConfig, filedataid);
         }
 
         [Route("exists")]
-        public bool Get(string buildConfig, string cdnConfig, string filename)
+        public async Task<bool> Get(string buildConfig, string cdnConfig, string filename)
         {
             Logger.WriteLine("Serving existence check of \"" + filename + "\" for build " + buildConfig);
-            return CASC.FileExists(buildConfig, filename);
+            return await CASC.FileExists(buildConfig, filename);
         }
 
         [Route("fdids")]
-        public uint[] Get(string buildConfig, string cdnConfig)
+        public async Task<uint[]> Get(string buildConfig, string cdnConfig)
         {
             Logger.WriteLine("Serving filedataid list for build " + buildConfig + " and cdn " + cdnConfig);
-            return CASC.GetFileDataIDsInBuild(buildConfig, cdnConfig);
+            return await CASC.GetFileDataIDsInBuild(buildConfig, cdnConfig);
         }
 
         [Route("fdidcount")]
-        public int Get(string rootcdn)
+        public async Task<int> Get(string rootcdn)
         {
             Logger.WriteLine("Serving filedataid count for root_cdn " + rootcdn);
-            return NGDP.GetRoot(Path.Combine(SettingsManager.cacheDir, "tpr", "wow"), rootcdn, true).entriesFDID.Count;
+            var root = await NGDP.GetRoot(Path.Combine(SettingsManager.cacheDir, "tpr", "wow"), rootcdn, true);
+            return root.entriesFDID.Count;
         }
 
         [Route("diff_api_invalidate")]
@@ -55,7 +57,7 @@ namespace CASCToolHost.Controllers
         }
 
         [Route("diff_api")]
-        public ActionResult DiffApi(string from, string to, int start = 0)
+        public async Task<ActionResult> DiffApi(string from, string to, int start = 0)
         {
             Logger.WriteLine("Serving root diff for root " + from + " => " + to);
 
@@ -72,10 +74,10 @@ namespace CASCToolHost.Controllers
                 });
             }
 
-            var filedataids = Database.GetAllFiles();
+            var filedataids = await Database.GetAllFiles();
 
-            var rootFrom = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), from, true);
-            var rootTo = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), to, true);
+            var rootFrom = await NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), from, true);
+            var rootTo = await NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), to, true);
 
             var rootFromEntries = rootFrom.entriesFDID;
             var rootToEntries = rootTo.entriesFDID;
@@ -164,7 +166,7 @@ namespace CASCToolHost.Controllers
         }
 
         [Route("diff")]
-        public string Diff(string from, string to)
+        public async Task<string> Diff(string from, string to)
         {
             Logger.WriteLine("Serving root diff for root " + from + " => " + to);
             var result = new List<string>();
@@ -176,10 +178,10 @@ namespace CASCToolHost.Controllers
                 result.Add("Action;Name;FileDataID");
             }
 
-            var filedataids = Database.GetKnownFiles(true);
+            var filedataids = await Database.GetKnownFiles(true);
 
-            var rootFrom = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), from, true);
-            var rootTo = NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), to, true);
+            var rootFrom = await NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), from, true);
+            var rootTo = await NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), to, true);
 
             var rootFromEntries = rootFrom.entriesFDID;
             var rootToEntries = rootTo.entriesFDID;

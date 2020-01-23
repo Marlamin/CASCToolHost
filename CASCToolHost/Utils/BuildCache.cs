@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Tasks;
 using static CASCToolHost.CASC;
 
 namespace CASCToolHost.Utils
@@ -11,11 +12,11 @@ namespace CASCToolHost.Utils
         private static readonly MemoryCache Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 15 });
         private static readonly ConcurrentDictionary<string, SemaphoreSlim> Locks = new ConcurrentDictionary<string, SemaphoreSlim>();
 
-        public static Build GetOrCreate(string buildConfig, string cdnConfig = "")
+        public static async Task<Build> GetOrCreate(string buildConfig, string cdnConfig = "")
         {
             if (string.IsNullOrEmpty(cdnConfig))
             {
-                cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfig);
+                cdnConfig = await Database.GetCDNConfigByBuildConfig(buildConfig);
                 if (string.IsNullOrEmpty(cdnConfig))
                 {
                     throw new Exception("Unable to locate CDNconfig for buildconfig " + buildConfig);
@@ -33,7 +34,7 @@ namespace CASCToolHost.Utils
                     if (!Cache.TryGetValue(buildConfig, out cachedBuild))
                     {
                         // Key not in cache, load build
-                        cachedBuild = LoadBuild("wowt", buildConfig, cdnConfig);
+                        cachedBuild = await LoadBuild("wowt", buildConfig, cdnConfig);
                         Cache.Set(buildConfig, cachedBuild, new MemoryCacheEntryOptions().SetSize(1));
                     }
                 }

@@ -35,7 +35,7 @@ namespace CASCToolHost.Controllers
                 // Retrieve CDNConfig from DB if not set in request
                 if (string.IsNullOrEmpty(cdnConfig) && !string.IsNullOrEmpty(buildConfig))
                 {
-                    cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfig);
+                    cdnConfig = await Database.GetCDNConfigByBuildConfig(buildConfig);
                 }
 
                 return new FileContentResult(await CASC.GetFile(buildConfig, cdnConfig, contenthash), "application/octet-stream")
@@ -52,13 +52,13 @@ namespace CASCToolHost.Controllers
             // Retrieve CDNConfig from DB if not set in request
             if (string.IsNullOrEmpty(cdnConfig) && !string.IsNullOrEmpty(buildConfig))
             {
-                cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfig);
+                cdnConfig = await Database.GetCDNConfigByBuildConfig(buildConfig);
             }
 
             // Retrieve filename from DB if not set in request
             if (string.IsNullOrEmpty(filename) && filedataid != 0)
             {
-                filename = Path.GetFileName(Database.GetFilenameByFileDataID(filedataid));
+                filename = Path.GetFileName(await Database.GetFilenameByFileDataID(filedataid));
                 if (string.IsNullOrEmpty(filename))
                 {
                     filename = filedataid + ".unk";
@@ -104,7 +104,7 @@ namespace CASCToolHost.Controllers
             // Retrieve CDNConfig from DB if not set in request
             if (string.IsNullOrEmpty(cdnConfig) && !string.IsNullOrEmpty(buildConfig))
             {
-                cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfig);
+                cdnConfig = await Database.GetCDNConfigByBuildConfig(buildConfig);
             }
 
             if (string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || string.IsNullOrEmpty(filename))
@@ -142,8 +142,8 @@ namespace CASCToolHost.Controllers
         [HttpGet]
         public async Task<ActionResult> GetDB2ByTableName(string tableName, string fullBuild)
         {
-            var buildConfig = Database.GetBuildConfigByFullBuild(fullBuild);
-            var cdnConfig = Database.GetCDNConfigByBuildConfig(buildConfig);
+            var buildConfig = await Database.GetBuildConfigByFullBuild(fullBuild);
+            var cdnConfig = await Database.GetCDNConfigByBuildConfig(buildConfig);
 
             if (string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || string.IsNullOrEmpty(tableName))
             {

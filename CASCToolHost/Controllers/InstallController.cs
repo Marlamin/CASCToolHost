@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CASCToolHost.Controllers
 {
@@ -11,9 +12,9 @@ namespace CASCToolHost.Controllers
     public class InstallController : Controller
     {
         [Route("dumpbybuild")]
-        public ActionResult DumpByBuild(string buildConfig)
+        public async Task<ActionResult> DumpByBuild(string buildConfig)
         {
-            var build = BuildCache.GetOrCreate(buildConfig);
+            var build = await BuildCache.GetOrCreate(buildConfig);
 
             string installHash;
 
@@ -33,21 +34,21 @@ namespace CASCToolHost.Controllers
                 }
             }
 
-            return DumpByHash(installHash);
+            return await DumpByHash(installHash);
         }
 
         [Route("dump")]
-        public ActionResult DumpByHash(string hash)
+        public async Task<ActionResult> DumpByHash(string hash)
         {
-            var install = NGDP.GetInstall("http://cdn.blizzard.com/tpr/wow/", hash, true);
+            var install = await NGDP.GetInstall("http://cdn.blizzard.com/tpr/wow/", hash, true);
             return Json(install.entries);
         }
 
         [Route("diff")]
-        public ActionResult Diff(string from, string to)
+        public async Task<ActionResult> Diff(string from, string to)
         {
-            var installFrom = NGDP.GetInstall("http://cdn.blizzard.com/tpr/wow/", from, true);
-            var installTo = NGDP.GetInstall("http://cdn.blizzard.com/tpr/wow/", to, true);
+            var installFrom = await NGDP.GetInstall("http://cdn.blizzard.com/tpr/wow/", from, true);
+            var installTo = await NGDP.GetInstall("http://cdn.blizzard.com/tpr/wow/", to, true);
 
             var installFromDict = new Dictionary<string, InstallFileEntry>();
             foreach(var entry in installFrom.entries)

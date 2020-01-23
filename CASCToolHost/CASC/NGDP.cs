@@ -194,7 +194,7 @@ namespace CASCToolHost
 
             return cdns;
         }
-        public static RootFile GetRoot(string url, string hash, bool parseIt = false)
+        public static async Task<RootFile> GetRoot(string url, string hash, bool parseIt = false)
         {
             var root = new RootFile
             {
@@ -206,11 +206,11 @@ namespace CASCToolHost
 
             if (url.StartsWith("http:"))
             {
-                content = CDN.Get(url + "data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash);
+                content = await CDN.Get(url + "data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash);
             }
             else
             {
-                content = File.ReadAllBytes(Path.Combine(url, "data", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
+                content = await File.ReadAllBytesAsync(Path.Combine(url, "data", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
             }
 
             if (!parseIt) return root;
@@ -219,7 +219,8 @@ namespace CASCToolHost
             var unnamedCount = 0;
             var newRoot = false;
 
-            using (BinaryReader bin = new BinaryReader(new MemoryStream(BLTE.Parse(content))))
+            using (MemoryStream ms = new MemoryStream(BLTE.Parse(content)))
+            using (BinaryReader bin = new BinaryReader(ms))
             {
                 var header = bin.ReadUInt32();
                 if (header == 1296454484)
@@ -294,19 +295,19 @@ namespace CASCToolHost
 
             return root;
         }
-        public static EncodingFile GetEncoding(string url, string hash, int encodingSize = 0, bool parseTableB = false, bool checkStuff = false)
+        public static async Task<EncodingFile> GetEncoding(string url, string hash, int encodingSize = 0, bool parseTableB = false, bool checkStuff = false)
         {
             var encoding = new EncodingFile();
-
+            hash = hash.ToLower();
             byte[] content;
 
             if (url.Substring(0, 4) == "http")
             {
-                content = CDN.Get(url + "data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash);
+                content = await CDN.Get(url + "data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash);
 
                 if (encodingSize != 0 && encodingSize != content.Length)
                 {
-                    content = CDN.Get(url + "data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash, true);
+                    content = await CDN.Get(url + "data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash, true);
 
                     if (encodingSize != content.Length && encodingSize != 0)
                     {
@@ -316,7 +317,7 @@ namespace CASCToolHost
             }
             else
             {
-                content = File.ReadAllBytes(Path.Combine(url, "data", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
+                content = await File.ReadAllBytesAsync(Path.Combine(url, "data", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
             }
 
             using (BinaryReader bin = new BinaryReader(new MemoryStream(BLTE.Parse(content))))
@@ -622,11 +623,11 @@ namespace CASCToolHost
             GetIndexes(Path.Combine(CDN.cacheDir, "tpr", "wow"), archiveList.ToArray());
         }
 
-        public static InstallFile GetInstall(string url, string hash, bool parseIt = false)
+        public static async Task<InstallFile> GetInstall(string url, string hash, bool parseIt = false)
         {
             var install = new InstallFile();
 
-            byte[] content = CDN.Get(url + "/data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash);
+            byte[] content = await CDN.Get(url + "/data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash);
 
             if (!parseIt) return install;
 

@@ -52,7 +52,7 @@ namespace CASCToolHost.Controllers
                         {
                             using (var cascStream = new MemoryStream(await CASC.GetFile(buildConfig, cdnConfig, filedataid)))
                             {
-                                var entryname = Path.GetFileName(Database.GetFilenameByFileDataID(filedataid));
+                                var entryname = Path.GetFileName(await Database.GetFilenameByFileDataID(filedataid));
                                 if(entryname == "")
                                 {
                                     entryname = filedataid.ToString() + ".unk";
