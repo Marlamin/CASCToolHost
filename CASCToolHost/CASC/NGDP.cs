@@ -289,7 +289,6 @@ namespace CASCToolHost
                             root.entriesFDID.Add(entries[i].fileDataID, entries[i]);
                         }
                     }
-
                 }
             }
 

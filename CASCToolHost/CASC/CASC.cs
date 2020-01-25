@@ -218,7 +218,7 @@ namespace CASCToolHost
             return new byte[0];
         }
 
-        public async static Task<byte[]> GetFileByFilename(string buildConfig, string cdnConfig, string filename)
+        public async static Task<byte[]> GetFileByFilename(string buildConfig, string cdnConfig, string filename, LocaleFlags locale = LocaleFlags.All_WoW)
         {
             var build = await BuildCache.GetOrCreate(buildConfig, cdnConfig);
 
@@ -228,9 +228,20 @@ namespace CASCToolHost
 
             if (build.root.entriesLookup.TryGetValue(lookup, out var entry))
             {
-                var prioritizedEntry = entry.FirstOrDefault(subentry =>
-                    subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
-                );
+                RootEntry prioritizedEntry;
+
+                if (locale == LocaleFlags.All_WoW)
+                {
+                    prioritizedEntry = entry.FirstOrDefault(subentry =>
+                        subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
+                    );
+                }
+                else
+                {
+                    prioritizedEntry = entry.FirstOrDefault(subentry =>
+                        subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && subentry.localeFlags.HasFlag(locale)
+                    );
+                }
 
                 var selectedEntry = (prioritizedEntry.fileDataID != 0) ? prioritizedEntry : entry.First();
                 target = selectedEntry.md5.ToHexString().ToLower();

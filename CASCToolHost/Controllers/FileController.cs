@@ -140,7 +140,7 @@ namespace CASCToolHost.Controllers
 
         [Route("db2")]
         [HttpGet]
-        public async Task<ActionResult> GetDB2ByTableName(string tableName, string fullBuild)
+        public async Task<ActionResult> GetDB2ByTableName(string tableName, string fullBuild, LocaleFlags locale = LocaleFlags.All_WoW)
         {
             var buildConfig = await Database.GetBuildConfigByFullBuild(fullBuild);
             var cdnConfig = await Database.GetCDNConfigByBuildConfig(buildConfig);
@@ -154,7 +154,7 @@ namespace CASCToolHost.Controllers
 
             try
             {
-                return new FileContentResult(await CASC.GetFileByFilename(buildConfig, cdnConfig, "dbfilesclient/" + tableName.ToLower() + ".db2"), "application/octet-stream")
+                return new FileContentResult(await CASC.GetFileByFilename(buildConfig, cdnConfig, "dbfilesclient/" + tableName.ToLower() + ".db2", locale), "application/octet-stream")
                 {
                     FileDownloadName = Path.GetFileName(tableName.ToLower() + ".db2")
                 };
