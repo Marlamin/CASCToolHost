@@ -8,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Runtime.InteropServices;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.Linq;
+using System;
+using System.Threading.Tasks;
 
 namespace CASCToolHost
 {
@@ -41,14 +43,6 @@ namespace CASCToolHost
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                NGDP.LoadAllIndexes();
-                Logger.WriteLine("Done loading indexes!");
-            }
-
-            KeyService.LoadKeys();
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

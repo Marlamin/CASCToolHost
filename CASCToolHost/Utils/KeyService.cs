@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace CASCToolHost
 {
@@ -9,9 +10,10 @@ namespace CASCToolHost
     {
         private static Dictionary<ulong, byte[]> keys = new Dictionary<ulong, byte[]>();
 
-        public static async void LoadKeys()
+        public static async Task<Dictionary<ulong, byte[]>> LoadKeys()
         {
             keys = await Database.GetKnownTACTKeys();
+            return keys;
         }
 
         private static Salsa20 salsa = new Salsa20();

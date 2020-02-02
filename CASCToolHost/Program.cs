@@ -1,13 +1,27 @@
 ﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace CASCToolHost
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            CreateWebHostBuilder(args).Build().Run();
+            var webHost = CreateWebHostBuilder(args).Build();
+
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+                await Task.Run(() => NGDP.LoadAllIndexes());
+                Console.WriteLine("Loaded indexes");
+
+                var keys = await KeyService.LoadKeys();
+                Console.WriteLine("Loaded " + keys.Count + " keys");
+            }
+
+            await webHost.RunAsync();
         }
 
         public static IHostBuilder CreateWebHostBuilder(string[] args) =>

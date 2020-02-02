@@ -586,7 +586,7 @@ namespace CASCToolHost
             Logger.WriteLine("Filtering indexes..");
             var archiveList = new List<MD5Hash>();
 
-            foreach (var file in Directory.GetFiles(Path.Combine(CDN.cacheDir, "tpr", "wow", "data"), "*.index", SearchOption.AllDirectories))
+            foreach (var file in Directory.EnumerateFiles(Path.Combine(CDN.cacheDir, "tpr", "wow", "data"), "*.index", SearchOption.AllDirectories))
             {
                 var indexName = Path.GetFileNameWithoutExtension(file);
                 using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read);
