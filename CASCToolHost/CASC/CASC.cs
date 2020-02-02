@@ -158,21 +158,14 @@ namespace CASCToolHost
             return await RetrieveFileBytes(target);
         }
 
-        public async static Task<byte[]> RetrieveFileBytes(MD5Hash target, bool raw = false, string cdndir = "tpr/wow")
+        public async static Task<byte[]> RetrieveFileBytes(MD5Hash target)
         {
             var targetString = target.ToHexString().ToLower();
-            var unarchivedName = Path.Combine(CDN.cacheDir, cdndir, "data", targetString[0] + "" + targetString[1], targetString[2] + "" + targetString[3], targetString);
+            var unarchivedName = Path.Combine(CDN.cacheDir, "tpr/wow", "data", targetString[0] + "" + targetString[1], targetString[2] + "" + targetString[3], targetString);
 
             if (File.Exists(unarchivedName))
             {
-                if (!raw)
-                {
-                    return BLTE.Parse(await File.ReadAllBytesAsync(unarchivedName));
-                }
-                else
-                {
-                    return await File.ReadAllBytesAsync(unarchivedName);
-                }
+                return BLTE.Parse(await File.ReadAllBytesAsync(unarchivedName));
             }
 
             if (!indexDictionary.TryGetValue(target, out IndexEntry entry))
@@ -182,32 +175,26 @@ namespace CASCToolHost
 
             var index = indexNames[(int)entry.indexID].ToHexString().ToLower();
 
-            var archiveName = Path.Combine(CDN.cacheDir, cdndir, "data", index[0] + "" + index[1], index[2] + "" + index[3], index);
+            var archiveName = Path.Combine(CDN.cacheDir, "tpr/wow", "data", index[0] + "" + index[1], index[2] + "" + index[3], index);
             if (!File.Exists(archiveName))
             {
                 throw new FileNotFoundException("Unable to find archive " + index + " on disk!");
             }
 
             using (var stream = new FileStream(archiveName, FileMode.Open, FileAccess.Read, FileShare.Read))
-            using (var bin = new BinaryReader(stream))
             {
-                bin.BaseStream.Position = entry.offset;
+                stream.Seek(entry.offset, SeekOrigin.Begin);
 
                 try
                 {
-                    if (entry.offset > bin.BaseStream.Length || entry.offset + entry.size > bin.BaseStream.Length)
+                    if (entry.offset > stream.Length || entry.offset + entry.size > stream.Length)
                     {
                         throw new Exception("File is beyond archive length, incomplete archive!");
                     }
 
-                    if (!raw)
-                    {
-                        return BLTE.Parse(bin.ReadBytes((int)entry.size));
-                    }
-                    else
-                    {
-                        return bin.ReadBytes((int)entry.size);
-                    }
+                    var archiveBytes = new byte[entry.size];
+                    await stream.ReadAsync(archiveBytes, 0, (int)entry.size);
+                    return BLTE.Parse(archiveBytes);
                 }
                 catch (Exception e)
                 {
