@@ -89,11 +89,11 @@ namespace CASCToolHost.Utils
                 while (await reader.ReadAsync())
                 {
                     file.ID = (uint)reader.GetInt32(0);
-                    file.Lookup = reader.GetString(1);
-                    file.Filename = reader.GetString(2);
+                    file.Lookup = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                    file.Filename = reader.IsDBNull(2) ? "" : reader.GetString(2);
                     file.Verified = reader.GetBoolean(3);
-                    file.Type = reader.GetString(4);
-                    file.FirstSeen = reader.GetString(5);
+                    file.Type = reader.IsDBNull(4) ? "" : reader.GetString(4);
+                    file.FirstSeen = reader.IsDBNull(5) ? "" : reader.GetString(5);
                 }
             }
 

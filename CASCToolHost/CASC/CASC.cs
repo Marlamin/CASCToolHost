@@ -17,6 +17,7 @@ namespace CASCToolHost
             public BuildConfigFile buildConfig;
             public CDNConfigFile cdnConfig;
             public RootFile root;
+            public MD5Hash root_cdn;
             public DateTime loadedAt;
         }
 
@@ -52,18 +53,16 @@ namespace CASCToolHost
 
             Logger.WriteLine("Loading root..");
 
-            string rootHash;
-
             if (NGDP.encodingDictionary.TryGetValue(build.buildConfig.root, out var rootEntry))
             {
-                rootHash = rootEntry.ToHexString().ToLower();
+                build.root_cdn = rootEntry;
             }
             else
             {
                 throw new KeyNotFoundException("Root encoding key not found!");
             }
 
-            build.root = await NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr/wow"), rootHash, true);
+            build.root = await NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr/wow"), build.root_cdn.ToHexString().ToLower(), true);
 
             build.loadedAt = DateTime.Now;
 

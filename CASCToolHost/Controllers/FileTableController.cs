@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CASCToolHost.Utils;
@@ -38,7 +39,14 @@ namespace CASCToolHost.Controllers
             public string FirstSeen { get; set; }
         }
 
-        public struct FileVersion { }
+        public struct FileVersion { 
+            public string root_cdn { get; set; }
+            public string contenthash { get; set; }
+            public string buildconfig { get; set; }
+            public string description { get; set; }
+            public string cdnconfig { get; set; }
+            public int enc { get; set; }
+        }
 
         [Route("files")]
         public async Task<DataTablesResult> Get(string buildConfig, int draw, int start, int length)
@@ -75,8 +83,8 @@ namespace CASCToolHost.Controllers
 
             result.recordsFiltered = result.recordsTotal;
 
-            var entries = build.root.entriesFDID.ToList();
-
+            var entries = build.root.entriesFDID.OrderBy(x => x.Key).ToList();
+            
             if (start + length > entries.Count)
                 length = entries.Count - start;
 
@@ -91,7 +99,7 @@ namespace CASCToolHost.Controllers
   
                 if(dbFile.ID == 0)
                 {
-                    Logger.WriteLine("WARNING! File " + entry.Value[0].fileDataID + " is not known in database!");
+                    Logger.WriteLine("WARNING! File " + entry.Value[0].fileDataID + " is not known in database!", ConsoleColor.Red);
                 }
 
                 // Filename
@@ -119,7 +127,23 @@ namespace CASCToolHost.Controllers
                 }
 
                 // Versions
-                row.Add(new List<FileVersion>());
+                var versionList = new List<FileVersion>();
+
+                foreach(var rootFileEntry in entry.Value)
+                {
+                    versionList.Add(
+                        new FileVersion()
+                        {
+                            root_cdn = build.root_cdn.ToHexString().ToLower(),
+                            contenthash = rootFileEntry.md5.ToHexString().ToLower(),
+                            buildconfig = buildConfig,
+                            description = rootFileEntry.localeFlags.ToString().Replace("All_WoW", "") + " " + rootFileEntry.contentFlags.ToString(),
+                            cdnconfig = await Database.GetCDNConfigByBuildConfig(buildConfig)
+                    }
+                    );
+                }
+
+                row.Add(versionList);
 
                 // Type
                 if (!string.IsNullOrEmpty(dbFile.Type))
