@@ -17,8 +17,28 @@ namespace CASCToolHost.Controllers
             public int draw;
             public int recordsFiltered;
             public int recordsTotal;
-            public List<List<string>> data;
+            public List<List<object>> data;
         }
+
+        public struct DataTablesRow { 
+            public uint ID { get; set; }
+            public string Filename { get; set; }
+            public string Lookup { get; set; }
+            public List<FileVersion> Versions { get; set; }
+            public string Type { get; set; }
+        }
+
+        public struct DBFile
+        {
+            public uint ID { get; set; }
+            public string Lookup { get; set; }
+            public string Filename { get; set; }
+            public bool Verified { get; set; }
+            public string Type { get; set; }
+            public string FirstSeen { get; set; }
+        }
+
+        public struct FileVersion { }
 
         [Route("files")]
         public async Task<DataTablesResult> Get(string buildConfig, int draw, int start, int length)
@@ -51,93 +71,67 @@ namespace CASCToolHost.Controllers
             var build = await BuildCache.GetOrCreate(buildConfig);
             result.recordsTotal = build.root.entriesFDID.Count;
 
-            result.data = new List<List<string>>();
+            result.data = new List<List<object>>();
 
-            var resultCount = 0;
+            result.recordsFiltered = result.recordsTotal;
 
-            if (searching)
+            var entries = build.root.entriesFDID.ToList();
+
+            if (start + length > entries.Count)
+                length = entries.Count - start;
+
+            foreach (var entry in entries.GetRange(start, length))
             {
-                //var filenameMap = Database.GetKnownLookups();
-
-                foreach (var entry in build.root.entriesFDID)
+                var row = new List<object>
                 {
-                    var matches = false;
-                    var row = new List<string>
-                    {
-                        entry.Value[0].fileDataID.ToString()
-                    };
+                    entry.Value[0].fileDataID
+                };
 
-                    if (entry.Value[0].fileDataID == Request.Query["search[value]"])
-                    {
-                        matches = true;
-                    }
+                var dbFile = await Database.GetFileByFileDataID(entry.Value[0].fileDataID);
+  
+                if(dbFile.ID == 0)
+                {
+                    Logger.WriteLine("WARNING! File " + entry.Value[0].fileDataID + " is not known in database!");
+                }
 
-                    /*
-                     * if (filenameMap.TryGetValue(entry.Key, out var filename))
-                    {
-                        row.Add(filename);
-                        if (filename.Contains(Request.Query["search[value]"]))
-                        {
-                            matches = true;
-                        }
-                    }
-                    else
-                    {*/
+                // Filename
+                if (!string.IsNullOrEmpty(dbFile.Filename))
+                {
+                    row.Add(dbFile.Filename);
+                }
+                else
+                {
                     row.Add("");
-                    /*}*/
+                }
 
-                    row.Add(entry.Key.ToString("x"));
-                    row.Add("");
+                // Lookup
+                if (!string.IsNullOrEmpty(dbFile.Lookup))
+                {
+                    row.Add(dbFile.Lookup);
+                }
+                else if(entry.Value[0].lookup != 0)
+                {
+                    row.Add(entry.Value[0].lookup.ToString("X").ToLower().PadLeft(16, '0'));
+                }
+                else
+                {
+                    row.Add("000000000000000");
+                }
+
+                // Versions
+                row.Add(new List<FileVersion>());
+
+                // Type
+                if (!string.IsNullOrEmpty(dbFile.Type))
+                {
+                    row.Add(dbFile.Type);
+                }
+                else
+                {
                     row.Add("unk");
-                    row.Add(""); // soundkits
-                    row.Add("");
-                    if (matches)
-                    {
-                        result.data.Add(row);
-                        resultCount++;
-                    }
                 }
 
-                result.recordsFiltered = resultCount;
-
-                var takeLength = length;
-                if ((start + length) > resultCount)
-                {
-                    takeLength = resultCount - start;
-                }
-
-                result.data = result.data.GetRange(start, takeLength);
-            }
-            else
-            {
-                result.recordsFiltered = result.recordsTotal;
-
-                var entries = build.root.entriesFDID.ToList();
-                foreach (var entry in entries.GetRange(start, length))
-                {
-                    var row = new List<string>
-                    {
-                        entry.Value[0].fileDataID.ToString()
-                    };
-
-                    var filename = await Database.GetFilenameByFileDataID(entry.Value[0].fileDataID);
-
-                    if (!string.IsNullOrEmpty(filename))
-                    {
-                        row.Add(filename);
-                    }
-                    else
-                    {
-                        row.Add("");
-                    }
-
-                    row.Add(entry.Key.ToString("x"));
-                    row.Add("");
-                    row.Add("unk");
-                    row.Add(""); // soundkits
-                    row.Add("");
-                    result.data.Add(row);
-                }
+                result.data.Add(row);
             }
 
             return result;

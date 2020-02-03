@@ -65,22 +65,39 @@ namespace CASCToolHost.Utils
         public static async Task<string> GetFilenameByFileDataID(uint filedataid)
         {
             Logger.WriteLine("Looking up filename for " + filedataid);
-            var filename = "";
-
             using (var connection = new MySqlConnection(SettingsManager.connectionString))
             {
                 await connection.OpenAsync();
                 using var cmd = connection.CreateCommand();
                 cmd.CommandText = "SELECT filename from wow_rootfiles WHERE id = @id";
                 cmd.Parameters.AddWithValue("@id", filedataid);
+                return (string)await cmd.ExecuteScalarAsync();
+            }
+        }
+
+        public static async Task<Controllers.FileTableController.DBFile> GetFileByFileDataID(uint filedataid)
+        {
+            var file = new Controllers.FileTableController.DBFile();
+
+            using (var connection = new MySqlConnection(SettingsManager.connectionString))
+            {
+                await connection.OpenAsync();
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT id, lookup, filename, verified, type, firstseen from wow_rootfiles WHERE id = @id";
+                cmd.Parameters.AddWithValue("@id", filedataid);
                 using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
-                    filename = reader["filename"].ToString();
+                    file.ID = (uint)reader.GetInt32(0);
+                    file.Lookup = reader.GetString(1);
+                    file.Filename = reader.GetString(2);
+                    file.Verified = reader.GetBoolean(3);
+                    file.Type = reader.GetString(4);
+                    file.FirstSeen = reader.GetString(5);
                 }
             }
 
-            return filename;
+            return file;
         }
 
         public static async Task<uint> GetFileDataIDByFilename(string filename)
