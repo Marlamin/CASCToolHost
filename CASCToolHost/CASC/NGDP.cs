@@ -210,7 +210,15 @@ namespace CASCToolHost
             }
             else
             {
-                content = await File.ReadAllBytesAsync(Path.Combine(url, "data", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
+                try
+                {
+                    content = await File.ReadAllBytesAsync(Path.Combine(url, "data", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Encountered " + e.Message + " while trying to load root file. Attempting to stream.. ");
+                    content = await CDN.Get(CDN.bestCDNEU + "/tpr/wow/data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash);
+                }
             }
 
             if (!parseIt) return root;
@@ -316,7 +324,15 @@ namespace CASCToolHost
             }
             else
             {
-                content = await File.ReadAllBytesAsync(Path.Combine(url, "data", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
+                try
+                {
+                    content = await File.ReadAllBytesAsync(Path.Combine(url, "data", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine("Encountered " + e.Message + " while trying to load encoding file. Attempting to stream.. ");
+                    content = await CDN.Get(CDN.bestCDNEU + "/tpr/wow/data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash);
+                }
             }
 
             using (BinaryReader bin = new BinaryReader(new MemoryStream(BLTE.Parse(content))))
@@ -486,7 +502,7 @@ namespace CASCToolHost
 
                 if (!File.Exists(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)))
                 {
-                    Console.WriteLine("Archive " + indexName + " not found, skipping index loading!");
+                    Console.WriteLine("WARNING! Archive " + indexName + " not found, skipping index loading!");
                     return;
                 }
 

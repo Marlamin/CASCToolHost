@@ -177,27 +177,37 @@ namespace CASCToolHost
             var archiveName = Path.Combine(CDN.cacheDir, "tpr/wow", "data", index[0] + "" + index[1], index[2] + "" + index[3], index);
             if (!File.Exists(archiveName))
             {
-                throw new FileNotFoundException("Unable to find archive " + index + " on disk!");
-            }
-
-            using (var stream = new FileStream(archiveName, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                stream.Seek(entry.offset, SeekOrigin.Begin);
-
+                Console.WriteLine("Unable to find archive " + index + " on disk, attempting to stream!");
                 try
                 {
-                    if (entry.offset > stream.Length || entry.offset + entry.size > stream.Length)
-                    {
-                        throw new Exception("File is beyond archive length, incomplete archive!");
-                    }
-
-                    var archiveBytes = new byte[entry.size];
-                    await stream.ReadAsync(archiveBytes, 0, (int)entry.size);
-                    return BLTE.Parse(archiveBytes);
+                    return BLTE.Parse(await CDN.Get(CDN.bestCDNEU + "/tpr/wow/data/" + archiveName[0] + archiveName[1] + "/" + archiveName[2] + archiveName[3] + "/" + archiveName, true, false, entry.size, entry.offset));
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e.Message);
+                }
+            }
+            else
+            {
+                using (var stream = new FileStream(archiveName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    stream.Seek(entry.offset, SeekOrigin.Begin);
+
+                    try
+                    {
+                        if (entry.offset > stream.Length || entry.offset + entry.size > stream.Length)
+                        {
+                            throw new Exception("File is beyond archive length, incomplete archive!");
+                        }
+
+                        var archiveBytes = new byte[entry.size];
+                        await stream.ReadAsync(archiveBytes, 0, (int)entry.size);
+                        return BLTE.Parse(archiveBytes);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
                 }
             }
 
