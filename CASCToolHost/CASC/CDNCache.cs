@@ -5,28 +5,38 @@ using System.Threading.Tasks;
 
 namespace CASCToolHost
 {
-    public static class CDN
+    public static class CDNCache
     {
         public static HttpClient client;
         public static string cacheDir;
         public static bool isEncrypted = false;
         public static string decryptionKeyName = "";
-        public static string bestCDNEU = "";
+        public const string bestCDNEU = "http://level3.blizzard.com";
+        public static string backupCDN = "http://blzddist1-a.akamaihd.net";
 
-        static CDN()
+        static CDNCache()
         {
             cacheDir = SettingsManager.cacheDir;
             client = new HttpClient();
-
-            // TODO: Add check to see which CDN is better. Assuming eu.cdn.blizzard.com and that it won't rate limit to hell and back.
-            bestCDNEU = "http://blzddist1-a.akamaihd.net/";
         }
 
-        public static async Task<byte[]> Get(string url, bool returnstream = true, bool redownload = false, uint size = 0, uint offset = 0)
+        /// <summary>
+        /// Gets a file from disk, if not available on disk it downloads it first.
+        /// </summary>
+        /// <param name="subFolder">"config", "data" or "patch"</param>
+        /// <param name="file">File</param>
+        /// <param name="returnstream">Whether or not to return byte[] array</param>
+        /// <param name="redownload">Whether or not to redownload the file</param>
+        /// <param name="size">Size (for partial downloads)</param>
+        /// <param name="offset">Offset (for partial downloads)</param>
+        /// <returns></returns>
+        public static async Task<byte[]> Get(string subFolder, string file, bool returnstream = true, bool redownload = false, uint size = 0, uint offset = 0, string cdn = bestCDNEU)
         {
-            var uri = new Uri(url.ToLower());
+            file = file.ToLower();
 
-            string cleanname = uri.AbsolutePath;
+            var target = bestCDNEU + "/tpr/wow/" + subFolder + "/" + file[0] + file[1] + "/" + file[2] + file[3] + "/" + file;
+            var uri = new Uri(target);
+            var cleanname = uri.AbsolutePath;
 
             if (redownload || !File.Exists(cacheDir + cleanname))
             {
@@ -76,7 +86,15 @@ namespace CASCToolHost
                         }
                         else
                         {
-                            throw new FileNotFoundException("Error retrieving file: HTTP status code " + response.StatusCode + " on URL " + url);
+                            if(cdn != backupCDN)
+                            {
+                                Logger.WriteLine("Error retrieving file: HTTP status code " + response.StatusCode + " on URL " + target + ", trying on backup CDN..");
+                                return await Get(subFolder, file, returnstream, redownload, size, offset, backupCDN);
+                            }
+                            else
+                            {
+                                throw new FileNotFoundException("Error retrieving file: HTTP status code " + response.StatusCode + " on URL " + target + ", exhausted all CDNs.");
+                            }
                         }
                     }
                 }

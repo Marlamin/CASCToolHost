@@ -49,7 +49,7 @@ namespace CASCToolHost.Controllers
         }
 
         [Route("files")]
-        public async Task<DataTablesResult> Get(string buildConfig, int draw, int start, int length)
+        public async Task<DataTablesResult> Get(string buildConfig, int draw, int start, int length, string src = "files")
         {
             if (string.IsNullOrEmpty(buildConfig))
             {

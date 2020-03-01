@@ -38,17 +38,17 @@ namespace CASCToolHost
 
             var build = new Build();
 
-            build.buildConfig = Config.GetBuildConfig(Path.Combine(CDN.cacheDir, "tpr/wow"), buildConfigHash);
-            build.cdnConfig = Config.GetCDNConfig(Path.Combine(CDN.cacheDir, "tpr/wow"), cdnConfigHash);
+            build.buildConfig = await Config.GetBuildConfig(buildConfigHash);
+            build.cdnConfig = await Config.GetCDNConfig(cdnConfigHash);
 
             Logger.WriteLine("Loading encoding..");
             if (build.buildConfig.encodingSize == null || build.buildConfig.encodingSize.Count() < 2)
             {
-                await NGDP.GetEncoding(Path.Combine(CDN.cacheDir, "tpr/wow"), build.buildConfig.encoding[1].ToHexString(), 0);
+                await NGDP.GetEncoding(build.buildConfig.encoding[1].ToHexString(), 0);
             }
             else
             {
-                await NGDP.GetEncoding(Path.Combine(CDN.cacheDir, "tpr/wow"), build.buildConfig.encoding[1].ToHexString(), int.Parse(build.buildConfig.encodingSize[1]));
+                await NGDP.GetEncoding(build.buildConfig.encoding[1].ToHexString(), int.Parse(build.buildConfig.encodingSize[1]));
             }
 
             Logger.WriteLine("Loading root..");
@@ -62,12 +62,12 @@ namespace CASCToolHost
                 throw new KeyNotFoundException("Root encoding key not found!");
             }
 
-            build.root = await NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr/wow"), build.root_cdn.ToHexString().ToLower(), true);
+            build.root = await NGDP.GetRoot(build.root_cdn.ToHexString().ToLower(), true);
 
             build.loadedAt = DateTime.Now;
 
             Logger.WriteLine("Loading indexes..");
-            NGDP.GetIndexes(Path.Combine(CDN.cacheDir, "tpr/wow"), build.cdnConfig.archives);
+            NGDP.GetIndexes(Path.Combine(CDNCache.cacheDir, "tpr/wow"), build.cdnConfig.archives);
 
             Logger.WriteLine("Done loading build " + buildConfigHash);
             return build;
@@ -160,7 +160,7 @@ namespace CASCToolHost
         public async static Task<byte[]> RetrieveFileBytes(MD5Hash target)
         {
             var targetString = target.ToHexString().ToLower();
-            var unarchivedName = Path.Combine(CDN.cacheDir, "tpr/wow", "data", targetString[0] + "" + targetString[1], targetString[2] + "" + targetString[3], targetString);
+            var unarchivedName = Path.Combine(CDNCache.cacheDir, "tpr/wow", "data", targetString[0] + "" + targetString[1], targetString[2] + "" + targetString[3], targetString);
 
             if (File.Exists(unarchivedName))
             {
@@ -174,13 +174,13 @@ namespace CASCToolHost
 
             var index = indexNames[(int)entry.indexID].ToHexString().ToLower();
 
-            var archiveName = Path.Combine(CDN.cacheDir, "tpr/wow", "data", index[0] + "" + index[1], index[2] + "" + index[3], index);
+            var archiveName = Path.Combine(CDNCache.cacheDir, "tpr/wow", "data", index[0] + "" + index[1], index[2] + "" + index[3], index);
             if (!File.Exists(archiveName))
             {
-                Console.WriteLine("Unable to find archive " + index + " on disk, attempting to stream!");
+                Logger.WriteLine("Unable to find archive " + index + " on disk, attempting to stream from CDN instead");
                 try
                 {
-                    return BLTE.Parse(await CDN.Get(CDN.bestCDNEU + "/tpr/wow/data/" + archiveName[0] + archiveName[1] + "/" + archiveName[2] + archiveName[3] + "/" + archiveName, true, false, entry.size, entry.offset));
+                    return BLTE.Parse(await CDNCache.Get("data", index, true, false, entry.size, entry.offset));
                 }
                 catch (Exception e)
                 {
@@ -291,7 +291,7 @@ namespace CASCToolHost
 
             if (!string.IsNullOrEmpty(rootcdn))
             {
-                root = await NGDP.GetRoot(Path.Combine(SettingsManager.cacheDir, "tpr", "wow"), rootcdn, true);
+                root = await NGDP.GetRoot(rootcdn, true);
             }
             else
             {

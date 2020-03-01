@@ -44,7 +44,7 @@ namespace CASCToolHost.Controllers
         public async Task<int> Get(string rootcdn)
         {
             Logger.WriteLine("Serving filedataid count for root_cdn " + rootcdn);
-            var root = await NGDP.GetRoot(Path.Combine(SettingsManager.cacheDir, "tpr", "wow"), rootcdn, true);
+            var root = await NGDP.GetRoot(rootcdn, true);
             return root.entriesFDID.Count;
         }
 
@@ -76,8 +76,8 @@ namespace CASCToolHost.Controllers
 
             var filedataids = await Database.GetAllFiles();
 
-            var rootFrom = await NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), from, true);
-            var rootTo = await NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), to, true);
+            var rootFrom = await NGDP.GetRoot(from, true);
+            var rootTo = await NGDP.GetRoot(to, true);
 
             var rootFromEntries = rootFrom.entriesFDID;
             var rootToEntries = rootTo.entriesFDID;
@@ -180,8 +180,8 @@ namespace CASCToolHost.Controllers
 
             var filedataids = await Database.GetKnownFiles(true);
 
-            var rootFrom = await NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), from, true);
-            var rootTo = await NGDP.GetRoot(Path.Combine(CDN.cacheDir, "tpr", "wow"), to, true);
+            var rootFrom = await NGDP.GetRoot(from, true);
+            var rootTo = await NGDP.GetRoot(to, true);
 
             var rootFromEntries = rootFrom.entriesFDID;
             var rootToEntries = rootTo.entriesFDID;

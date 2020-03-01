@@ -227,7 +227,7 @@ namespace CASCToolHost.Utils
 
         public static async Task<Dictionary<uint, string>> GetFilesByBuild(string buildConfig)
         {
-            var config = Config.GetBuildConfig("http://cdn.blizzard.com/tpr/wow/", buildConfig);
+            var config = await Config.GetBuildConfig(buildConfig);
 
             var rootHash = "";
 
@@ -255,11 +255,11 @@ namespace CASCToolHost.Utils
 
                 if (config.encodingSize == null || config.encodingSize.Count() < 2)
                 {
-                    encoding = await NGDP.GetEncoding("http://cdn.blizzard.com/tpr/wow/", config.encoding[1].ToHexString(), 0);
+                    encoding = await NGDP.GetEncoding(config.encoding[1].ToHexString(), 0);
                 }
                 else
                 {
-                    encoding = await NGDP.GetEncoding("http://cdn.blizzard.com/tpr/wow/", config.encoding[1].ToHexString(), int.Parse(config.encodingSize[1]));
+                    encoding = await NGDP.GetEncoding(config.encoding[1].ToHexString(), int.Parse(config.encodingSize[1]));
                 }
 
                 if (encoding.aEntries.TryGetValue(config.root, out var bakRootEntry))
@@ -277,7 +277,7 @@ namespace CASCToolHost.Utils
 
         public static async Task<Dictionary<uint, string>> GetFilesByRoot(string rootHash)
         {
-            var root = await NGDP.GetRoot("http://cdn.blizzard.com/tpr/wow/", rootHash, true);
+            var root = await NGDP.GetRoot(rootHash, true);
 
             var fileList = new Dictionary<uint, string>();
 

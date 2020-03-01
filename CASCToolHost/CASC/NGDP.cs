@@ -25,7 +25,7 @@ namespace CASCToolHost
 
             try
             {
-                using HttpResponseMessage response = CDN.client.GetAsync(new Uri(baseUrl + program + "/" + "versions")).Result;
+                using HttpResponseMessage response = CDNCache.client.GetAsync(new Uri(baseUrl + program + "/" + "versions")).Result;
                 using HttpContent res = response.Content;
                 content = res.ReadAsStringAsync().Result;
             }
@@ -106,7 +106,7 @@ namespace CASCToolHost
 
             try
             {
-                using HttpResponseMessage response = CDN.client.GetAsync(new Uri(baseUrl + program + "/" + "cdns")).Result;
+                using HttpResponseMessage response = CDNCache.client.GetAsync(new Uri(baseUrl + program + "/" + "cdns")).Result;
                 if (response.IsSuccessStatusCode)
                 {
                     using HttpContent res = response.Content;
@@ -194,7 +194,7 @@ namespace CASCToolHost
 
             return cdns;
         }
-        public static async Task<RootFile> GetRoot(string url, string hash, bool parseIt = false)
+        public static async Task<RootFile> GetRoot(string hash, bool parseIt = false)
         {
             var root = new RootFile
             {
@@ -202,25 +202,7 @@ namespace CASCToolHost
                 entriesFDID = new MultiDictionary<uint, RootEntry>(),
             };
 
-            byte[] content;
-
-            if (url.StartsWith("http:"))
-            {
-                content = await CDN.Get(url + "data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash);
-            }
-            else
-            {
-                try
-                {
-                    content = await File.ReadAllBytesAsync(Path.Combine(url, "data", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Encountered " + e.Message + " while trying to load root file. Attempting to stream.. ");
-                    content = await CDN.Get(CDN.bestCDNEU + "/tpr/wow/data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash);
-                }
-            }
-
+            byte[] content = await CDNCache.Get("data", hash);
             if (!parseIt) return root;
 
             var namedCount = 0;
@@ -302,39 +284,22 @@ namespace CASCToolHost
 
             return root;
         }
-        public static async Task<EncodingFile> GetEncoding(string url, string hash, int encodingSize = 0, bool parseTableB = false, bool checkStuff = false)
+        public static async Task<EncodingFile> GetEncoding(string hash, int encodingSize = 0, bool parseTableB = false, bool checkStuff = false)
         {
             var encoding = new EncodingFile();
             hash = hash.ToLower();
-            byte[] content;
-
-            if (url.Substring(0, 4) == "http")
+            byte[] content = await CDNCache.Get("data", hash);
+            if (encodingSize != 0 && encodingSize != content.Length)
             {
-                content = await CDN.Get(url + "data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash);
+                // Re-download file, not expected size.
+                content = await CDNCache.Get("data", hash, true, true);
 
-                if (encodingSize != 0 && encodingSize != content.Length)
+                if (encodingSize != content.Length && encodingSize != 0)
                 {
-                    content = await CDN.Get(url + "data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash, true);
-
-                    if (encodingSize != content.Length && encodingSize != 0)
-                    {
-                        throw new Exception("File corrupt/not fully downloaded! Remove " + "data / " + hash[0] + hash[1] + " / " + hash[2] + hash[3] + " / " + hash + " from cache.");
-                    }
+                    throw new Exception("File corrupt/not fully downloaded! Remove " + "data / " + hash[0] + hash[1] + " / " + hash[2] + hash[3] + " / " + hash + " from cache.");
                 }
             }
-            else
-            {
-                try
-                {
-                    content = await File.ReadAllBytesAsync(Path.Combine(url, "data", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
-                }
-                catch(Exception e)
-                {
-                    Console.WriteLine("Encountered " + e.Message + " while trying to load encoding file. Attempting to stream.. ");
-                    content = await CDN.Get(CDN.bestCDNEU + "/tpr/wow/data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash);
-                }
-            }
-
+    
             using (BinaryReader bin = new BinaryReader(new MemoryStream(BLTE.Parse(content))))
             {
                 if (Encoding.UTF8.GetString(bin.ReadBytes(2)) != "EN") { throw new Exception("Error while parsing encoding file. Did BLTE header size change?"); }
@@ -495,16 +460,10 @@ namespace CASCToolHost
         }
         public static void GetIndexes(string url, MD5Hash[] archives)
         {
-            Parallel.ForEach(archives, (archive, state, i) =>
+            Parallel.ForEach(archives, async (archive, state, i) =>
             {
                 uint indexID;
                 string indexName = archive.ToHexString().ToLower();
-
-                if (!File.Exists(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)))
-                {
-                    Console.WriteLine("WARNING! Archive " + indexName + " not found, skipping index loading!");
-                    return;
-                }
 
                 try
                 {
@@ -533,9 +492,14 @@ namespace CASCToolHost
                     indexCacheLock.ExitUpgradeableReadLock();
                 }
 
-                var archiveLength = new FileInfo(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)).Length;
-
-                var indexContent = File.ReadAllBytes(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName + ".index"));
+                long archiveLength = 0;
+                if (File.Exists(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)))
+                {
+                    Console.WriteLine("WARNING! Archive " + indexName + " not found, skipping bound checks!");
+                    archiveLength = new FileInfo(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)).Length;
+                }
+                    
+                var indexContent = await CDNCache.Get("data", indexName + ".index");
 
                 using BinaryReader bin = new BinaryReader(new MemoryStream(indexContent));
                 bin.BaseStream.Position = bin.BaseStream.Length - 12;
@@ -560,7 +524,7 @@ namespace CASCToolHost
 
                         entriesRead++;
 
-                        if ((entry.offset + entry.size) > archiveLength)
+                        if (archiveLength > 0 && (entry.offset + entry.size) > archiveLength)
                         {
                             //Console.WriteLine("Read index entry at " + entry.offset + " of size " + entry.size + " that goes beyond size of archive " + indexName + " " + archiveLength + ", skipping..");
                         }
@@ -602,7 +566,7 @@ namespace CASCToolHost
             Logger.WriteLine("Filtering indexes..");
             var archiveList = new List<MD5Hash>();
 
-            foreach (var file in Directory.EnumerateFiles(Path.Combine(CDN.cacheDir, "tpr", "wow", "data"), "*.index", SearchOption.AllDirectories))
+            foreach (var file in Directory.EnumerateFiles(Path.Combine(CDNCache.cacheDir, "tpr", "wow", "data"), "*.index", SearchOption.AllDirectories))
             {
                 var indexName = Path.GetFileNameWithoutExtension(file);
                 using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -611,9 +575,9 @@ namespace CASCToolHost
                 // 0 = loose file index, 4 = archive index, 6 = group archive index
                 if (bin.ReadChar() == 4)
                 {
-                    if (!File.Exists(Path.Combine(CDN.cacheDir, "tpr", "wow", "patch", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName + ".index")))
+                    if (!File.Exists(Path.Combine(CDNCache.cacheDir, "tpr", "wow", "patch", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName + ".index")))
                     {
-                        if (File.Exists(Path.Combine(CDN.cacheDir, "tpr", "wow", "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)))
+                        if (File.Exists(Path.Combine(CDNCache.cacheDir, "tpr", "wow", "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)))
                         {
                             archiveList.Add(Path.GetFileNameWithoutExtension(file).ToByteArray().ToMD5());
                         }
@@ -635,14 +599,14 @@ namespace CASCToolHost
 
             Logger.WriteLine("Loading " + archiveList.Count.ToString() + " archive indexes..");
 
-            GetIndexes(Path.Combine(CDN.cacheDir, "tpr", "wow"), archiveList.ToArray());
+            GetIndexes(Path.Combine(CDNCache.cacheDir, "tpr", "wow"), archiveList.ToArray());
         }
 
-        public static async Task<InstallFile> GetInstall(string url, string hash, bool parseIt = false)
+        public static async Task<InstallFile> GetInstall(string hash, bool parseIt = false)
         {
             var install = new InstallFile();
 
-            byte[] content = await CDN.Get(url + "/data/" + hash[0] + hash[1] + "/" + hash[2] + hash[3] + "/" + hash);
+            byte[] content = await CDNCache.Get("data", hash);
 
             if (!parseIt) return install;
 

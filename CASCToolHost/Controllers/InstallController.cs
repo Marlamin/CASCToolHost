@@ -40,15 +40,15 @@ namespace CASCToolHost.Controllers
         [Route("dump")]
         public async Task<ActionResult> DumpByHash(string hash)
         {
-            var install = await NGDP.GetInstall("http://cdn.blizzard.com/tpr/wow/", hash, true);
+            var install = await NGDP.GetInstall(hash, true);
             return Json(install.entries);
         }
 
         [Route("diff")]
         public async Task<ActionResult> Diff(string from, string to)
         {
-            var installFrom = await NGDP.GetInstall("http://cdn.blizzard.com/tpr/wow/", from, true);
-            var installTo = await NGDP.GetInstall("http://cdn.blizzard.com/tpr/wow/", to, true);
+            var installFrom = await NGDP.GetInstall(from, true);
+            var installTo = await NGDP.GetInstall(to, true);
 
             var installFromDict = new Dictionary<string, InstallFileEntry>();
             foreach(var entry in installFrom.entries)

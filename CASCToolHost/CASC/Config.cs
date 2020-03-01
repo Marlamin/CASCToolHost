@@ -1,16 +1,17 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CASCToolHost
 {
     public class Config
     {
-        public static CDNConfigFile GetCDNConfig(string url, string hash)
+        public static async Task<CDNConfigFile> GetCDNConfig(string hash)
         {
             var cdnConfig = new CDNConfigFile();
 
-            string content = File.ReadAllText(Path.Combine(CDN.cacheDir, "tpr", "wow", "config", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
+            string content = System.Text.Encoding.UTF8.GetString(await CDNCache.Get("config", hash));
 
             var cdnConfigLines = content.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -72,11 +73,11 @@ namespace CASCToolHost
 
             return cdnConfig;
         }
-        public static BuildConfigFile GetBuildConfig(string url, string hash)
+        public static async Task<BuildConfigFile> GetBuildConfig(string hash)
         {
             var buildConfig = new BuildConfigFile();
 
-            string content = File.ReadAllText(Path.Combine(CDN.cacheDir, "tpr", "wow", "config", "" + hash[0] + hash[1], "" + hash[2] + hash[3], hash));
+            string content = System.Text.Encoding.UTF8.GetString(await CDNCache.Get("config", hash));
 
             if (string.IsNullOrEmpty(content) || !content.StartsWith("# Build"))
             {
