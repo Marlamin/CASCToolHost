@@ -250,9 +250,20 @@ namespace CASCToolHost
                 {
                     if (build.root.entriesFDID.TryGetValue(filedataid, out var fdidentry))
                     {
-                        var prioritizedEntry = fdidentry.FirstOrDefault(subentry =>
-                            subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
-                        );
+                        RootEntry prioritizedEntry;
+
+                        if (locale == LocaleFlags.All_WoW)
+                        {
+                            prioritizedEntry = fdidentry.FirstOrDefault(subentry =>
+                                subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
+                            );
+                        }
+                        else
+                        {
+                            prioritizedEntry = fdidentry.FirstOrDefault(subentry =>
+                                subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && subentry.localeFlags.HasFlag(locale)
+                            );
+                        }
 
                         var selectedEntry = (prioritizedEntry.fileDataID != 0) ? prioritizedEntry : fdidentry.First();
                         target = selectedEntry.md5.ToHexString().ToLower();

@@ -150,7 +150,7 @@ namespace CASCToolHost.Controllers
                 throw new ArgumentException("Invalid arguments!");
             }
 
-            Logger.WriteLine("Serving DB2 \"" + tableName + "\" for build " + fullBuild);
+            Logger.WriteLine("Serving DB2 \"" + tableName + "\" for build " + fullBuild + " with locale " + locale);
 
             try
             {
