@@ -8,9 +8,10 @@ namespace CASCToolHost
     {
         public static void WriteLine(string line)
         {
-            ThreadPool.GetAvailableThreads(out int availableWorkerThreads, out int availableAsyncIOThreads);
+            ThreadPool.GetAvailableThreads(out int availableWorkerThreads, out _);
+            ThreadPool.GetMaxThreads(out int maxWorkerThreads, out _);
 
-            Console.WriteLine("[" + DateTime.Now.ToString() + "] [AW=" + availableWorkerThreads + ", AIO=" + availableAsyncIOThreads + "] " + line);
+            Console.WriteLine("[" + DateTime.Now.ToString() + "] [AW=" + availableWorkerThreads + "/" + maxWorkerThreads + " (" + (maxWorkerThreads - availableWorkerThreads) + " active)] " + line);
         }
 
         public static void WriteLine(string line, ConsoleColor color)
