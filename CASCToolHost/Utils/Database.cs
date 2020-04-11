@@ -69,9 +69,25 @@ namespace CASCToolHost.Utils
             {
                 await connection.OpenAsync();
                 using var cmd = connection.CreateCommand();
-                cmd.CommandText = "SELECT filename from wow_rootfiles WHERE id = @id";
+                cmd.CommandText = "SELECT filename, type from wow_rootfiles WHERE id = @id";
                 cmd.Parameters.AddWithValue("@id", filedataid);
-                return (string)await cmd.ExecuteScalarAsync();
+                using var reader = await cmd.ExecuteReaderAsync();
+                string filename = "unk";
+
+                while (await reader.ReadAsync())
+                {
+                    if (reader.IsDBNull(0))
+                    {
+                        var type = reader.IsDBNull(1) ? "unk" : reader.GetString(1);
+                        filename = filedataid + "." + type;
+                    }
+                    else
+                    {
+                        filename = reader.GetString(0);
+                    }
+                }
+                
+                return filename;
             }
         }
 
