@@ -56,7 +56,7 @@ namespace CASCToolHost.Controllers
 
             System.Net.Mime.ContentDisposition cd = new System.Net.Mime.ContentDisposition
             {
-                FileName = "preview",
+                FileName = Path.GetFileNameWithoutExtension(filename),
                 Inline = true
             };
 
