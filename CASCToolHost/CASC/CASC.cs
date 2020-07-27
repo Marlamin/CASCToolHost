@@ -160,16 +160,24 @@ namespace CASCToolHost
         public async static Task<byte[]> RetrieveFileBytes(MD5Hash target)
         {
             var targetString = target.ToHexString().ToLower();
+
+            var cachedName = Path.Combine("/home/wow/chashcache", targetString[0] + "" + targetString[1], targetString[2] + "" + targetString[3], targetString);
+
             var unarchivedName = Path.Combine(CDNCache.cacheDir, "tpr/wow", "data", targetString[0] + "" + targetString[1], targetString[2] + "" + targetString[3], targetString);
 
             if (File.Exists(unarchivedName))
             {
                 return BLTE.Parse(await File.ReadAllBytesAsync(unarchivedName));
             }
-
+            
             if (!indexDictionary.TryGetValue(target, out IndexEntry entry))
             {
                 throw new Exception("Unable to find file in archives. File is not available!?");
+            }
+
+            if (File.Exists(cachedName))
+            {
+                return File.ReadAllBytes(cachedName);
             }
 
             var index = indexNames[(int)entry.indexID].ToHexString().ToLower();
@@ -202,7 +210,13 @@ namespace CASCToolHost
 
                         var archiveBytes = new byte[entry.size];
                         await stream.ReadAsync(archiveBytes, 0, (int)entry.size);
-                        return BLTE.Parse(archiveBytes);
+                        var content = BLTE.Parse(archiveBytes);
+
+                        // Write out file for later caching
+                        Directory.CreateDirectory(Path.GetDirectoryName(cachedName));
+                        BackgroundJob.Enqueue(() => File.WriteAllBytes(cachedName, content));
+
+                        return content;
                     }
                     catch (Exception e)
                     {
