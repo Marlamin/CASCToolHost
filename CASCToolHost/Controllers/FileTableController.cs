@@ -134,7 +134,7 @@ namespace CASCToolHost.Controllers
                     versionList.Add(
                         new FileVersion()
                         {
-                            root_cdn = build.root_cdn.ToHexString().ToLower(),
+                            root_cdn = build.buildConfig.root_cdn.ToHexString().ToLower(),
                             contenthash = rootFileEntry.md5.ToHexString().ToLower(),
                             buildconfig = buildConfig,
                             description = rootFileEntry.localeFlags.ToString().Replace("All_WoW", "") + " " + rootFileEntry.contentFlags.ToString(),

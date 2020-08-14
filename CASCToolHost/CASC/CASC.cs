@@ -17,8 +17,6 @@ namespace CASCToolHost
             public BuildConfigFile buildConfig;
             public CDNConfigFile cdnConfig;
             public RootFile root;
-            public MD5Hash root_cdn;
-            public DateTime loadedAt;
         }
 
         public static async Task<Build> LoadBuild(string program, string buildConfigHash)
@@ -37,7 +35,6 @@ namespace CASCToolHost
             Logger.WriteLine("Loading build " + buildConfigHash + "..");
 
             var build = new Build();
-
             build.buildConfig = await Config.GetBuildConfig(buildConfigHash);
             build.cdnConfig = await Config.GetCDNConfig(cdnConfigHash);
 
@@ -52,19 +49,16 @@ namespace CASCToolHost
             }
 
             Logger.WriteLine("Loading root..");
-
             if (NGDP.encodingDictionary.TryGetValue(build.buildConfig.root, out var rootEntry))
             {
-                build.root_cdn = rootEntry;
+                build.buildConfig.root_cdn = rootEntry;
             }
             else
             {
                 throw new KeyNotFoundException("Root encoding key not found!");
             }
 
-            build.root = await NGDP.GetRoot(build.root_cdn.ToHexString().ToLower(), true);
-
-            build.loadedAt = DateTime.Now;
+            build.root = await NGDP.GetRoot(build.buildConfig.root_cdn.ToHexString().ToLower(), true);
 
             Logger.WriteLine("Loading indexes..");
             NGDP.GetIndexes(Path.Combine(CDNCache.cacheDir, "tpr/wow"), build.cdnConfig.archives);
@@ -104,9 +98,8 @@ namespace CASCToolHost
 
         public async static Task<byte[]> GetFile(string buildConfig, string cdnConfig, uint filedataid)
         {
-            var build = await BuildCache.GetOrCreate(buildConfig, cdnConfig);
-
             var target = "";
+            var build = await BuildCache.GetOrCreate(buildConfig, cdnConfig);
 
             if (build.root.entriesFDID.TryGetValue(filedataid, out var entry))
             {
@@ -120,7 +113,7 @@ namespace CASCToolHost
 
             if (string.IsNullOrEmpty(target))
             {
-                throw new FileNotFoundException("No file found in root for FileDataID " + filedataid);
+                throw new FileNotFoundException("FileDataID " + filedataid + " not found in root for build " + buildConfig);
             }
 
             return await GetFile(buildConfig, cdnConfig, target);
@@ -133,7 +126,7 @@ namespace CASCToolHost
 
             if (!NGDP.encodingDictionary.TryGetValue(contenthashMD5, out MD5Hash target))
             {
-                Logger.WriteLine("Contenthash " + contenthash + " not found in current encoding, loading build " + buildConfig + "..");
+                Logger.WriteLine("Contenthash " + contenthash + " not found in encoding, loading build " + buildConfig + "..");
                 
                 await BuildCache.GetOrCreate(buildConfig, cdnConfig);
                 if (NGDP.encodingDictionary.TryGetValue(contenthashMD5, out target))
@@ -213,8 +206,8 @@ namespace CASCToolHost
                         var content = BLTE.Parse(archiveBytes);
 
                         // Write out file for later caching
-                        Directory.CreateDirectory(Path.GetDirectoryName(cachedName));
-                        BackgroundJob.Enqueue(() => File.WriteAllBytes(cachedName, content));
+                        //Directory.CreateDirectory(Path.GetDirectoryName(cachedName));
+                        //BackgroundJob.Enqueue(() => File.WriteAllBytes(cachedName, content));
 
                         return content;
                     }

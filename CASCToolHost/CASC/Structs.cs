@@ -9,81 +9,18 @@ namespace CASCToolHost
         public fixed byte Value[16];
     }
 
-    public struct VersionsFile
-    {
-        public VersionsEntry[] entries;
-    }
-
-    public struct VersionsEntry
-    {
-        public string region;
-        public string buildConfig;
-        public string cdnConfig;
-        public string buildId;
-        public string versionsName;
-        public string productConfig;
-        public string keyRing;
-    }
-
-    public struct CdnsFile
-    {
-        public CdnsEntry[] entries;
-    }
-
-    public struct CdnsEntry
-    {
-        public string name;
-        public string path;
-        public string[] hosts;
-        public string configPath;
-    }
-
-    public struct GameBlobFile
-    {
-        public string decryptionKeyName;
-    }
-
     public struct BuildConfigFile
     {
         public MD5Hash root;
-        public MD5Hash[] download;
-        public string[] downloadSize;
+        public MD5Hash root_cdn;
         public MD5Hash[] install;
-        public string[] installSize;
         public MD5Hash[] encoding;
         public string[] encodingSize;
-        public string[] size;
-        public string[] sizeSize;
-        public string buildName;
-        public string buildPlaybuildInstaller;
-        public string buildProduct;
-        public string buildUid;
-        public string buildBranch;
-        public string buildNumber;
-        public string buildAttributes;
-        public string buildComments;
-        public string buildCreator;
-        public string buildFixedHash;
-        public string buildReplayHash;
-        public string buildManifestVersion;
-        public MD5Hash patch;
-        public string patchSize;
-        public MD5Hash patchConfig;
-        public string partialPriority;
-        public string partialPrioritySize;
     }
 
     public struct CDNConfigFile
     {
         public MD5Hash[] archives;
-        public string archiveGroup;
-        public MD5Hash[] patchArchives;
-        public string patchArchiveGroup;
-        public string[] builds;
-        public string fileIndex;
-        public string fileIndexSize;
-        public string patchFileIndex;
-        public string patchFileIndexSize;
     }
 
     public struct IndexEntry
@@ -91,21 +28,6 @@ namespace CASCToolHost
         public uint indexID;
         public uint offset;
         public uint size;
-    }
-
-    public struct IndexFooter
-    {
-        public byte[] tocHash;
-        public byte version;
-        public byte unk0;
-        public byte unk1;
-        public byte blockSizeKB;
-        public byte offsetBytes;
-        public byte sizeBytes;
-        public byte keySizeInBytes;
-        public byte checksumSize;
-        public uint numElements;
-        public byte[] footerChecksum;
     }
 
     public struct EncodingFile
@@ -169,20 +91,6 @@ namespace CASCToolHost
         public List<string> tags;
     }
 
-    public struct DownloadFile
-    {
-        public byte[] unk;
-        public uint numEntries;
-        public uint numTags;
-        public DownloadEntry[] entries;
-    }
-
-    public struct DownloadEntry
-    {
-        public string hash;
-        public byte[] unk;
-    }
-
     public struct BLTEChunkInfo
     {
         public bool isFullChunk;
@@ -204,49 +112,6 @@ namespace CASCToolHost
         public ulong lookup;
         public uint fileDataID;
         public MD5Hash md5;
-    }
-
-    public struct PatchFile
-    {
-        public byte version;
-        public byte fileKeySize;
-        public byte sizeB;
-        public byte patchKeySize;
-        public byte blockSizeBits;
-        public ushort blockCount;
-        public byte flags;
-        public byte[] encodingContentKey;
-        public byte[] encodingEncodingKey;
-        public uint decodedSize;
-        public uint encodedSize;
-        public byte especLength;
-        public string encodingSpec;
-        public PatchBlock[] blocks;
-    }
-
-    public struct PatchBlock
-    {
-        public byte[] lastFileContentKey;
-        public byte[] blockMD5;
-        public uint blockOffset;
-        public BlockFile[] files;
-    }
-
-    public struct BlockFile
-    {
-        public byte numPatches;
-        public byte[] targetFileContentKey;
-        public ulong decodedSize;
-        public FilePatch[] patches;
-    }
-
-    public struct FilePatch
-    {
-        public byte[] sourceFileEncodingKey;
-        public ulong decodedSize;
-        public byte[] patchEncodingKey;
-        public uint patchSize;
-        public byte patchIndex;
     }
 
     [Flags]
