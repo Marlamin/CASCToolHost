@@ -138,6 +138,44 @@ namespace CASCToolHost.Controllers
             return NotFound();
         }
 
+        [Route("gametable")]
+        [HttpGet]
+        public async Task<ActionResult> GetGameTableByGameTableName(string gameTableName, string fullBuild)
+        {
+            var buildConfig = await Database.GetBuildConfigByFullBuild(fullBuild);
+            var cdnConfig = await Database.GetCDNConfigByBuildConfig(buildConfig);
+
+            if (string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || string.IsNullOrEmpty(gameTableName))
+            {
+                throw new ArgumentException("Invalid arguments!");
+            }
+
+            Logger.WriteLine("Serving gametable \"" + gameTableName + "\" for build " + fullBuild);
+
+            try
+            {
+                return new FileContentResult(await CASC.GetFileByFilename(buildConfig, cdnConfig, "gametables/" + gameTableName.ToLower() + ".txt"), "application/octet-stream")
+                {
+                    FileDownloadName = Path.GetFileName(gameTableName.ToLower() + ".txt")
+                };
+            }
+            catch (FileNotFoundException)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Logger.WriteLine("GameTable " + gameTableName + " not found in root of buildconfig " + buildConfig + " cdnconfig " + cdnConfig);
+                Console.ResetColor();
+                return NotFound();
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Logger.WriteLine("Error " + e.Message + " occured when getting file " + gameTableName + " of buildconfig " + buildConfig + " cdnconfig " + cdnConfig);
+                Console.ResetColor();
+            }
+
+            return NotFound();
+        }
+
         [Route("db2")]
         [HttpGet]
         public async Task<ActionResult> GetDB2ByTableName(string tableName, string fullBuild, LocaleFlags locale = LocaleFlags.All_WoW)
