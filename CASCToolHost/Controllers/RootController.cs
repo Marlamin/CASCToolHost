@@ -133,7 +133,7 @@ namespace CASCToolHost.Controllers
                 var originalFile = prioritize(rootFromEntries[entry]);
                 var patchedFile = prioritize(rootToEntries[entry]);
 
-                if (originalFile.md5.Equals(patchedFile.md5))
+                if (originalFile.md5.EqualsTo(patchedFile.md5))
                 {
                     continue;
                 }
