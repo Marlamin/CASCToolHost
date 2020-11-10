@@ -42,7 +42,7 @@ namespace CASCToolHost
             services.AddMvc().AddNewtonsoftJson();
             services.AddCors(options =>
             {
-                options.AddPolicy("AllowSpecificOrigin", builder => builder.WithOrigins("https://wow.tools", "https://bnet.marlam.in", "http://localhost:27631"));
+                options.AddPolicy("AllowSpecificOrigin", builder => builder.WithOrigins("https://wow.tools", "http://wow.tools.localhost", "http://localhost:27631"));
             });
         }
 
