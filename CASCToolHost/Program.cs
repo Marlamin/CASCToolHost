@@ -14,8 +14,8 @@ namespace CASCToolHost
             var webHost = CreateWebHostBuilder(args).Build();
 
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-                await Task.Run(() => NGDP.LoadAllIndexes());
-                Console.WriteLine("Loaded indexes");
+                //await Task.Run(() => NGDP.LoadAllIndexes());
+                //Console.WriteLine("Loaded indexes");
 
                 var keys = await KeyService.LoadKeys();
                 Console.WriteLine("Loaded " + keys.Count + " keys");

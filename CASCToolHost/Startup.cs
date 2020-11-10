@@ -10,8 +10,6 @@ using Microsoft.AspNetCore.ResponseCompression;
 using System.Linq;
 using System;
 using System.Threading.Tasks;
-using Hangfire;
-using Hangfire.MemoryStorage;
 
 namespace CASCToolHost
 {
@@ -35,10 +33,6 @@ namespace CASCToolHost
                     ResponseCompressionDefaults.MimeTypes.Concat(
                         new[] { "application/octet-stream" });
             });
-            services.AddHangfire(config =>
-            {
-                config.UseMemoryStorage();
-            });
             services.AddMvc().AddNewtonsoftJson();
             services.AddCors(options =>
             {
@@ -54,7 +48,6 @@ namespace CASCToolHost
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHangfireServer();
             app.UseRouting();
             app.UseCors("AllowSpecificOrigin");
             app.UseResponseCompression();

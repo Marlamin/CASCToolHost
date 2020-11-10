@@ -73,7 +73,6 @@ namespace CASCToolHost.Controllers
             {
                 searching = true;
                 Logger.WriteLine("Serving file table data " + start + "," + length + " for build " + buildConfig + " for draw " + draw + " with filter " + Request.Query["search[value]"]);
-
             }
 
             var build = await BuildCache.GetOrCreate(buildConfig);
