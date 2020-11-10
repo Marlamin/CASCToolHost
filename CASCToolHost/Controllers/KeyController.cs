@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Threading.Tasks;
 
 namespace CASCToolHost.Controllers
 {
@@ -8,10 +9,10 @@ namespace CASCToolHost.Controllers
     public class KeyController : ControllerBase
     {
         [HttpGet]
-        public string Get()
+        public async Task<string> Get()
         {
             Console.WriteLine("[" + DateTime.Now + "] Reloading keys!");
-            KeyService.LoadKeys();
+            await KeyService.LoadKeys();
             return "Reloaded keys!";
         }
     }
