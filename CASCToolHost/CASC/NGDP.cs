@@ -281,9 +281,9 @@ namespace CASCToolHost
 
             return encoding;
         }
-        public static void GetIndexes(string url, MD5Hash[] archives)
+        public static async Task<int> GetIndexes(string url, MD5Hash[] archives)
         {
-            Parallel.ForEach(archives, async (archive, state, i) =>
+            var tasks =  archives.Select(async archive =>
             {
                 uint indexID;
                 string indexName = archive.ToHexString().ToLower();
@@ -292,7 +292,7 @@ namespace CASCToolHost
                 {
                     indexCacheLock.EnterUpgradeableReadLock();
 
-                    if (!CASC.indexNames.Contains(archives[i], new MD5HashComparer()))
+                    if (!CASC.indexNames.Contains(archive, new MD5HashComparer()))
                     {
                         try
                         {
@@ -318,10 +318,13 @@ namespace CASCToolHost
                 long archiveLength = 0;
                 if (File.Exists(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)))
                 {
-                    Console.WriteLine("WARNING! Archive " + indexName + " not found, skipping bound checks!");
                     archiveLength = new FileInfo(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)).Length;
                 }
-                    
+                else
+                {
+                    Console.WriteLine("WARNING! Archive " + indexName + " not found, skipping bound checks!");
+                }
+
                 var indexContent = await CDNCache.Get("data", indexName + ".index");
 
                 using BinaryReader bin = new BinaryReader(new MemoryStream(indexContent));
@@ -383,7 +386,12 @@ namespace CASCToolHost
                     bin.ReadBytes(16);
                 }
             });
+
+            await Task.WhenAll(tasks);
+
+            return archives.Length;
         }
+
         public static void LoadAllIndexes()
         {
             Logger.WriteLine("Filtering indexes..");

@@ -61,7 +61,8 @@ namespace CASCToolHost
             build.root = await NGDP.GetRoot(build.buildConfig.root_cdn.ToHexString().ToLower(), true);
 
             Logger.WriteLine("Loading indexes..");
-            NGDP.GetIndexes(Path.Combine(CDNCache.cacheDir, "tpr/wow"), build.cdnConfig.archives);
+            var loadedIndexes = await NGDP.GetIndexes(Path.Combine(CDNCache.cacheDir, "tpr/wow"), build.cdnConfig.archives);
+            Logger.WriteLine("Loaded " + loadedIndexes + " indexes");
 
             Logger.WriteLine("Done loading build " + buildConfigHash);
             return build;
@@ -144,7 +145,7 @@ namespace CASCToolHost
 
             if (!foundTarget)
             {
-                throw new FileNotFoundException("Unable to find contenthash " + contenthash + " in encoding!");
+                throw new FileNotFoundException("Unable to find contenthash " + contenthash + " in encoding (bc " + buildConfig + ", cdnc " + cdnConfig + "!");
             }
 
             return await RetrieveFileBytes(target);
