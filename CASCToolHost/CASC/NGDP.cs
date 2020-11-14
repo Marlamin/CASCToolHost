@@ -28,8 +28,8 @@ namespace CASCToolHost
             byte[] content = await CDNCache.Get("data", hash);
             if (!parseIt) return root;
 
-            var namedCount = 0;
-            var unnamedCount = 0;
+            //var namedCount = 0;
+            //var unnamedCount = 0;
             var newRoot = false;
 
             using (MemoryStream ms = new MemoryStream(BLTE.Parse(content)))
@@ -89,12 +89,12 @@ namespace CASCToolHost
                             if (contentFlags.HasFlag(ContentFlags.NoNames))
                             {
                                 entries[i].lookup = 0;
-                                unnamedCount++;
+                                //unnamedCount++;
                             }
                             else
                             {
-                                entries[i].lookup = bin.ReadUInt64();
-                                namedCount++;
+                                entries[i].lookup = bin.ReadUInt64(); 
+                                //namedCount++;
 
                                 root.entriesLookup.Add(entries[i].lookup, entries[i]);
                             }
@@ -325,14 +325,13 @@ namespace CASCToolHost
                     Console.WriteLine("WARNING! Archive " + indexName + " not found, skipping bound checks!");
                 }
 
-                var indexContent = await CDNCache.Get("data", indexName + ".index");
-
-                using BinaryReader bin = new BinaryReader(new MemoryStream(indexContent));
+                using MemoryStream indexContent = new MemoryStream(await CDNCache.Get("data", indexName + ".index"));
+                using BinaryReader bin = new BinaryReader(indexContent);
                 bin.BaseStream.Position = bin.BaseStream.Length - 12;
                 var entryCount = bin.ReadUInt32();
                 bin.BaseStream.Position = 0;
 
-                int indexEntries = indexContent.Length / 4096;
+                var indexEntries = indexContent.Length / 4096;
 
                 var entriesRead = 0;
                 for (var b = 0; b < indexEntries; b++)
@@ -352,7 +351,7 @@ namespace CASCToolHost
 
                         if (archiveLength > 0 && (entry.offset + entry.size) > archiveLength)
                         {
-                            //Console.WriteLine("Read index entry at " + entry.offset + " of size " + entry.size + " that goes beyond size of archive " + indexName + " " + archiveLength + ", skipping..");
+                            Console.WriteLine("Read index entry at " + bin.BaseStream.Position + "index entry of archive offset " + entry.offset + ", size " + entry.size + " that goes beyond size of archive " + indexName + " " + archiveLength + ", skipping..");
                         }
                         else
                         {
@@ -377,10 +376,10 @@ namespace CASCToolHost
                                 indexCacheLock.ExitUpgradeableReadLock();
                             }
                         }
-                    }
 
-                    if (entriesRead == entryCount)
-                        return;
+                        if (entriesRead == entryCount)
+                            return;
+                    }
 
                     // 16 bytes padding that rounds the chunk to 4096 bytes (index entry is 24 bytes, 24 * 170 = 4080 bytes so 16 bytes remain)
                     bin.ReadBytes(16);
