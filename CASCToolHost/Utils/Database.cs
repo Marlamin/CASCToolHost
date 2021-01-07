@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 
 namespace CASCToolHost.Utils
@@ -137,7 +138,7 @@ namespace CASCToolHost.Utils
             return filedataid;
         }
 
-        public static async Task<string[]> GetFiles()
+        public static async Task<string[]> GetFiles(string? typeFilter = null)
         {
             var fileList = new List<string>();
 
@@ -149,6 +150,9 @@ namespace CASCToolHost.Utils
                 using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
+                    if (typeFilter != null && !reader["filename"].ToString().EndsWith(typeFilter))
+                        continue;
+
                     fileList.Add(reader["filename"].ToString());
                 }
             }
@@ -175,7 +179,7 @@ namespace CASCToolHost.Utils
             return fileList.ToArray();
         }
 
-        public static async Task<Dictionary<uint, CASCFile>> GetKnownFiles(bool includeUnverified = false)
+        public static async Task<Dictionary<uint, CASCFile>> GetKnownFiles(bool includeUnverified = false, string? typeFilter = null)
         {
             var dict = new Dictionary<uint, CASCFile>();
 
@@ -194,6 +198,9 @@ namespace CASCToolHost.Utils
                 using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
+                    if (typeFilter != null && !reader["filename"].ToString().EndsWith(typeFilter))
+                        continue;
+
                     var row = new CASCFile { id = uint.Parse(reader["id"].ToString()), filename = reader["filename"].ToString(), type = reader["type"].ToString() };
                     dict.Add(uint.Parse(reader["id"].ToString()), row);
                 }
@@ -241,7 +248,7 @@ namespace CASCToolHost.Utils
             return dict;
         }
 
-        public static async Task<Dictionary<uint, string>> GetFilesByBuild(string buildConfig)
+        public static async Task<Dictionary<uint, string>> GetFilesByBuild(string buildConfig, string? typeFilter = null)
         {
             var config = await Config.GetBuildConfig(buildConfig);
 
@@ -288,10 +295,10 @@ namespace CASCToolHost.Utils
                 }
             }
 
-            return await GetFilesByRoot(rootHash);
+            return await GetFilesByRoot(rootHash, typeFilter);
         }
 
-        public static async Task<Dictionary<uint, string>> GetFilesByRoot(string rootHash)
+        public static async Task<Dictionary<uint, string>> GetFilesByRoot(string rootHash, string typeFilter = null)
         {
             var root = await NGDP.GetRoot(rootHash, true);
 
@@ -314,6 +321,8 @@ namespace CASCToolHost.Utils
             {
                 if (fileList.TryGetValue(entry.Key, out string filename))
                 {
+                    if (typeFilter != null && !filename.EndsWith(typeFilter))
+                        continue;
                     returnNames.Add(entry.Key, filename);
                 }
             }

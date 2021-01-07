@@ -18,20 +18,20 @@ namespace CASCToolHost.Controllers
         }
 
         [Route("download")]
-        public async Task<ActionResult> Download()
+        public async Task<ActionResult> Download(string? typeFilter = null)
         {
             Logger.WriteLine("Serving listfile");
-            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', await Database.GetFiles())), "text/plain")
+            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', await Database.GetFiles(typeFilter))), "text/plain")
             {
                 FileDownloadName = "listfile.txt"
             };
         }
 
         [Route("download/build/{buildConfig}")]
-        public async Task<ActionResult> DownloadByBuild(string buildConfig)
+        public async Task<ActionResult> DownloadByBuild(string buildConfig, string? typeFilter = null)
         {
             Logger.WriteLine("Serving listfile for build " + buildConfig);
-            var filesPerBuild = await Database.GetFilesByBuild(buildConfig);
+            var filesPerBuild = await Database.GetFilesByBuild(buildConfig, typeFilter);
             return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', filesPerBuild.Values)), "text/plain")
             {
                 FileDownloadName = "listfile.txt"
@@ -56,10 +56,10 @@ namespace CASCToolHost.Controllers
         }
 
         [Route("download/csv/unverified")]
-        public async Task<ActionResult> DownloadCSVUnverified()
+        public async Task<ActionResult> DownloadCSVUnverified(string? typeFilter = null)
         {
             Logger.WriteLine("Serving unverified CSV listfile");
-            var knownFiles = await Database.GetKnownFiles(true);
+            var knownFiles = await Database.GetKnownFiles(true, typeFilter);
             var nameList = new List<string>();
             foreach (var entry in knownFiles)
             {
@@ -73,11 +73,11 @@ namespace CASCToolHost.Controllers
         }
 
         [Route("download/csv/build")]
-        public async Task<ActionResult> DownloadCSVByBuild(string buildConfig)
+        public async Task<ActionResult> DownloadCSVByBuild(string buildConfig, string? typeFilter = null)
         {
             Logger.WriteLine("Serving CSV listfile for build " + buildConfig);
 
-            var knownFiles = await Database.GetFilesByBuild(buildConfig);
+            var knownFiles = await Database.GetFilesByBuild(buildConfig, typeFilter);
 
             var nameList = new List<string>();
             foreach (var entry in knownFiles)
