@@ -13,7 +13,7 @@ namespace CASCToolHost.Controllers
     {
         [Route("fdid")]
         [HttpGet]
-        public async Task<FileContentResult> GetByFileDataID(string buildConfig, string cdnConfig, uint filedataid, string filename)
+        public async Task<FileContentResult> GetByFileDataID(string buildConfig, string cdnConfig, uint filedataid, string filename, byte mipmap = 0)
         {
             Logger.WriteLine("Serving preview of \"" + filename + "\" for build " + buildConfig + " and cdn " + cdnConfig);
 
@@ -24,7 +24,6 @@ namespace CASCToolHost.Controllers
             };
 
             Response.Headers[HeaderNames.ContentDisposition] = cd.ToString();
-
             var fileBytes = await CASC.GetFile(buildConfig, cdnConfig, filedataid);
             var ext = Path.GetExtension(filename);
 
@@ -36,9 +35,12 @@ namespace CASCToolHost.Controllers
                 using (var outStream = new MemoryStream())
                 {
                     var blpReader = new SereniaBLPLib.BlpFile(stream);
-                    var blp = blpReader.GetBitmap(0);
+                    var blp = blpReader.GetBitmap(mipmap);
                     blp.Save(outStream, ImageFormat.Png);
                     fileBytes = outStream.ToArray();
+                    Response.Headers["X-WoWTools-Res-Width"] = blp.Width.ToString();
+                    Response.Headers["X-WoWTools-Res-Height"] = blp.Height.ToString();
+                    Response.Headers["X-WoWTools-AvailableMipMaps"] = blpReader.MipMapCount.ToString();
                 }
 
                 mime = "image/png";
@@ -50,7 +52,7 @@ namespace CASCToolHost.Controllers
         [Route("")]
         [Route("chash")]
         [HttpGet]
-        public async Task<FileContentResult> GetByContentHash(string buildConfig, string cdnConfig, string contenthash, string filename)
+        public async Task<FileContentResult> GetByContentHash(string buildConfig, string cdnConfig, string contenthash, string filename, byte mipmap = 0)
         {
             Console.WriteLine("[" + DateTime.Now + "] Serving preview of \"" + filename + "\" (" + contenthash + ") for build " + buildConfig + " and cdn " + cdnConfig);
 
@@ -73,9 +75,12 @@ namespace CASCToolHost.Controllers
                 using (var outStream = new MemoryStream())
                 {
                     var blpReader = new SereniaBLPLib.BlpFile(stream);
-                    var blp = blpReader.GetBitmap(0);
+                    var blp = blpReader.GetBitmap(mipmap);
                     blp.Save(outStream, ImageFormat.Png);
                     fileBytes = outStream.ToArray();
+                    Response.Headers["X-WoWTools-Res-Width"] = blp.Width.ToString();
+                    Response.Headers["X-WoWTools-Res-Height"] = blp.Height.ToString();
+                    Response.Headers["X-WoWTools-AvailableMipMaps"] = blpReader.MipMapCount.ToString();
                 }
 
                 mime = "image/png";
