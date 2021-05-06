@@ -18,4 +18,4 @@ RUN dotnet publish "CASCToolHost.csproj" -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "CASCToolHost.dll"]
+ENTRYPOINT ["dotnet", "CASCToolHost.dll", "--urls", "http://0.0.0.0:80"]
