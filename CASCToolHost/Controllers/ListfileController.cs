@@ -103,5 +103,19 @@ namespace CASCToolHost.Controllers
                 FileDownloadName = "unknown.csv"
             };
         }
+
+
+        [Route("download/csv/unknownlookups")]
+        public async Task<ActionResult> DownloadUnknownLookupCSV()
+        {
+            Logger.WriteLine("Serving unknown lookup listfile");
+
+            var unkFiles = await Database.GetUnknownLookups();
+
+            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', unkFiles)), "text/plain")
+            {
+                FileDownloadName = "unknownlookups.csv"
+            };
+        }
     }
 }

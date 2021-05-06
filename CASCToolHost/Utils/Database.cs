@@ -178,6 +178,25 @@ namespace CASCToolHost.Utils
 
             return fileList.ToArray();
         }
+        public static async Task<string[]> GetUnknownLookups()
+        {
+            var fileList = new List<string>();
+
+            using (var connection = new MySqlConnection(SettingsManager.connectionString))
+            {
+                await connection.OpenAsync();
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT lookup from wow_rootfiles WHERE lookup != '' AND verified = 0 ORDER BY id DESC";
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    fileList.Add(reader["lookup"].ToString());
+                }
+            }
+
+            return fileList.ToArray();
+        }
+
 
         public static async Task<Dictionary<uint, CASCFile>> GetKnownFiles(bool includeUnverified = false, string? typeFilter = null)
         {
