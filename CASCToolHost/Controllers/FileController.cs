@@ -70,13 +70,11 @@ namespace CASCToolHost.Controllers
                 throw new ArgumentException("Invalid arguments!");
             }
 
-            Logger.WriteLine("Serving file \"" + filename + "\" (fdid " + filedataid + ") for build " + buildConfig + " and cdn " + cdnConfig);
-
-            var file = await CASC.GetFile(buildConfig, cdnConfig, filedataid);
+            //Logger.WriteLine("Serving file \"" + filename + "\" (fdid " + filedataid + ") for build " + buildConfig + " and cdn " + cdnConfig);
 
             try
             {
-                return new FileContentResult(file, "application/octet-stream")
+                return new FileContentResult(await CASC.GetFile(buildConfig, cdnConfig, filedataid), "application/octet-stream")
                 {
                     FileDownloadName = filename
                 };

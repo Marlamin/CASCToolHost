@@ -9,7 +9,7 @@ namespace CASCToolHost.Utils
 {
     public static class BuildCache
     {
-        private static readonly MemoryCache Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 15 });
+        private static readonly MemoryCache Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 10 });
         private static readonly ConcurrentDictionary<string, SemaphoreSlim> Locks = new ConcurrentDictionary<string, SemaphoreSlim>();
 
         public static async Task<Build> GetOrCreate(string buildConfig, string cdnConfig = "")

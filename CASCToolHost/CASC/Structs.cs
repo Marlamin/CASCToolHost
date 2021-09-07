@@ -23,11 +23,11 @@ namespace CASCToolHost
         public MD5Hash[] archives;
     }
 
-    public struct IndexEntry
+    public record IndexEntry
     {
-        public uint indexID;
-        public uint offset;
-        public uint size;
+        public uint indexID { get;  init;}
+        public uint offset { get; init; }
+        public uint size { get; init; }
     }
 
     public struct EncodingFile
