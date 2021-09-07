@@ -288,7 +288,7 @@ namespace CASCToolHost.Utils
 
             if (NGDP.encodingDictionary.TryGetValue(config.root, out var rootEntry))
             {
-                rootHash = rootEntry.ToHexString().ToLower();
+                rootHash = rootEntry[0].ToHexString().ToLower();
             }
 
             if (rootHash == "")
@@ -306,7 +306,7 @@ namespace CASCToolHost.Utils
 
                 if (encoding.aEntries.TryGetValue(config.root, out var bakRootEntry))
                 {
-                    rootHash = bakRootEntry.eKey.ToHexString().ToLower();
+                    rootHash = bakRootEntry.eKeys[0].ToHexString().ToLower();
                 }
                 else
                 {

@@ -51,7 +51,7 @@ namespace CASCToolHost
             Logger.WriteLine("Loading root..");
             if (NGDP.encodingDictionary.TryGetValue(build.buildConfig.root, out var rootEntry))
             {
-                build.buildConfig.root_cdn = rootEntry;
+                build.buildConfig.root_cdn = rootEntry[0];
             }
             else
             {
@@ -125,18 +125,15 @@ namespace CASCToolHost
             var foundTarget = false;
             var contenthashMD5 = contenthash.ToByteArray().ToMD5();
 
-            if (!NGDP.encodingDictionary.TryGetValue(contenthashMD5, out MD5Hash target))
+            if (!NGDP.encodingDictionary.TryGetValue(contenthashMD5, out var targets))
             {
                 Logger.WriteLine("Contenthash " + contenthash + " not found in encoding, loading build " + buildConfig + "..");
                 
                 await BuildCache.GetOrCreate(buildConfig, cdnConfig);
-                if (NGDP.encodingDictionary.TryGetValue(contenthashMD5, out target))
+                if (NGDP.encodingDictionary.TryGetValue(contenthashMD5, out targets))
                 {
                     foundTarget = true;
                 }
-
-                // Remove build from cache, all encoding entries will be in encodingDictionary now for future reference
-                BuildCache.Remove(buildConfig);
             }
             else
             {
@@ -148,12 +145,29 @@ namespace CASCToolHost
                 throw new FileNotFoundException("Unable to find contenthash " + contenthash + " in encoding (bc " + buildConfig + ", cdnc " + cdnConfig + "!");
             }
 
-            return await RetrieveFileBytes(target);
+            return await RetrieveFileBytes(targets);
         }
 
-        public async static Task<byte[]> RetrieveFileBytes(MD5Hash target)
+        public async static Task<byte[]> RetrieveFileBytes(List<MD5Hash> targets)
         {
-            var targetString = target.ToHexString().ToLower();
+            var targetEKey = targets[0];
+
+            if (targets.Count > 1)
+            {
+                for(var i = 0; i < targets.Count; i++)
+                {
+                    Console.WriteLine("Trying " + i.ToString() + ": " + targets[i].ToHexString());
+
+                    var targetBytes = await RetrieveFileBytes(new List<MD5Hash>() { targets[i] });
+
+                    if (!Array.TrueForAll(targetBytes, x => x == 0)){
+
+                        targetEKey = targets[i];
+                    }
+                }
+            }
+
+            var targetString = targetEKey.ToHexString().ToLower();
 
             var cachedName = Path.Combine("/home/wow/chashcache", targetString[0] + "" + targetString[1], targetString[2] + "" + targetString[3], targetString);
 
@@ -164,7 +178,7 @@ namespace CASCToolHost
                 return BLTE.Parse(await File.ReadAllBytesAsync(unarchivedName));
             }
             
-            if (!indexDictionary.TryGetValue(target, out IndexEntry entry))
+            if (!indexDictionary.TryGetValue(targetEKey, out IndexEntry entry))
             {
                 throw new Exception("Unable to find file in archives. File is not available!?");
             }
@@ -205,10 +219,6 @@ namespace CASCToolHost
                         var archiveBytes = new byte[entry.size];
                         await stream.ReadAsync(archiveBytes, 0, (int)entry.size);
                         var content = BLTE.Parse(archiveBytes);
-
-                        // Write out file for later caching
-                        //Directory.CreateDirectory(Path.GetDirectoryName(cachedName));
-                        //BackgroundJob.Enqueue(() => File.WriteAllBytes(cachedName, content));
 
                         return content;
                     }

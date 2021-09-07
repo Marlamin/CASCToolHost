@@ -57,7 +57,7 @@ namespace CASCToolHost
     public struct EncodingFileEntry
     {
         public long size;
-        public MD5Hash eKey;
+        public List<MD5Hash> eKeys;
     }
 
     public struct EncodingFileDescEntry

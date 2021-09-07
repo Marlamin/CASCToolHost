@@ -15,7 +15,7 @@ namespace CASCToolHost
         private static readonly ReaderWriterLockSlim indexCacheLock = new ReaderWriterLockSlim();
         private static readonly ReaderWriterLockSlim encodingCacheLock = new ReaderWriterLockSlim();
 
-        public static Dictionary<MD5Hash, MD5Hash> encodingDictionary = new Dictionary<MD5Hash, MD5Hash>(new MD5HashComparer());
+        public static Dictionary<MD5Hash, List<MD5Hash>> encodingDictionary = new Dictionary<MD5Hash, List<MD5Hash>>(new MD5HashComparer());
 
         public static async Task<RootFile> GetRoot(string hash, bool parseIt = false)
         {
@@ -181,23 +181,17 @@ namespace CASCToolHost
                     {
                         EncodingFileEntry entry = new EncodingFileEntry()
                         {
-                            size = bin.ReadInt40BE()
+                            size = bin.ReadInt40BE(),
+                            eKeys = new List<MD5Hash>()
                         };
 
                         var cKey = bin.Read<MD5Hash>();
 
-                        // @TODO add support for multiple encoding keys
                         for (int key = 0; key < keysCount; key++)
                         {
-                            if (key == 0)
-                            {
-                                entry.eKey = bin.Read<MD5Hash>();
-                            }
-                            else
-                            {
-                                bin.ReadBytes(16);
-                            }
+                            entry.eKeys.Add(bin.Read<MD5Hash>());
                         }
+
                         entries.Add(cKey, entry);
 
                         try
@@ -209,7 +203,7 @@ namespace CASCToolHost
                                 try
                                 {
                                     encodingCacheLock.EnterWriteLock();
-                                    encodingDictionary.Add(cKey, entry.eKey);
+                                    encodingDictionary.Add(cKey, entry.eKeys);
                                 }
                                 finally
                                 {
