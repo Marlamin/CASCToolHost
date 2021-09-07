@@ -152,12 +152,11 @@ namespace CASCToolHost
         {
             var targetEKey = targets[0];
 
+            // TODO: ESpecString/key checking, this solution is slow and will not work well for all encryption scenarios
             if (targets.Count > 1)
             {
                 for(var i = 0; i < targets.Count; i++)
                 {
-                    Console.WriteLine("Trying " + i.ToString() + ": " + targets[i].ToHexString());
-
                     var targetBytes = await RetrieveFileBytes(new List<MD5Hash>() { targets[i] });
 
                     if (!Array.TrueForAll(targetBytes, x => x == 0)){
