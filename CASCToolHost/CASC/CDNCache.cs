@@ -45,7 +45,7 @@ namespace CASCToolHost
                     if (!Directory.Exists(cacheDir + cleanname)) { Directory.CreateDirectory(Path.GetDirectoryName(cacheDir + cleanname)); }
                     Logger.WriteLine("WARNING! Downloading " + cleanname);
                     var request = new HttpRequestMessage(HttpMethod.Get, uri);
-                    if(size > 0)
+                    if (size > 0)
                     {
                         request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(offset, offset + size);
                     }
@@ -65,7 +65,7 @@ namespace CASCToolHost
                                     var decrypted = BLTE.DecryptFile(cleaned, mstream.ToArray(), decryptionKeyName);
 
                                     // Only write out if this is a full DL
-                                    if(size == 0)
+                                    if (size == 0)
                                     {
                                         await File.WriteAllBytesAsync(cacheDir + cleanname, decrypted);
                                     }
@@ -86,7 +86,7 @@ namespace CASCToolHost
                         }
                         else
                         {
-                            if(cdn != backupCDN)
+                            if (cdn != backupCDN)
                             {
                                 Logger.WriteLine("Error retrieving file: HTTP status code " + response.StatusCode + " on URL " + target + ", trying on backup CDN..");
                                 return await Get(subFolder, file, returnstream, redownload, size, offset, backupCDN);

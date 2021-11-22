@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Runtime.InteropServices;
@@ -13,7 +12,8 @@ namespace CASCToolHost
         {
             var webHost = CreateWebHostBuilder(args).Build();
 
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
                 //await Task.Run(() => NGDP.LoadAllIndexes());
                 //Console.WriteLine("Loaded indexes");
 

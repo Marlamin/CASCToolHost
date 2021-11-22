@@ -22,7 +22,7 @@ namespace CASCToolHost.Utils
                     throw new Exception("Unable to locate CDNconfig for buildconfig " + buildConfig);
                 }
             }
-            
+
             if (!Cache.TryGetValue(buildConfig, out Build cachedBuild))
             {
                 SemaphoreSlim mylock = Locks.GetOrAdd(buildConfig, k => new SemaphoreSlim(1, 1));

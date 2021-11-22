@@ -25,7 +25,7 @@ namespace CASCToolHost
 
     public record IndexEntry
     {
-        public uint indexID { get;  init;}
+        public uint indexID { get; init; }
         public uint offset { get; init; }
         public uint size { get; init; }
     }

@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 
 namespace CASCToolHost.Utils
@@ -87,7 +85,7 @@ namespace CASCToolHost.Utils
                         filename = reader.GetString(0);
                     }
                 }
-                
+
                 return filename;
             }
         }

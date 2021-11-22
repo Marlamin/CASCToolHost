@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -90,7 +89,7 @@ namespace CASCToolHost
                             }
                             else
                             {
-                                entries[i].lookup = bin.ReadUInt64(); 
+                                entries[i].lookup = bin.ReadUInt64();
                                 root.entriesLookup.Add(entries[i].lookup, entries[i]);
                             }
 
@@ -117,7 +116,7 @@ namespace CASCToolHost
                     throw new Exception("File corrupt/not fully downloaded! Remove " + "data / " + hash[0] + hash[1] + " / " + hash[2] + hash[3] + " / " + hash + " from cache.");
                 }
             }
-    
+
             using (var bin = new BinaryReader(new MemoryStream(BLTE.Parse(content))))
             {
                 if (Encoding.UTF8.GetString(bin.ReadBytes(2)) != "EN") { throw new Exception("Error while parsing encoding file. Did BLTE header size change?"); }
@@ -272,108 +271,108 @@ namespace CASCToolHost
         }
         public static async Task<int> GetIndexes(string url, MD5Hash[] archives)
         {
-            var tasks =  archives.Select(async archive =>
-            {
-                uint indexID;
-                string indexName = archive.ToHexString().ToLower();
+            var tasks = archives.Select(async archive =>
+           {
+               uint indexID;
+               string indexName = archive.ToHexString().ToLower();
 
-                try
-                {
-                    indexCacheLock.EnterUpgradeableReadLock();
+               try
+               {
+                   indexCacheLock.EnterUpgradeableReadLock();
 
-                    if (!CASC.indexNames.Contains(archive, new MD5HashComparer()))
-                    {
-                        try
-                        {
-                            indexCacheLock.EnterWriteLock();
-                            CASC.indexNames.Add(archive);
-                            indexID = (uint)CASC.indexNames.Count - 1;
-                        }
-                        finally
-                        {
-                            indexCacheLock.ExitWriteLock();
-                        }
-                    }
-                    else
-                    {
-                        return;
-                    }
-                }
-                finally
-                {
-                    indexCacheLock.ExitUpgradeableReadLock();
-                }
+                   if (!CASC.indexNames.Contains(archive, new MD5HashComparer()))
+                   {
+                       try
+                       {
+                           indexCacheLock.EnterWriteLock();
+                           CASC.indexNames.Add(archive);
+                           indexID = (uint)CASC.indexNames.Count - 1;
+                       }
+                       finally
+                       {
+                           indexCacheLock.ExitWriteLock();
+                       }
+                   }
+                   else
+                   {
+                       return;
+                   }
+               }
+               finally
+               {
+                   indexCacheLock.ExitUpgradeableReadLock();
+               }
 
-                long archiveLength = 0;
-                if (File.Exists(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)))
-                {
-                    archiveLength = new FileInfo(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)).Length;
-                }
-                else
-                {
-                    Console.WriteLine("WARNING! Archive " + indexName + " not found, skipping bound checks!");
-                }
+               long archiveLength = 0;
+               if (File.Exists(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)))
+               {
+                   archiveLength = new FileInfo(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)).Length;
+               }
+               else
+               {
+                   Console.WriteLine("WARNING! Archive " + indexName + " not found, skipping bound checks!");
+               }
 
-                using var indexContent = new MemoryStream(await CDNCache.Get("data", indexName + ".index"));
-                using var bin = new BinaryReader(indexContent);
-                bin.BaseStream.Position = bin.BaseStream.Length - 12;
-                var entryCount = bin.ReadUInt32();
-                bin.BaseStream.Position = 0;
+               using var indexContent = new MemoryStream(await CDNCache.Get("data", indexName + ".index"));
+               using var bin = new BinaryReader(indexContent);
+               bin.BaseStream.Position = bin.BaseStream.Length - 12;
+               var entryCount = bin.ReadUInt32();
+               bin.BaseStream.Position = 0;
 
-                var indexEntries = indexContent.Length / 4096;
+               var indexEntries = indexContent.Length / 4096;
 
-                var entriesRead = 0;
-                for (var b = 0; b < indexEntries; b++)
-                {
-                    for (var bi = 0; bi < 170; bi++)
-                    {
-                        var headerHash = bin.Read<MD5Hash>();
+               var entriesRead = 0;
+               for (var b = 0; b < indexEntries; b++)
+               {
+                   for (var bi = 0; bi < 170; bi++)
+                   {
+                       var headerHash = bin.Read<MD5Hash>();
 
-                        var entry = new IndexEntry()
-                        {
-                            indexID = indexID,
-                            size = bin.ReadUInt32(true),
-                            offset = bin.ReadUInt32(true)
-                        };
+                       var entry = new IndexEntry()
+                       {
+                           indexID = indexID,
+                           size = bin.ReadUInt32(true),
+                           offset = bin.ReadUInt32(true)
+                       };
 
-                        entriesRead++;
+                       entriesRead++;
 
-                        if (archiveLength > 0 && (entry.offset + entry.size) > archiveLength)
-                        {
-                            Console.WriteLine("Read index entry at " + bin.BaseStream.Position + "index entry of archive offset " + entry.offset + ", size " + entry.size + " that goes beyond size of archive " + indexName + " " + archiveLength + ", skipping..");
-                        }
-                        else
-                        {
-                            indexCacheLock.EnterUpgradeableReadLock();
-                            try
-                            {
-                                if (!CASC.indexDictionary.ContainsKey(headerHash))
-                                {
-                                    indexCacheLock.EnterWriteLock();
-                                    try
-                                    {
-                                        CASC.indexDictionary.Add(headerHash, entry);
-                                    }
-                                    finally
-                                    {
-                                        indexCacheLock.ExitWriteLock();
-                                    }
-                                }
-                            }
-                            finally
-                            {
-                                indexCacheLock.ExitUpgradeableReadLock();
-                            }
-                        }
+                       if (archiveLength > 0 && (entry.offset + entry.size) > archiveLength)
+                       {
+                           Console.WriteLine("Read index entry at " + bin.BaseStream.Position + "index entry of archive offset " + entry.offset + ", size " + entry.size + " that goes beyond size of archive " + indexName + " " + archiveLength + ", skipping..");
+                       }
+                       else
+                       {
+                           indexCacheLock.EnterUpgradeableReadLock();
+                           try
+                           {
+                               if (!CASC.indexDictionary.ContainsKey(headerHash))
+                               {
+                                   indexCacheLock.EnterWriteLock();
+                                   try
+                                   {
+                                       CASC.indexDictionary.Add(headerHash, entry);
+                                   }
+                                   finally
+                                   {
+                                       indexCacheLock.ExitWriteLock();
+                                   }
+                               }
+                           }
+                           finally
+                           {
+                               indexCacheLock.ExitUpgradeableReadLock();
+                           }
+                       }
 
-                        if (entriesRead == entryCount)
-                            return;
-                    }
+                       if (entriesRead == entryCount)
+                           return;
+                   }
 
-                    // 16 bytes padding that rounds the chunk to 4096 bytes (index entry is 24 bytes, 24 * 170 = 4080 bytes so 16 bytes remain)
-                    bin.ReadBytes(16);
-                }
-            });
+                   // 16 bytes padding that rounds the chunk to 4096 bytes (index entry is 24 bytes, 24 * 170 = 4080 bytes so 16 bytes remain)
+                   bin.ReadBytes(16);
+               }
+           });
 
             await Task.WhenAll(tasks);
 

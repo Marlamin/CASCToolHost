@@ -1,11 +1,10 @@
-﻿using System;
+﻿using CASCToolHost.Utils;
+using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using CASCToolHost.Utils;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 
 namespace CASCToolHost.Controllers
 {
@@ -21,7 +20,8 @@ namespace CASCToolHost.Controllers
             public List<List<object>> data;
         }
 
-        public struct DataTablesRow { 
+        public struct DataTablesRow
+        {
             public uint ID { get; set; }
             public string Filename { get; set; }
             public string Lookup { get; set; }
@@ -39,7 +39,8 @@ namespace CASCToolHost.Controllers
             public string FirstSeen { get; set; }
         }
 
-        public struct FileVersion { 
+        public struct FileVersion
+        {
             public string root_cdn { get; set; }
             public string contenthash { get; set; }
             public string buildconfig { get; set; }
@@ -83,7 +84,7 @@ namespace CASCToolHost.Controllers
             result.recordsFiltered = result.recordsTotal;
 
             var entries = build.root.entriesFDID.OrderBy(x => x.Key).ToList();
-            
+
             if (start + length > entries.Count)
                 length = entries.Count - start;
 
@@ -95,8 +96,8 @@ namespace CASCToolHost.Controllers
                 };
 
                 var dbFile = await Database.GetFileByFileDataID(entry.Value[0].fileDataID);
-  
-                if(dbFile.ID == 0)
+
+                if (dbFile.ID == 0)
                 {
                     Logger.WriteLine("WARNING! File " + entry.Value[0].fileDataID + " is not known in database!", ConsoleColor.Red);
                 }
@@ -116,7 +117,7 @@ namespace CASCToolHost.Controllers
                 {
                     row.Add(dbFile.Lookup);
                 }
-                else if(entry.Value[0].lookup != 0)
+                else if (entry.Value[0].lookup != 0)
                 {
                     row.Add(entry.Value[0].lookup.ToString("X").ToLower().PadLeft(16, '0'));
                 }
@@ -128,7 +129,7 @@ namespace CASCToolHost.Controllers
                 // Versions
                 var versionList = new List<FileVersion>();
 
-                foreach(var rootFileEntry in entry.Value)
+                foreach (var rootFileEntry in entry.Value)
                 {
                     versionList.Add(
                         new FileVersion()
@@ -138,7 +139,7 @@ namespace CASCToolHost.Controllers
                             buildconfig = buildConfig,
                             description = rootFileEntry.localeFlags.ToString().Replace("All_WoW", "") + " " + rootFileEntry.contentFlags.ToString(),
                             cdnconfig = await Database.GetCDNConfigByBuildConfig(buildConfig)
-                    }
+                        }
                     );
                 }
 

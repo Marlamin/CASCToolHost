@@ -18,7 +18,7 @@ namespace CASCToolHost.Controllers
 
             string installHash;
 
-            if(build.buildConfig.install.Length == 2)
+            if (build.buildConfig.install.Length == 2)
             {
                 installHash = build.buildConfig.install[1].ToHexString().ToLower();
             }
@@ -51,7 +51,7 @@ namespace CASCToolHost.Controllers
             var installTo = await NGDP.GetInstall(to, true);
 
             var installFromDict = new Dictionary<string, InstallFileEntry>();
-            foreach(var entry in installFrom.entries)
+            foreach (var entry in installFrom.entries)
             {
                 installFromDict.Add(entry.name, entry);
             }

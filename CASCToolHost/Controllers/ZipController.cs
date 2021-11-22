@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -19,13 +18,13 @@ namespace CASCToolHost.Controllers
         public async Task<ActionResult> GetByFileDataID(string buildConfig, string cdnConfig, string ids, string filename)
         {
             var filedataidlist = new List<uint>();
-            foreach(var fdid in ids.Split(','))
+            foreach (var fdid in ids.Split(','))
             {
                 filedataidlist.Add(uint.Parse(fdid));
             }
 
             var filedataids = filedataidlist.ToArray();
-    
+
             if (string.IsNullOrEmpty(buildConfig) || string.IsNullOrEmpty(cdnConfig) || filedataids.Length == 0 || string.IsNullOrEmpty(filename))
             {
                 throw new NullReferenceException("Invalid arguments!");
@@ -53,7 +52,7 @@ namespace CASCToolHost.Controllers
                             using (var cascStream = new MemoryStream(await CASC.GetFile(buildConfig, cdnConfig, filedataid)))
                             {
                                 var entryname = Path.GetFileName(await Database.GetFilenameByFileDataID(filedataid));
-                                if(entryname == "")
+                                if (entryname == "")
                                 {
                                     entryname = filedataid.ToString() + ".unk";
                                 }
@@ -77,7 +76,7 @@ namespace CASCToolHost.Controllers
                         }
                     }
 
-                    if(errors.Count > 0)
+                    if (errors.Count > 0)
                     {
                         using (var errorStream = new MemoryStream())
                         {

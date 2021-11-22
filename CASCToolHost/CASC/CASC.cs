@@ -130,7 +130,7 @@ namespace CASCToolHost
             if (!NGDP.encodingDictionary.TryGetValue(contenthashMD5, out var targets))
             {
                 Logger.WriteLine("Contenthash " + contenthash + " not found in encoding, loading build " + buildConfig + "..");
-                
+
                 await BuildCache.GetOrCreate(buildConfig, cdnConfig);
                 if (NGDP.encodingDictionary.TryGetValue(contenthashMD5, out targets))
                 {
@@ -157,11 +157,12 @@ namespace CASCToolHost
             // TODO: ESpecString/key checking, this solution is slow and will not work well for all encryption scenarios
             if (targets.Count > 1)
             {
-                for(var i = 0; i < targets.Count; i++)
+                for (var i = 0; i < targets.Count; i++)
                 {
                     var targetBytes = await RetrieveFileBytes(new List<MD5Hash>() { targets[i] });
 
-                    if (!Array.TrueForAll(targetBytes, x => x == 0)){
+                    if (!Array.TrueForAll(targetBytes, x => x == 0))
+                    {
 
                         targetEKey = targets[i];
                     }
@@ -176,7 +177,7 @@ namespace CASCToolHost
             {
                 return BLTE.Parse(await File.ReadAllBytesAsync(unarchivedName));
             }
-            
+
             if (!indexDictionary.TryGetValue(targetEKey, out IndexEntry entry))
             {
                 throw new Exception("Unable to find file in archives. File is not available!?");

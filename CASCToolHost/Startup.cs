@@ -1,15 +1,10 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
-using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Runtime.InteropServices;
-using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.Extensions.Hosting;
 using System.Linq;
-using System;
-using System.Threading.Tasks;
 
 namespace CASCToolHost
 {
@@ -52,7 +47,8 @@ namespace CASCToolHost
             app.UseRouting();
             app.UseCors("AllowSpecificOrigin");
             app.UseResponseCompression();
-            app.UseEndpoints(endpoints => {
+            app.UseEndpoints(endpoints =>
+            {
                 endpoints.MapControllers();
             });
         }
