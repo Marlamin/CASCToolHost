@@ -9,8 +9,8 @@ namespace CASCToolHost.Utils
 {
     public static class BuildCache
     {
-        private static readonly MemoryCache Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 10 });
-        private static readonly ConcurrentDictionary<string, SemaphoreSlim> Locks = new ConcurrentDictionary<string, SemaphoreSlim>();
+        private static readonly MemoryCache Cache = new(new MemoryCacheOptions() { SizeLimit = 10 });
+        private static readonly ConcurrentDictionary<string, SemaphoreSlim> Locks = new();
 
         public static async Task<Build> GetOrCreate(string buildConfig, string cdnConfig = "")
         {
@@ -34,7 +34,7 @@ namespace CASCToolHost.Utils
                     if (!Cache.TryGetValue(buildConfig, out cachedBuild))
                     {
                         // Key not in cache, load build
-                        cachedBuild = await LoadBuild("wowt", buildConfig, cdnConfig);
+                        cachedBuild = await LoadBuild(buildConfig, cdnConfig);
                         Cache.Set(buildConfig, cachedBuild, new MemoryCacheEntryOptions().SetSize(1));
                     }
                 }

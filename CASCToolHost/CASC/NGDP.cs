@@ -12,10 +12,10 @@ namespace CASCToolHost
 {
     public static class NGDP
     {
-        private static readonly ReaderWriterLockSlim indexCacheLock = new ReaderWriterLockSlim();
-        private static readonly ReaderWriterLockSlim encodingCacheLock = new ReaderWriterLockSlim();
+        private static readonly ReaderWriterLockSlim indexCacheLock = new();
+        private static readonly ReaderWriterLockSlim encodingCacheLock = new();
 
-        public static Dictionary<MD5Hash, List<MD5Hash>> encodingDictionary = new Dictionary<MD5Hash, List<MD5Hash>>(new MD5HashComparer());
+        public static Dictionary<MD5Hash, List<MD5Hash>> encodingDictionary = new(new MD5HashComparer());
 
         public static async Task<RootFile> GetRoot(string hash, bool parseIt = false)
         {
@@ -28,12 +28,10 @@ namespace CASCToolHost
             byte[] content = await CDNCache.Get("data", hash);
             if (!parseIt) return root;
 
-            //var namedCount = 0;
-            //var unnamedCount = 0;
             var newRoot = false;
 
-            using (MemoryStream ms = new MemoryStream(BLTE.Parse(content)))
-            using (BinaryReader bin = new BinaryReader(ms))
+            using (var ms = new MemoryStream(BLTE.Parse(content)))
+            using (var bin = new BinaryReader(ms))
             {
                 var header = bin.ReadUInt32();
                 if (header == 1296454484)
@@ -89,13 +87,10 @@ namespace CASCToolHost
                             if (contentFlags.HasFlag(ContentFlags.NoNames))
                             {
                                 entries[i].lookup = 0;
-                                //unnamedCount++;
                             }
                             else
                             {
                                 entries[i].lookup = bin.ReadUInt64(); 
-                                //namedCount++;
-
                                 root.entriesLookup.Add(entries[i].lookup, entries[i]);
                             }
 
@@ -123,7 +118,7 @@ namespace CASCToolHost
                 }
             }
     
-            using (BinaryReader bin = new BinaryReader(new MemoryStream(BLTE.Parse(content))))
+            using (var bin = new BinaryReader(new MemoryStream(BLTE.Parse(content))))
             {
                 if (Encoding.UTF8.GetString(bin.ReadBytes(2)) != "EN") { throw new Exception("Error while parsing encoding file. Did BLTE header size change?"); }
                 encoding.version = bin.ReadByte();
@@ -171,7 +166,7 @@ namespace CASCToolHost
 
                 var tableAstart = bin.BaseStream.Position;
 
-                Dictionary<MD5Hash, EncodingFileEntry> entries = new Dictionary<MD5Hash, EncodingFileEntry>(new MD5HashComparer());
+                var entries = new Dictionary<MD5Hash, EncodingFileEntry>(new MD5HashComparer());
 
                 for (int i = 0; i < encoding.cKeyPageCount; i++)
                 {
@@ -179,7 +174,7 @@ namespace CASCToolHost
 
                     while ((keysCount = bin.ReadByte()) != 0)
                     {
-                        EncodingFileEntry entry = new EncodingFileEntry()
+                        var entry = new EncodingFileEntry()
                         {
                             size = bin.ReadInt40BE(),
                             eKeys = new List<MD5Hash>()
@@ -246,7 +241,7 @@ namespace CASCToolHost
 
                 var tableBstart = bin.BaseStream.Position;
 
-                List<EncodingFileDescEntry> b_entries = new List<EncodingFileDescEntry>();
+                var b_entries = new List<EncodingFileDescEntry>();
 
                 while (bin.BaseStream.Position < tableBstart + 4096 * encoding.eKeyPageCount)
                 {
@@ -258,7 +253,7 @@ namespace CASCToolHost
                         continue;
                     }
 
-                    EncodingFileDescEntry entry = new EncodingFileDescEntry()
+                    var entry = new EncodingFileDescEntry()
                     {
                         key = bin.Read<MD5Hash>(),
                         stringIndex = bin.ReadUInt32(true),
@@ -319,8 +314,8 @@ namespace CASCToolHost
                     Console.WriteLine("WARNING! Archive " + indexName + " not found, skipping bound checks!");
                 }
 
-                using MemoryStream indexContent = new MemoryStream(await CDNCache.Get("data", indexName + ".index"));
-                using BinaryReader bin = new BinaryReader(indexContent);
+                using var indexContent = new MemoryStream(await CDNCache.Get("data", indexName + ".index"));
+                using var bin = new BinaryReader(indexContent);
                 bin.BaseStream.Position = bin.BaseStream.Length - 12;
                 var entryCount = bin.ReadUInt32();
                 bin.BaseStream.Position = 0;
@@ -385,47 +380,6 @@ namespace CASCToolHost
             return archives.Length;
         }
 
-        public static void LoadAllIndexes()
-        {
-            Logger.WriteLine("Filtering indexes..");
-            var archiveList = new List<MD5Hash>();
-
-            foreach (var file in Directory.EnumerateFiles(Path.Combine(CDNCache.cacheDir, "tpr", "wow", "data"), "*.index", SearchOption.AllDirectories))
-            {
-                var indexName = Path.GetFileNameWithoutExtension(file);
-                using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read);
-                using var bin = new BinaryReader(stream);
-                bin.BaseStream.Position = bin.BaseStream.Length - 16;
-                // 0 = loose file index, 4 = archive index, 6 = group archive index
-                if (bin.ReadChar() == 4)
-                {
-                    if (!File.Exists(Path.Combine(CDNCache.cacheDir, "tpr", "wow", "patch", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName + ".index")))
-                    {
-                        if (File.Exists(Path.Combine(CDNCache.cacheDir, "tpr", "wow", "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName)))
-                        {
-                            archiveList.Add(Path.GetFileNameWithoutExtension(file).ToByteArray().ToMD5());
-                        }
-                        else
-                        {
-                            Logger.WriteLine("Skipping archive index without archive " + file);
-                        }
-                    }
-                    else
-                    {
-                        Logger.WriteLine("Skipping patch index " + file);
-                    }
-                }
-                else
-                {
-                    Logger.WriteLine("Skipping non-archive index " + file);
-                }
-            }
-
-            Logger.WriteLine("Loading " + archiveList.Count.ToString() + " archive indexes..");
-
-            GetIndexes(Path.Combine(CDNCache.cacheDir, "tpr", "wow"), archiveList.ToArray());
-        }
-
         public static async Task<InstallFile> GetInstall(string hash, bool parseIt = false)
         {
             var install = new InstallFile();
@@ -434,7 +388,7 @@ namespace CASCToolHost
 
             if (!parseIt) return install;
 
-            using (BinaryReader bin = new BinaryReader(new MemoryStream(BLTE.Parse(content))))
+            using (var bin = new BinaryReader(new MemoryStream(BLTE.Parse(content))))
             {
                 if (Encoding.UTF8.GetString(bin.ReadBytes(2)) != "IN") { throw new Exception("Error while parsing install file. Did BLTE header size change?"); }
 

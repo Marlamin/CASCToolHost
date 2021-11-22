@@ -62,7 +62,7 @@ namespace CASCToolHost
 
                 using (var result = new MemoryStream(totalSize))
                 {
-                    for (var index = 0; index < chunkInfos.Count(); index++)
+                    for (var index = 0; index < chunkInfos.Length; index++)
                     {
                         var chunk = chunkInfos[index];
 
@@ -181,7 +181,7 @@ namespace CASCToolHost
         {
             byte[] key = new byte[16];
 
-            using (BinaryReader reader = new BinaryReader(new FileStream(decryptionKeyName + ".ak", FileMode.Open)))
+            using (var reader = new BinaryReader(new FileStream(decryptionKeyName + ".ak", FileMode.Open)))
             {
                 key = reader.ReadBytes(16);
             }
@@ -191,7 +191,7 @@ namespace CASCToolHost
             Array.Copy(IV, 8, IV, 0, 8);
             Array.Resize(ref IV, 8);
 
-            using (Salsa20 salsa = new Salsa20())
+            using (var salsa = new Salsa20())
             {
                 var decryptor = salsa.CreateDecryptor(key, IV);
                 return decryptor.TransformFinalBlock(data, 0, data.Length);

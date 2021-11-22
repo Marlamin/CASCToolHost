@@ -295,7 +295,7 @@ namespace CASCToolHost.Utils
             {
                 EncodingFile encoding;
 
-                if (config.encodingSize == null || config.encodingSize.Count() < 2)
+                if (config.encodingSize == null || config.encodingSize.Length < 2)
                 {
                     encoding = await NGDP.GetEncoding(config.encoding[1].ToHexString(), 0);
                 }

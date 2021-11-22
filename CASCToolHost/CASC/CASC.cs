@@ -9,8 +9,8 @@ namespace CASCToolHost
 {
     public static class CASC
     {
-        public static Dictionary<MD5Hash, IndexEntry> indexDictionary = new Dictionary<MD5Hash, IndexEntry>(new MD5HashComparer());
-        public static List<MD5Hash> indexNames = new List<MD5Hash>();
+        public static Dictionary<MD5Hash, IndexEntry> indexDictionary = new(new MD5HashComparer());
+        public static List<MD5Hash> indexNames = new();
 
         public struct Build
         {
@@ -19,7 +19,7 @@ namespace CASCToolHost
             public RootFile root;
         }
 
-        public static async Task<Build> LoadBuild(string program, string buildConfigHash)
+        public static async Task<Build> LoadBuild(string buildConfigHash)
         {
             var cdnConfig = await Database.GetCDNConfigByBuildConfig(buildConfigHash);
             if (string.IsNullOrEmpty(cdnConfig))
@@ -27,19 +27,21 @@ namespace CASCToolHost
                 throw new Exception("Unable to locate CDNconfig for buildconfig " + buildConfigHash);
             }
 
-            return await LoadBuild(program, buildConfigHash, cdnConfig);
+            return await LoadBuild(buildConfigHash, cdnConfig);
         }
 
-        public static async Task<Build> LoadBuild(string program, string buildConfigHash, string cdnConfigHash)
+        public static async Task<Build> LoadBuild(string buildConfigHash, string cdnConfigHash)
         {
             Logger.WriteLine("Loading build " + buildConfigHash + "..");
 
-            var build = new Build();
-            build.buildConfig = await Config.GetBuildConfig(buildConfigHash);
-            build.cdnConfig = await Config.GetCDNConfig(cdnConfigHash);
+            var build = new Build
+            {
+                buildConfig = await Config.GetBuildConfig(buildConfigHash),
+                cdnConfig = await Config.GetCDNConfig(cdnConfigHash)
+            };
 
             Logger.WriteLine("Loading encoding..");
-            if (build.buildConfig.encodingSize == null || build.buildConfig.encodingSize.Count() < 2)
+            if (build.buildConfig.encodingSize == null || build.buildConfig.encodingSize.Length < 2)
             {
                 await NGDP.GetEncoding(build.buildConfig.encoding[1].ToHexString(), 0);
             }
@@ -168,8 +170,6 @@ namespace CASCToolHost
 
             var targetString = targetEKey.ToHexString().ToLower();
 
-            var cachedName = Path.Combine("/home/wow/chashcache", targetString[0] + "" + targetString[1], targetString[2] + "" + targetString[3], targetString);
-
             var unarchivedName = Path.Combine(CDNCache.cacheDir, "tpr/wow", "data", targetString[0] + "" + targetString[1], targetString[2] + "" + targetString[3], targetString);
 
             if (File.Exists(unarchivedName))
@@ -180,11 +180,6 @@ namespace CASCToolHost
             if (!indexDictionary.TryGetValue(targetEKey, out IndexEntry entry))
             {
                 throw new Exception("Unable to find file in archives. File is not available!?");
-            }
-
-            if (File.Exists(cachedName))
-            {
-                return File.ReadAllBytes(cachedName);
             }
 
             var index = indexNames[(int)entry.indexID].ToHexString().ToLower();
@@ -216,7 +211,7 @@ namespace CASCToolHost
                         }
 
                         var archiveBytes = new byte[entry.size];
-                        await stream.ReadAsync(archiveBytes, 0, (int)entry.size);
+                        await stream.ReadAsync(archiveBytes.AsMemory(0, (int)entry.size));
                         var content = BLTE.Parse(archiveBytes);
 
                         return content;
@@ -228,7 +223,7 @@ namespace CASCToolHost
                 }
             }
 
-            return new byte[0];
+            return Array.Empty<byte>();
         }
 
         public async static Task<byte[]> GetFileByFilename(string buildConfig, string cdnConfig, string filename, LocaleFlags locale = LocaleFlags.All_WoW)
