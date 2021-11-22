@@ -7,12 +7,11 @@ namespace CASCToolHost
 {
     public static class CDNCache
     {
-        public static HttpClient client;
         public static string cacheDir;
-        public static bool isEncrypted = false;
-        public static string decryptionKeyName = "";
-        public const string bestCDNEU = "http://level3.blizzard.com";
-        public static string backupCDN = "http://blzddist1-a.akamaihd.net";
+
+        private static readonly HttpClient client;
+        private const string bestCDNEU = "http://level3.blizzard.com";
+        private static readonly string backupCDN = "http://blzddist1-a.akamaihd.net";
 
         static CDNCache()
         {
@@ -50,37 +49,22 @@ namespace CASCToolHost
                         request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(offset, offset + size);
                     }
 
-                    using (HttpResponseMessage response = await client.SendAsync(request))
+                    using (var response = await client.SendAsync(request))
                     {
                         if (response.IsSuccessStatusCode)
                         {
-                            using (MemoryStream mstream = new MemoryStream())
-                            using (HttpContent res = response.Content)
+                            using (var mstream = new MemoryStream())
+                            using (var res = response.Content)
                             {
                                 await res.CopyToAsync(mstream);
 
-                                if (isEncrypted)
+                                if (size == 0)
                                 {
-                                    var cleaned = Path.GetFileNameWithoutExtension(cleanname);
-                                    var decrypted = BLTE.DecryptFile(cleaned, mstream.ToArray(), decryptionKeyName);
-
-                                    // Only write out if this is a full DL
-                                    if (size == 0)
-                                    {
-                                        await File.WriteAllBytesAsync(cacheDir + cleanname, decrypted);
-                                    }
-                                    return decrypted;
+                                    await File.WriteAllBytesAsync(cacheDir + cleanname, mstream.ToArray());
                                 }
                                 else
                                 {
-                                    if (size == 0)
-                                    {
-                                        await File.WriteAllBytesAsync(cacheDir + cleanname, mstream.ToArray());
-                                    }
-                                    else
-                                    {
-                                        return mstream.ToArray();
-                                    }
+                                    return mstream.ToArray();
                                 }
                             }
                         }
@@ -110,7 +94,7 @@ namespace CASCToolHost
             }
             else
             {
-                return new byte[0];
+                return Array.Empty<byte>();
             }
         }
     }

@@ -183,7 +183,7 @@ namespace CASCToolHost
                 throw new Exception("Unable to find file in archives. File is not available!?");
             }
 
-            var index = indexNames[(int)entry.indexID].ToHexString().ToLower();
+            var index = indexNames[(int)entry.IndexID].ToHexString().ToLower();
 
             var archiveName = Path.Combine(CDNCache.cacheDir, "tpr/wow", "data", index[0] + "" + index[1], index[2] + "" + index[3], index);
             if (!File.Exists(archiveName))
@@ -191,7 +191,7 @@ namespace CASCToolHost
                 Logger.WriteLine("Unable to find archive " + index + " on disk, attempting to stream from CDN instead");
                 try
                 {
-                    return BLTE.Parse(await CDNCache.Get("data", index, true, false, entry.size, entry.offset));
+                    return BLTE.Parse(await CDNCache.Get("data", index, true, false, entry.Size, entry.Offset));
                 }
                 catch (Exception e)
                 {
@@ -202,17 +202,17 @@ namespace CASCToolHost
             {
                 using (var stream = new FileStream(archiveName, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
-                    stream.Seek(entry.offset, SeekOrigin.Begin);
+                    stream.Seek(entry.Offset, SeekOrigin.Begin);
 
                     try
                     {
-                        if (entry.offset > stream.Length || entry.offset + entry.size > stream.Length)
+                        if (entry.Offset > stream.Length || entry.Offset + entry.Size > stream.Length)
                         {
                             throw new Exception("File is beyond archive length, incomplete archive!");
                         }
 
-                        var archiveBytes = new byte[entry.size];
-                        await stream.ReadAsync(archiveBytes.AsMemory(0, (int)entry.size));
+                        var archiveBytes = new byte[entry.Size];
+                        await stream.ReadAsync(archiveBytes.AsMemory(0, (int)entry.Size));
                         var content = BLTE.Parse(archiveBytes);
 
                         return content;

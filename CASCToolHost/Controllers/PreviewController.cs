@@ -17,7 +17,7 @@ namespace CASCToolHost.Controllers
         {
             Logger.WriteLine("Serving preview of \"" + filename + "\" for build " + buildConfig + " and cdn " + cdnConfig);
 
-            System.Net.Mime.ContentDisposition cd = new System.Net.Mime.ContentDisposition
+            System.Net.Mime.ContentDisposition cd = new()
             {
                 FileName = "preview",
                 Inline = true
@@ -56,7 +56,7 @@ namespace CASCToolHost.Controllers
         {
             Console.WriteLine("[" + DateTime.Now + "] Serving preview of \"" + filename + "\" (" + contenthash + ") for build " + buildConfig + " and cdn " + cdnConfig);
 
-            System.Net.Mime.ContentDisposition cd = new System.Net.Mime.ContentDisposition
+            System.Net.Mime.ContentDisposition cd = new()
             {
                 FileName = Path.GetFileNameWithoutExtension(filename),
                 Inline = true
@@ -89,7 +89,7 @@ namespace CASCToolHost.Controllers
             return new FileContentResult(fileBytes, mime);
         }
 
-        private string GetMimeTypeByExt(string ext)
+        private static string GetMimeTypeByExt(string ext)
         {
             switch (ext)
             {

@@ -8,9 +8,9 @@ namespace CASCToolHost
     public class Jenkins96 : HashAlgorithm
     {
         private ulong hashValue;
-        private static byte[] fakeHash = new byte[0];
+        private static readonly byte[] fakeHash = Array.Empty<byte>();
 
-        private uint rot(uint x, int k)
+        private static uint rot(uint x, int k)
         {
             return (x << k) | (x >> (32 - k));
         }

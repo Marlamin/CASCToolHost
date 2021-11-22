@@ -330,16 +330,16 @@ namespace CASCToolHost
 
                        var entry = new IndexEntry()
                        {
-                           indexID = indexID,
-                           size = bin.ReadUInt32(true),
-                           offset = bin.ReadUInt32(true)
+                           IndexID = indexID,
+                           Size = bin.ReadUInt32(true),
+                           Offset = bin.ReadUInt32(true)
                        };
 
                        entriesRead++;
 
-                       if (archiveLength > 0 && (entry.offset + entry.size) > archiveLength)
+                       if (archiveLength > 0 && (entry.Offset + entry.Size) > archiveLength)
                        {
-                           Console.WriteLine("Read index entry at " + bin.BaseStream.Position + "index entry of archive offset " + entry.offset + ", size " + entry.size + " that goes beyond size of archive " + indexName + " " + archiveLength + ", skipping..");
+                           Console.WriteLine("Read index entry at " + bin.BaseStream.Position + "index entry of archive offset " + entry.Offset + ", size " + entry.Size + " that goes beyond size of archive " + indexName + " " + archiveLength + ", skipping..");
                        }
                        else
                        {

@@ -5,9 +5,9 @@ namespace CASCToolHost.Utils
 {
     public static class BuildDiffCache
     {
-        private static MemoryCache Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 15 });
+        private static readonly MemoryCache Cache = new(new MemoryCacheOptions() { SizeLimit = 15 });
 
-        private static HashSet<string> Keys = new HashSet<string>();
+        private static HashSet<string> Keys = new();
 
         public static bool Get(string from, string to, out ApiDiff diff)
         {

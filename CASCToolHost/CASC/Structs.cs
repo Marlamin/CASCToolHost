@@ -25,9 +25,9 @@ namespace CASCToolHost
 
     public record IndexEntry
     {
-        public uint indexID { get; init; }
-        public uint offset { get; init; }
-        public uint size { get; init; }
+        public uint IndexID { get; init; }
+        public uint Offset { get; init; }
+        public uint Size { get; init; }
     }
 
     public struct EncodingFile

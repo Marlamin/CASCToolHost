@@ -12,8 +12,10 @@ namespace CASCToolHost
             }
             else
             {
-                hset = new List<V>();
-                hset.Add(value);
+                hset = new List<V>
+                {
+                    value
+                };
                 base[key] = hset;
             }
         }

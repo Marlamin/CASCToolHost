@@ -41,11 +41,11 @@ namespace CASCToolHost.Controllers
 
         public struct FileVersion
         {
-            public string root_cdn { get; set; }
-            public string contenthash { get; set; }
-            public string buildconfig { get; set; }
-            public string description { get; set; }
-            public string cdnconfig { get; set; }
+            public string Root_CDN { get; set; }
+            public string ContentHash { get; set; }
+            public string BuildConfig { get; set; }
+            public string Description { get; set; }
+            public string CDNConfig { get; set; }
             public int enc { get; set; }
         }
 
@@ -134,11 +134,11 @@ namespace CASCToolHost.Controllers
                     versionList.Add(
                         new FileVersion()
                         {
-                            root_cdn = build.buildConfig.root_cdn.ToHexString().ToLower(),
-                            contenthash = rootFileEntry.md5.ToHexString().ToLower(),
-                            buildconfig = buildConfig,
-                            description = rootFileEntry.localeFlags.ToString().Replace("All_WoW", "") + " " + rootFileEntry.contentFlags.ToString(),
-                            cdnconfig = await Database.GetCDNConfigByBuildConfig(buildConfig)
+                            Root_CDN = build.buildConfig.root_cdn.ToHexString().ToLower(),
+                            ContentHash = rootFileEntry.md5.ToHexString().ToLower(),
+                            BuildConfig = buildConfig,
+                            Description = rootFileEntry.localeFlags.ToString().Replace("All_WoW", "") + " " + rootFileEntry.contentFlags.ToString(),
+                            CDNConfig = await Database.GetCDNConfigByBuildConfig(buildConfig)
                         }
                     );
                 }

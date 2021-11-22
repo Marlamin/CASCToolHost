@@ -58,7 +58,7 @@ namespace CASCToolHost
             return new Salsa20CryptoTransform(rgbKey, rgbIV, m_rounds);
         }
 
-        private new bool ValidKeySize(int size)
+        private new static bool ValidKeySize(int size)
         {
             return size == 128 || size == 256;
         }
@@ -127,7 +127,7 @@ namespace CASCToolHost
                 throw new CryptographicException("Invalid IV size; it must be 8 bytes.");
         }
 
-        private static Random rnd = new Random();
+        private static readonly Random rnd = new();
 
         // Returns a new byte array containing the specified number of random bytes.
         private static byte[] GetRandomBytes(int byteCount)

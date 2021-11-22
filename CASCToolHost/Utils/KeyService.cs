@@ -6,7 +6,7 @@ namespace CASCToolHost
 {
     class KeyService
     {
-        private static Dictionary<ulong, byte[]> keys = new Dictionary<ulong, byte[]>();
+        private static Dictionary<ulong, byte[]> keys = new();
 
         public static async Task<Dictionary<ulong, byte[]>> LoadKeys()
         {
@@ -14,7 +14,7 @@ namespace CASCToolHost
             return keys;
         }
 
-        private static Salsa20 salsa = new Salsa20();
+        private static readonly Salsa20 salsa = new();
 
         public static Salsa20 SalsaInstance => salsa;
 
