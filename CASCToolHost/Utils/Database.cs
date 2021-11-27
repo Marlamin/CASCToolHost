@@ -90,31 +90,6 @@ namespace CASCToolHost.Utils
             }
         }
 
-        public static async Task<Controllers.FileTableController.DBFile> GetFileByFileDataID(uint filedataid)
-        {
-            var file = new Controllers.FileTableController.DBFile();
-
-            using (var connection = new MySqlConnection(SettingsManager.connectionString))
-            {
-                await connection.OpenAsync();
-                using var cmd = connection.CreateCommand();
-                cmd.CommandText = "SELECT id, lookup, filename, verified, type, firstseen from wow_rootfiles WHERE id = @id";
-                cmd.Parameters.AddWithValue("@id", filedataid);
-                using var reader = await cmd.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
-                {
-                    file.ID = (uint)reader.GetInt32(0);
-                    file.Lookup = reader.IsDBNull(1) ? "" : reader.GetString(1);
-                    file.Filename = reader.IsDBNull(2) ? "" : reader.GetString(2);
-                    file.Verified = reader.GetBoolean(3);
-                    file.Type = reader.IsDBNull(4) ? "" : reader.GetString(4);
-                    file.FirstSeen = reader.IsDBNull(5) ? "" : reader.GetString(5);
-                }
-            }
-
-            return file;
-        }
-
         public static async Task<uint> GetFileDataIDByFilename(string filename)
         {
             Logger.WriteLine("Looking up filedataid for " + filename);
