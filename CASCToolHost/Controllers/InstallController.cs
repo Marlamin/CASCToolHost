@@ -12,19 +12,22 @@ namespace CASCToolHost.Controllers
     public class InstallController : Controller
     {
         [Route("dumpbybuild")]
-        public async Task<ActionResult> DumpByBuild(string buildConfig)
+        public async Task<ActionResult> DumpByBuild(string buildConfigHash)
         {
-            var build = await BuildCache.GetOrCreate(buildConfig);
-
             string installHash;
 
-            if (build.buildConfig.install.Length == 2)
+            // Force load build
+            await BuildCache.GetOrCreate(buildConfigHash);
+
+            var buildConfig = await Config.GetBuildConfig(buildConfigHash);
+
+            if (buildConfig.install.Length == 2)
             {
-                installHash = build.buildConfig.install[1].ToHexString().ToLower();
+                installHash = buildConfig.install[1].ToHexString().ToLower();
             }
             else
             {
-                if (NGDP.encodingDictionary.TryGetValue(build.buildConfig.install[0], out var installEntry))
+                if (NGDP.encodingDictionary.TryGetValue(buildConfig.install[0], out var installEntry))
                 {
                     installHash = installEntry[0].ToHexString().ToLower();
                 }

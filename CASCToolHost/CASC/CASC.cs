@@ -14,8 +14,6 @@ namespace CASCToolHost
 
         public struct Build
         {
-            public BuildConfigFile buildConfig;
-            public CDNConfigFile cdnConfig;
             public RootFile root;
         }
 
@@ -34,36 +32,36 @@ namespace CASCToolHost
         {
             Logger.WriteLine("Loading build " + buildConfigHash + "..");
 
-            var build = new Build
-            {
-                buildConfig = await Config.GetBuildConfig(buildConfigHash),
-                cdnConfig = await Config.GetCDNConfig(cdnConfigHash)
-            };
+            var buildConfig = await Config.GetBuildConfig(buildConfigHash);
+            var cdnConfig = await Config.GetCDNConfig(cdnConfigHash);
 
             Logger.WriteLine("Loading encoding..");
-            if (build.buildConfig.encodingSize == null || build.buildConfig.encodingSize.Length < 2)
+            if (buildConfig.encodingSize == null || buildConfig.encodingSize.Length < 2)
             {
-                await NGDP.GetEncoding(build.buildConfig.encoding[1].ToHexString(), 0);
+                await NGDP.GetEncoding(buildConfig.encoding[1].ToHexString(), 0);
             }
             else
             {
-                await NGDP.GetEncoding(build.buildConfig.encoding[1].ToHexString(), int.Parse(build.buildConfig.encodingSize[1]));
+                await NGDP.GetEncoding(buildConfig.encoding[1].ToHexString(), int.Parse(buildConfig.encodingSize[1]));
             }
 
             Logger.WriteLine("Loading root..");
-            if (NGDP.encodingDictionary.TryGetValue(build.buildConfig.root, out var rootEntry))
+            if (NGDP.encodingDictionary.TryGetValue(buildConfig.root, out var rootEntry))
             {
-                build.buildConfig.root_cdn = rootEntry[0];
+                buildConfig.root_cdn = rootEntry[0];
             }
             else
             {
                 throw new KeyNotFoundException("Root encoding key not found!");
             }
 
-            build.root = await NGDP.GetRoot(build.buildConfig.root_cdn.ToHexString().ToLower(), true);
+            var build = new Build
+            {
+                root = await NGDP.GetRoot(buildConfig.root_cdn.ToHexString().ToLower(), true)
+            };
 
             Logger.WriteLine("Loading indexes..");
-            var loadedIndexes = await NGDP.GetIndexes(Path.Combine(CDNCache.cacheDir, "tpr/wow"), build.cdnConfig.archives);
+            var loadedIndexes = await NGDP.GetIndexes(Path.Combine(CDNCache.cacheDir, "tpr/wow"), cdnConfig.archives);
             Logger.WriteLine("Loaded " + loadedIndexes + " indexes");
 
             Logger.WriteLine("Done loading build " + buildConfigHash);
