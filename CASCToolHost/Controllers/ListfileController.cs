@@ -25,9 +25,9 @@ namespace CASCToolHost.Controllers
             Logger.WriteLine("Serving listfile");
 
             var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', await Database.GetFiles(typeFilter)));
-
             var contentDispositionHeader = new ContentDispositionHeaderValue(DispositionTypeNames.Attachment)
             {
+                FileNameStar = "listfile.txt",
                 FileName = "listfile.txt",
                 Size = dataResponse.Length
             };
@@ -44,9 +44,9 @@ namespace CASCToolHost.Controllers
             var filesPerBuild = await Database.GetFilesByBuild(buildConfig, typeFilter);
 
             var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', filesPerBuild.Values));
-
             var contentDispositionHeader = new ContentDispositionHeaderValue(DispositionTypeNames.Attachment)
             {
+                FileNameStar = "listfile.txt",
                 FileName = "listfile.txt",
                 Size = dataResponse.Length
             };
@@ -68,9 +68,9 @@ namespace CASCToolHost.Controllers
             }
 
             var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', nameList.ToArray()));
-
             var contentDispositionHeader = new ContentDispositionHeaderValue(DispositionTypeNames.Attachment)
             {
+                FileNameStar = "listfile.csv",
                 FileName = "listfile.csv",
                 Size = dataResponse.Length
             };
@@ -92,9 +92,9 @@ namespace CASCToolHost.Controllers
             }
 
             var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', nameList.ToArray()));
-
             var contentDispositionHeader = new ContentDispositionHeaderValue(DispositionTypeNames.Attachment)
             {
+                FileNameStar = "listfile.csv",
                 FileName = "listfile.csv",
                 Size = dataResponse.Length
             };
@@ -118,9 +118,9 @@ namespace CASCToolHost.Controllers
             }
 
             var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', nameList.ToArray()));
-
             var contentDispositionHeader = new ContentDispositionHeaderValue(DispositionTypeNames.Attachment)
             {
+                FileNameStar = "listfile.csv",
                 FileName = "listfile.csv",
                 Size = dataResponse.Length
             };
@@ -137,9 +137,9 @@ namespace CASCToolHost.Controllers
 
             var unkFiles = await Database.GetUnknownFiles();
             var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', unkFiles));
-
             var contentDispositionHeader = new ContentDispositionHeaderValue(DispositionTypeNames.Attachment)
             {
+                FileNameStar = "unknown.csv",
                 FileName = "unknown.csv",
                 Size = dataResponse.Length
             };
@@ -158,9 +158,9 @@ namespace CASCToolHost.Controllers
             var unkFiles = await Database.GetUnknownLookups();
 
             var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', unkFiles));
-
             var contentDispositionHeader = new ContentDispositionHeaderValue(DispositionTypeNames.Attachment)
             {
+                FileNameStar = "unknownlookups.csv",
                 FileName = "unknownlookups.csv",
                 Size = dataResponse.Length
             };
