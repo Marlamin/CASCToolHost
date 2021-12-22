@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Net.Http.Headers;
+using System.Net.Mime;
 
 namespace CASCToolHost.Controllers
 {
@@ -21,10 +23,19 @@ namespace CASCToolHost.Controllers
         public async Task<ActionResult> Download(string? typeFilter = null)
         {
             Logger.WriteLine("Serving listfile");
-            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', await Database.GetFiles(typeFilter))), "text/plain")
+
+            //var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', await Database.GetFiles(typeFilter)));
+            var dataResponse = Encoding.ASCII.GetBytes("dfjhkebgfajwehgfj");
+            ContentDisposition contentDisposition = new()
             {
-                FileDownloadName = "listfile.txt"
+                FileName = "listfile.txt",
+                Size = dataResponse.Length,
+                DispositionType = DispositionTypeNames.Attachment
             };
+
+            Response.Headers[HeaderNames.ContentDisposition] = contentDisposition.ToString();
+
+            return new FileContentResult(dataResponse, "text/plain");
         }
 
         [Route("download/build/{buildConfig}")]
@@ -32,10 +43,20 @@ namespace CASCToolHost.Controllers
         {
             Logger.WriteLine("Serving listfile for build " + buildConfig);
             var filesPerBuild = await Database.GetFilesByBuild(buildConfig, typeFilter);
-            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', filesPerBuild.Values)), "text/plain")
+
+            var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', filesPerBuild.Values));
+          
+            ContentDisposition contentDisposition = new()
             {
-                FileDownloadName = "listfile.txt"
+                FileName = "listfile.txt",
+                Size = dataResponse.Length,
+                DispositionType = DispositionTypeNames.Attachment
             };
+
+            Response.Headers[HeaderNames.ContentDisposition] = contentDisposition.ToString();
+
+            return new FileContentResult(dataResponse, "text/plain");
+
         }
 
         [Route("download/csv")]
@@ -49,10 +70,18 @@ namespace CASCToolHost.Controllers
                 nameList.Add(entry.Key + ";" + entry.Value.filename);
             }
 
-            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', nameList.ToArray())), "text/plain")
+            var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', nameList.ToArray()));
+            
+            ContentDisposition contentDisposition = new()
             {
-                FileDownloadName = "listfile.csv"
+                FileName = "listfile.csv",
+                Size = dataResponse.Length,
+                DispositionType = DispositionTypeNames.Attachment
             };
+
+            Response.Headers[HeaderNames.ContentDisposition] = contentDisposition.ToString();
+
+            return new FileContentResult(dataResponse, "text/csv");
         }
 
         [Route("download/csv/unverified")]
@@ -66,10 +95,18 @@ namespace CASCToolHost.Controllers
                 nameList.Add(entry.Key + ";" + entry.Value.filename);
             }
 
-            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', nameList.ToArray())), "text/plain")
+            var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', nameList.ToArray()));
+
+            ContentDisposition contentDisposition = new()
             {
-                FileDownloadName = "listfile.csv"
+                FileName = "listfile.csv",
+                Size = dataResponse.Length,
+                DispositionType = DispositionTypeNames.Attachment
             };
+
+            Response.Headers[HeaderNames.ContentDisposition] = contentDisposition.ToString();
+
+            return new FileContentResult(dataResponse, "text/csv");
         }
 
         [Route("download/csv/build")]
@@ -85,10 +122,18 @@ namespace CASCToolHost.Controllers
                 nameList.Add(entry.Key + ";" + entry.Value);
             }
 
-            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', nameList.ToArray())), "text/plain")
+            var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', nameList.ToArray()));
+          
+            ContentDisposition contentDisposition = new()
             {
-                FileDownloadName = "listfile.csv"
+                FileName = "listfile.csv",
+                Size = dataResponse.Length,
+                DispositionType = DispositionTypeNames.Attachment
             };
+
+            Response.Headers[HeaderNames.ContentDisposition] = contentDisposition.ToString();
+
+            return new FileContentResult(dataResponse, "text/csv");
         }
 
         [Route("download/csv/unknown")]
@@ -97,11 +142,18 @@ namespace CASCToolHost.Controllers
             Logger.WriteLine("Serving unknown listfile");
 
             var unkFiles = await Database.GetUnknownFiles();
-
-            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', unkFiles)), "text/plain")
+            var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', unkFiles));
+          
+            ContentDisposition contentDisposition = new()
             {
-                FileDownloadName = "unknown.csv"
+                FileName = "unknown.csv",
+                Size = dataResponse.Length,
+                DispositionType = DispositionTypeNames.Attachment
             };
+
+            Response.Headers[HeaderNames.ContentDisposition] = contentDisposition.ToString();
+
+            return new FileContentResult(dataResponse, "text/csv");
         }
 
 
@@ -112,10 +164,18 @@ namespace CASCToolHost.Controllers
 
             var unkFiles = await Database.GetUnknownLookups();
 
-            return new FileContentResult(Encoding.ASCII.GetBytes(string.Join('\n', unkFiles)), "text/plain")
+            var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', unkFiles));
+         
+            ContentDisposition contentDisposition = new()
             {
-                FileDownloadName = "unknownlookups.csv"
+                FileName = "unknownlookups.csv",
+                Size = dataResponse.Length,
+                DispositionType = DispositionTypeNames.Attachment
             };
+
+            Response.Headers[HeaderNames.ContentDisposition] = contentDisposition.ToString();
+
+            return new FileContentResult(dataResponse, "text/csv");
         }
     }
 }
