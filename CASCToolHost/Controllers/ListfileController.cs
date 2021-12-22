@@ -24,16 +24,15 @@ namespace CASCToolHost.Controllers
         {
             Logger.WriteLine("Serving listfile");
 
-            //var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', await Database.GetFiles(typeFilter)));
-            var dataResponse = Encoding.ASCII.GetBytes("dfjhkebgfajwehgfj");
-            ContentDisposition contentDisposition = new()
+            var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', await Database.GetFiles(typeFilter)));
+
+            var contentDispositionHeader = new ContentDispositionHeaderValue(DispositionTypeNames.Attachment)
             {
                 FileName = "listfile.txt",
-                Size = dataResponse.Length,
-                DispositionType = DispositionTypeNames.Attachment
+                Size = dataResponse.Length
             };
 
-            Response.Headers[HeaderNames.ContentDisposition] = contentDisposition.ToString();
+            Response.Headers[HeaderNames.ContentDisposition] = contentDispositionHeader.ToString();
 
             return new FileContentResult(dataResponse, "text/plain");
         }
@@ -45,18 +44,16 @@ namespace CASCToolHost.Controllers
             var filesPerBuild = await Database.GetFilesByBuild(buildConfig, typeFilter);
 
             var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', filesPerBuild.Values));
-          
-            ContentDisposition contentDisposition = new()
+
+            var contentDispositionHeader = new ContentDispositionHeaderValue(DispositionTypeNames.Attachment)
             {
                 FileName = "listfile.txt",
-                Size = dataResponse.Length,
-                DispositionType = DispositionTypeNames.Attachment
+                Size = dataResponse.Length
             };
 
-            Response.Headers[HeaderNames.ContentDisposition] = contentDisposition.ToString();
+            Response.Headers[HeaderNames.ContentDisposition] = contentDispositionHeader.ToString();
 
             return new FileContentResult(dataResponse, "text/plain");
-
         }
 
         [Route("download/csv")]
@@ -71,15 +68,14 @@ namespace CASCToolHost.Controllers
             }
 
             var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', nameList.ToArray()));
-            
-            ContentDisposition contentDisposition = new()
+
+            var contentDispositionHeader = new ContentDispositionHeaderValue(DispositionTypeNames.Attachment)
             {
                 FileName = "listfile.csv",
-                Size = dataResponse.Length,
-                DispositionType = DispositionTypeNames.Attachment
+                Size = dataResponse.Length
             };
 
-            Response.Headers[HeaderNames.ContentDisposition] = contentDisposition.ToString();
+            Response.Headers[HeaderNames.ContentDisposition] = contentDispositionHeader.ToString();
 
             return new FileContentResult(dataResponse, "text/csv");
         }
@@ -97,14 +93,13 @@ namespace CASCToolHost.Controllers
 
             var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', nameList.ToArray()));
 
-            ContentDisposition contentDisposition = new()
+            var contentDispositionHeader = new ContentDispositionHeaderValue(DispositionTypeNames.Attachment)
             {
                 FileName = "listfile.csv",
-                Size = dataResponse.Length,
-                DispositionType = DispositionTypeNames.Attachment
+                Size = dataResponse.Length
             };
 
-            Response.Headers[HeaderNames.ContentDisposition] = contentDisposition.ToString();
+            Response.Headers[HeaderNames.ContentDisposition] = contentDispositionHeader.ToString();
 
             return new FileContentResult(dataResponse, "text/csv");
         }
@@ -123,15 +118,14 @@ namespace CASCToolHost.Controllers
             }
 
             var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', nameList.ToArray()));
-          
-            ContentDisposition contentDisposition = new()
+
+            var contentDispositionHeader = new ContentDispositionHeaderValue(DispositionTypeNames.Attachment)
             {
                 FileName = "listfile.csv",
-                Size = dataResponse.Length,
-                DispositionType = DispositionTypeNames.Attachment
+                Size = dataResponse.Length
             };
 
-            Response.Headers[HeaderNames.ContentDisposition] = contentDisposition.ToString();
+            Response.Headers[HeaderNames.ContentDisposition] = contentDispositionHeader.ToString();
 
             return new FileContentResult(dataResponse, "text/csv");
         }
@@ -143,15 +137,14 @@ namespace CASCToolHost.Controllers
 
             var unkFiles = await Database.GetUnknownFiles();
             var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', unkFiles));
-          
-            ContentDisposition contentDisposition = new()
+
+            var contentDispositionHeader = new ContentDispositionHeaderValue(DispositionTypeNames.Attachment)
             {
                 FileName = "unknown.csv",
-                Size = dataResponse.Length,
-                DispositionType = DispositionTypeNames.Attachment
+                Size = dataResponse.Length
             };
 
-            Response.Headers[HeaderNames.ContentDisposition] = contentDisposition.ToString();
+            Response.Headers[HeaderNames.ContentDisposition] = contentDispositionHeader.ToString();
 
             return new FileContentResult(dataResponse, "text/csv");
         }
@@ -165,15 +158,14 @@ namespace CASCToolHost.Controllers
             var unkFiles = await Database.GetUnknownLookups();
 
             var dataResponse = Encoding.ASCII.GetBytes(string.Join('\n', unkFiles));
-         
-            ContentDisposition contentDisposition = new()
+
+            var contentDispositionHeader = new ContentDispositionHeaderValue(DispositionTypeNames.Attachment)
             {
                 FileName = "unknownlookups.csv",
-                Size = dataResponse.Length,
-                DispositionType = DispositionTypeNames.Attachment
+                Size = dataResponse.Length
             };
 
-            Response.Headers[HeaderNames.ContentDisposition] = contentDisposition.ToString();
+            Response.Headers[HeaderNames.ContentDisposition] = contentDispositionHeader.ToString();
 
             return new FileContentResult(dataResponse, "text/csv");
         }
