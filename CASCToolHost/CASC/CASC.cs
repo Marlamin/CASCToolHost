@@ -161,7 +161,6 @@ namespace CASCToolHost
 
                     if (!Array.TrueForAll(targetBytes, x => x == 0))
                     {
-
                         targetEKey = targets[i];
                     }
                 }
@@ -182,7 +181,7 @@ namespace CASCToolHost
             }
 
             var index = indexNames[(int)entry.IndexID].ToHexString().ToLower();
-
+            //Console.WriteLine("Retrieving file " + targetEKey.ToHexString().ToLower() + " archive from " + index);
             var archiveName = Path.Combine(CDNCache.cacheDir, "tpr/wow", "data", index[0] + "" + index[1], index[2] + "" + index[3], index);
             if (!File.Exists(archiveName))
             {
