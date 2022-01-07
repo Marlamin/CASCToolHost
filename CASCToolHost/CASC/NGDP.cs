@@ -358,6 +358,27 @@ namespace CASCToolHost
                                        indexCacheLock.ExitWriteLock();
                                    }
                                }
+                               else
+                               {
+                                   var currentKey = CASC.indexDictionary[headerHash];
+                                   var currentIndex = CASC.indexNames[(int)currentKey.IndexID].ToHexString().ToLower();
+                                   var currentIndexTimestamp = new FileInfo(Path.Combine(url, "data", "" + currentIndex[0] + currentIndex[1], "" + currentIndex[2] + currentIndex[3], currentIndex + ".index")).CreationTime;
+                                   var newIndexTimestamp = new FileInfo(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName + ".index")).CreationTime;
+                                   if(newIndexTimestamp > currentIndexTimestamp)
+                                   {
+                                       Console.WriteLine("Duplicate index key for " + headerHash.ToHexString().ToLower() + ", using new entry since index " + indexName + " is newer than " + currentIndex);
+                                       indexCacheLock.EnterWriteLock();
+                                       try
+                                       {
+                                           CASC.indexDictionary.Remove(headerHash);
+                                           CASC.indexDictionary.Add(headerHash, entry);
+                                       }
+                                       finally
+                                       {
+                                           indexCacheLock.ExitWriteLock();
+                                       }
+                                   }
+                               }
                            }
                            finally
                            {
