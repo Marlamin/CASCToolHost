@@ -5,8 +5,6 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CASCToolHost", "CASCToolHost\CASCToolHost.csproj", "{521D60B2-F930-4700-AFF6-629EF3FFFD1E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark", "Benchmark\Benchmark.csproj", "{FA552F5C-FA15-4D0C-82C6-AA52C4E5DB56}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{AE0D727C-73C1-466A-93DE-FAA472ADAB43}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
@@ -22,10 +20,6 @@ Global
 		{521D60B2-F930-4700-AFF6-629EF3FFFD1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{521D60B2-F930-4700-AFF6-629EF3FFFD1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{521D60B2-F930-4700-AFF6-629EF3FFFD1E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FA552F5C-FA15-4D0C-82C6-AA52C4E5DB56}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FA552F5C-FA15-4D0C-82C6-AA52C4E5DB56}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FA552F5C-FA15-4D0C-82C6-AA52C4E5DB56}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FA552F5C-FA15-4D0C-82C6-AA52C4E5DB56}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

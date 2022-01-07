@@ -161,13 +161,7 @@ namespace System.IO
         public static byte[] ToByteArray(this string str)
         {
             str = str.Replace(" ", string.Empty);
-
-            var res = new byte[str.Length / 2];
-            for (int i = 0; i < res.Length; ++i)
-            {
-                res[i] = Convert.ToByte(str.Substring(i * 2, 2), 16);
-            }
-            return res;
+            return Convert.FromHexString(str);
         }
     }
 
@@ -182,7 +176,7 @@ namespace System.IO
                 *(MD5Hash*)aptr = key;
             }
 
-            return array.ToHexString();
+            return Convert.ToHexString(array);
         }
 
         public static unsafe bool EqualsTo(this MD5Hash key, byte[] array)
@@ -222,11 +216,6 @@ namespace System.IO
 
     public static class ByteArrayExtensions
     {
-        public static string ToHexString(this byte[] data)
-        {
-            return BitConverter.ToString(data).Replace("-", string.Empty);
-        }
-
         public static unsafe MD5Hash ToMD5(this byte[] array)
         {
             if (array.Length != 16)
