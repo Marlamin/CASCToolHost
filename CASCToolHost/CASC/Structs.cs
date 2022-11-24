@@ -4,9 +4,10 @@ using System.Collections.Generic;
 
 namespace CASCToolHost
 {
-    public unsafe struct MD5Hash
+    public readonly struct MD5Hash
     {
-        public fixed byte Value[16];
+        public readonly ulong lowPart;
+        public readonly ulong highPart;
     }
 
     public struct BuildConfigFile

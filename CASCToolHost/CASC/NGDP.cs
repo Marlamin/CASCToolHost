@@ -364,9 +364,9 @@ namespace CASCToolHost
                                    var currentIndex = CASC.indexNames[(int)currentKey.IndexID].ToHexString().ToLower();
                                    var currentIndexTimestamp = new FileInfo(Path.Combine(url, "data", "" + currentIndex[0] + currentIndex[1], "" + currentIndex[2] + currentIndex[3], currentIndex + ".index")).CreationTime;
                                    var newIndexTimestamp = new FileInfo(Path.Combine(url, "data", "" + indexName[0] + indexName[1], "" + indexName[2] + indexName[3], indexName + ".index")).CreationTime;
-                                   if(newIndexTimestamp > currentIndexTimestamp)
+                                   if (newIndexTimestamp > currentIndexTimestamp)
                                    {
-                                       Console.WriteLine("Duplicate index key for " + headerHash.ToHexString().ToLower() + ", using new entry since index " + indexName + " is newer than " + currentIndex);
+                                       //Console.WriteLine("Duplicate index key for " + headerHash.ToHexString().ToLower() + ", using new entry since index " + indexName + " is newer than " + currentIndex);
                                        indexCacheLock.EnterWriteLock();
                                        try
                                        {

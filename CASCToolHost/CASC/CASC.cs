@@ -12,23 +12,7 @@ namespace CASCToolHost
         public static Dictionary<MD5Hash, IndexEntry> indexDictionary = new(new MD5HashComparer());
         public static List<MD5Hash> indexNames = new();
 
-        public struct Build
-        {
-            public RootFile root;
-        }
-
-        public static async Task<Build> LoadBuild(string buildConfigHash)
-        {
-            var cdnConfig = await Database.GetCDNConfigByBuildConfig(buildConfigHash);
-            if (string.IsNullOrEmpty(cdnConfig))
-            {
-                throw new Exception("Unable to locate CDNconfig for buildconfig " + buildConfigHash);
-            }
-
-            return await LoadBuild(buildConfigHash, cdnConfig);
-        }
-
-        public static async Task<Build> LoadBuild(string buildConfigHash, string cdnConfigHash)
+        public static async Task<RootFile> LoadRoot(string buildConfigHash, string cdnConfigHash)
         {
             Logger.WriteLine("Loading build " + buildConfigHash + "..");
 
@@ -55,40 +39,31 @@ namespace CASCToolHost
                 throw new KeyNotFoundException("Root encoding key not found!");
             }
 
-            var build = new Build
-            {
-                root = await NGDP.GetRoot(buildConfig.root_cdn.ToHexString().ToLower(), true)
-            };
+            var root = await NGDP.GetRoot(buildConfig.root_cdn.ToHexString().ToLower(), true);
 
             Logger.WriteLine("Loading indexes..");
             var loadedIndexes = await NGDP.GetIndexes(Path.Combine(CDNCache.cacheDir, "tpr/wow"), cdnConfig.archives);
             Logger.WriteLine("Loaded " + loadedIndexes + " indexes");
 
             Logger.WriteLine("Done loading build " + buildConfigHash);
-            return build;
+            return root;
         }
 
         public static async Task<bool> FileExists(string buildConfig, uint filedataid)
         {
-            var build = await BuildCache.GetOrCreate(buildConfig);
-
-            if (build.root.entriesFDID.ContainsKey(filedataid))
-            {
-                return true;
-            }
-
-            return false;
+            var root = await RootCache.GetOrCreate(buildConfig);
+            return root.entriesFDID.ContainsKey(filedataid);
         }
 
         public static async Task<bool> FileExists(string buildConfig, string filename)
         {
-            var build = await BuildCache.GetOrCreate(buildConfig);
+            var root = await RootCache.GetOrCreate(buildConfig);
 
             using (var hasher = new Jenkins96())
             {
                 var lookup = hasher.ComputeHash(filename, true);
 
-                if (build.root.entriesLookup.ContainsKey(lookup))
+                if (root.entriesLookup.ContainsKey(lookup))
                 {
                     return true;
                 }
@@ -100,9 +75,9 @@ namespace CASCToolHost
         public async static Task<byte[]> GetFile(string buildConfig, string cdnConfig, uint filedataid)
         {
             var target = "";
-            var build = await BuildCache.GetOrCreate(buildConfig, cdnConfig);
+            var root = await RootCache.GetOrCreate(buildConfig, cdnConfig);
 
-            if (build.root.entriesFDID.TryGetValue(filedataid, out var entry))
+            if (root.entriesFDID.TryGetValue(filedataid, out var entry))
             {
                 var prioritizedEntry = entry.FirstOrDefault(subentry =>
                         subentry.contentFlags.HasFlag(ContentFlags.LowViolence) == false && (subentry.localeFlags.HasFlag(LocaleFlags.All_WoW) || subentry.localeFlags.HasFlag(LocaleFlags.enUS))
@@ -129,7 +104,7 @@ namespace CASCToolHost
             {
                 Logger.WriteLine("Contenthash " + contenthash + " not found in encoding, loading build " + buildConfig + "..");
 
-                await BuildCache.GetOrCreate(buildConfig, cdnConfig);
+                await RootCache.GetOrCreate(buildConfig, cdnConfig);
                 if (NGDP.encodingDictionary.TryGetValue(contenthashMD5, out targets))
                 {
                     foundTarget = true;
@@ -226,13 +201,13 @@ namespace CASCToolHost
 
         public async static Task<byte[]> GetFileByFilename(string buildConfig, string cdnConfig, string filename, LocaleFlags locale = LocaleFlags.All_WoW)
         {
-            var build = await BuildCache.GetOrCreate(buildConfig, cdnConfig);
+            var root = await RootCache.GetOrCreate(buildConfig, cdnConfig);
 
             using var hasher = new Jenkins96();
             var lookup = hasher.ComputeHash(filename, true);
             var target = "";
 
-            if (build.root.entriesLookup.TryGetValue(lookup, out var entry))
+            if (root.entriesLookup.TryGetValue(lookup, out var entry))
             {
                 RootEntry prioritizedEntry;
 
@@ -258,7 +233,7 @@ namespace CASCToolHost
                 var filedataid = await Database.GetFileDataIDByFilename(filename);
                 if (filedataid != 0)
                 {
-                    if (build.root.entriesFDID.TryGetValue(filedataid, out var fdidentry))
+                    if (root.entriesFDID.TryGetValue(filedataid, out var fdidentry))
                     {
                         RootEntry prioritizedEntry;
 
@@ -291,12 +266,12 @@ namespace CASCToolHost
 
         public static async Task<uint> GetFileDataIDByFilename(string buildConfig, string cdnConfig, string filename)
         {
-            var build = await BuildCache.GetOrCreate(buildConfig, cdnConfig);
+            var root = await RootCache.GetOrCreate(buildConfig, cdnConfig);
 
             using var hasher = new Jenkins96();
             var lookup = hasher.ComputeHash(filename, true);
 
-            if (build.root.entriesLookup.TryGetValue(lookup, out var entry))
+            if (root.entriesLookup.TryGetValue(lookup, out var entry))
             {
                 return entry[0].fileDataID;
             }
@@ -321,8 +296,7 @@ namespace CASCToolHost
                     cdnConfig = await Database.GetCDNConfigByBuildConfig(buildConfig);
                 }
 
-                var build = await BuildCache.GetOrCreate(buildConfig, cdnConfig);
-                root = build.root;
+                root = await RootCache.GetOrCreate(buildConfig, cdnConfig);
             }
 
             return root.entriesFDID.Keys.ToArray();

@@ -7,12 +7,12 @@ using static CASCToolHost.CASC;
 
 namespace CASCToolHost.Utils
 {
-    public static class BuildCache
+    public static class RootCache
     {
         private static readonly MemoryCache Cache = new(new MemoryCacheOptions() { SizeLimit = 10 });
         private static readonly ConcurrentDictionary<string, SemaphoreSlim> Locks = new();
 
-        public static async Task<Build> GetOrCreate(string buildConfig, string cdnConfig = "")
+        public static async Task<RootFile> GetOrCreate(string buildConfig, string cdnConfig = "")
         {
             if (string.IsNullOrEmpty(cdnConfig))
             {
@@ -23,7 +23,7 @@ namespace CASCToolHost.Utils
                 }
             }
 
-            if (!Cache.TryGetValue(buildConfig, out Build cachedBuild))
+            if (!Cache.TryGetValue(buildConfig, out RootFile cachedRoot))
             {
                 SemaphoreSlim mylock = Locks.GetOrAdd(buildConfig, k => new SemaphoreSlim(1, 1));
 
@@ -31,11 +31,11 @@ namespace CASCToolHost.Utils
 
                 try
                 {
-                    if (!Cache.TryGetValue(buildConfig, out cachedBuild))
+                    if (!Cache.TryGetValue(buildConfig, out cachedRoot))
                     {
                         // Key not in cache, load build
-                        cachedBuild = await LoadBuild(buildConfig, cdnConfig);
-                        Cache.Set(buildConfig, cachedBuild, new MemoryCacheEntryOptions().SetSize(1));
+                        cachedRoot = await LoadRoot(buildConfig, cdnConfig);
+                        Cache.Set(buildConfig, cachedRoot, new MemoryCacheEntryOptions().SetSize(1));
                     }
                 }
                 finally
@@ -44,7 +44,7 @@ namespace CASCToolHost.Utils
                 }
             }
 
-            return cachedBuild;
+            return cachedRoot;
         }
 
         public static int Count()

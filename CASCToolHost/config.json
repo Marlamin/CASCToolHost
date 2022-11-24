@@ -1,6 +1,6 @@
 {
   "config": {
-    "cacheDir": "/var/www/wow.tools/",
+    "cacheDir": "X:/",
     "connectionString": ""
   }
 }

@@ -12,7 +12,7 @@ namespace CASCToolHost.Controllers
         public string Get()
         {
             Console.WriteLine("[" + DateTime.Now + "] Serving stats!");
-            return "Builds loaded: " + BuildCache.Count() + "\nIndexes loaded: " + CASC.indexNames.Count + "\nFiles indexed: " + CASC.indexDictionary.Count + "\nEncoding mappings: " + NGDP.encodingDictionary.Count;
+            return "Builds loaded: " + RootCache.Count() + "\nIndexes loaded: " + CASC.indexNames.Count + "\nFiles indexed: " + CASC.indexDictionary.Count + "\nEncoding mappings: " + NGDP.encodingDictionary.Count;
         }
     }
 }

@@ -17,7 +17,7 @@ namespace CASCToolHost.Controllers
             string installHash;
 
             // Force load build
-            await BuildCache.GetOrCreate(buildConfigHash);
+            await RootCache.GetOrCreate(buildConfigHash);
 
             var buildConfig = await Config.GetBuildConfig(buildConfigHash);
 
